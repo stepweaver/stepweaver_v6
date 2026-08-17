@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
-
 	type Variant = 'primary' | 'secondary';
 
 	type Props = {
@@ -20,6 +18,6 @@
 	};
 </script>
 
-<a href={resolve(href)} class={`${baseClasses} ${variantClasses[variant]}`}>
+<a {href} class={`${baseClasses} ${variantClasses[variant]}`}>
 	{label}
 </a>

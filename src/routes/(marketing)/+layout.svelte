@@ -5,7 +5,7 @@
 	let { children } = $props();
 </script>
 
-<div class="min-h-screen bg-canvas text-text">
+<div class="bg-canvas text-text min-h-screen">
 	<Navbar />
 
 	<main>

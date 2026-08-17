@@ -4,10 +4,7 @@
 
 <svelte:head>
 	<title>Stephen Weaver | stepweaver.dev</title>
-	<meta
-		name="description"
-		content="Product-minded systems builder for operations-heavy teams."
-	/>
+	<meta name="description" content="Product-minded systems builder for operations-heavy teams." />
 </svelte:head>
 
 <Hero />

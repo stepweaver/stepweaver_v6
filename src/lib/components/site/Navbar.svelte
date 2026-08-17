@@ -19,7 +19,7 @@
 
 		<!-- Desktop navigation -->
 		<nav class="hidden items-center gap-6 lg:flex" aria-label="Primary navigation">
-			{#each navLinks as link}
+			{#each navLinks as link (link.href)}
 				<a
 					href={link.href}
 					class="text-muted hover:text-accent text-xs tracking-wider uppercase transition-colors"
@@ -56,7 +56,7 @@
 			aria-label="Mobile navigation"
 		>
 			<div class="mx-auto flex max-w-7xl flex-col">
-				{#each navLinks as link}
+				{#each navLinks as link (link.href)}
 					<a
 						href={link.href}
 						class="border-border/10 text-muted hover:text-accent border-b py-3 text-sm tracking-wider uppercase transition-colors last:border-b-0"

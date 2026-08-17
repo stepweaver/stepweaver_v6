@@ -39,20 +39,31 @@
 	--sw-accent: #57dcff;
 	--sw-warning: #f0d65a;
 	--sw-danger: #e86262;
+
+	--sw-border: #1cd697;
 }
 
 /*
- * Expose our design tokens to Tailwind.
+ * Expose the design tokens to Tailwind.
  *
- * This gives us utilities such as:
+ * Examples:
  *
  * bg-canvas
+ * bg-panel
  * bg-surface
+ * bg-chrome
+ *
  * text-text
+ * text-secondary
  * text-muted
+ * text-meta
+ * text-label
+ *
  * text-neon
  * text-accent
+ *
  * border-border
+ *
  * font-ibm
  * font-ocr
  */
@@ -61,17 +72,22 @@
 	--font-ocr: 'OCR A', ui-monospace, monospace;
 
 	--color-canvas: var(--sw-canvas);
+	--color-panel: var(--sw-panel);
 	--color-surface: var(--sw-surface);
 	--color-chrome: var(--sw-chrome);
-	--color-border: var(--sw-border);
 
 	--color-text: var(--sw-text);
+	--color-secondary: var(--sw-text-secondary);
 	--color-muted: var(--sw-text-muted);
+	--color-meta: var(--sw-text-meta);
+	--color-label: var(--sw-text-label);
 
 	--color-neon: var(--sw-neon);
 	--color-accent: var(--sw-accent);
 	--color-warning: var(--sw-warning);
 	--color-danger: var(--sw-danger);
+
+	--color-border: var(--sw-border);
 }
 
 html {
