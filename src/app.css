@@ -1,0 +1,102 @@
+@import 'tailwindcss';
+
+@font-face {
+	font-family: 'IBM 3270';
+	src: url('/fonts/IBM_3270.woff') format('woff');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'OCR A';
+	src: url('/fonts/OCRA.woff') format('woff');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+/*
+ * Default λstepweaver design tokens.
+ *
+ * These colors come from the current site's default theme,
+ * but the new names describe their purpose rather than
+ * their implementation.
+ */
+:root {
+	--sw-canvas: #050b12;
+	--sw-panel: #080e16;
+	--sw-surface: #090f18;
+	--sw-chrome: #0c141e;
+
+	--sw-text: #e0ebe4;
+	--sw-text-secondary: #afc2b6;
+	--sw-text-muted: #769082;
+	--sw-text-meta: #6c8275;
+	--sw-text-label: #84af96;
+
+	--sw-neon: #1cd697;
+	--sw-accent: #57dcff;
+	--sw-warning: #f0d65a;
+	--sw-danger: #e86262;
+}
+
+/*
+ * Expose our design tokens to Tailwind.
+ *
+ * This gives us utilities such as:
+ *
+ * bg-canvas
+ * bg-surface
+ * text-text
+ * text-muted
+ * text-neon
+ * text-accent
+ * border-border
+ * font-ibm
+ * font-ocr
+ */
+@theme inline {
+	--font-ibm: 'IBM 3270', ui-monospace, monospace;
+	--font-ocr: 'OCR A', ui-monospace, monospace;
+
+	--color-canvas: var(--sw-canvas);
+	--color-surface: var(--sw-surface);
+	--color-chrome: var(--sw-chrome);
+	--color-border: var(--sw-border);
+
+	--color-text: var(--sw-text);
+	--color-muted: var(--sw-text-muted);
+
+	--color-neon: var(--sw-neon);
+	--color-accent: var(--sw-accent);
+	--color-warning: var(--sw-warning);
+	--color-danger: var(--sw-danger);
+}
+
+html {
+	min-height: 100%;
+	background: var(--sw-canvas);
+	scroll-behavior: smooth;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+	background: var(--sw-canvas);
+	color: var(--sw-text);
+	font-family: var(--font-ibm);
+	line-height: 1.6;
+}
+
+::selection {
+	background: color-mix(in srgb, var(--sw-neon) 30%, transparent);
+	color: var(--sw-text);
+}
+
+:focus-visible {
+	outline: 2px solid var(--sw-neon);
+	outline-offset: 2px;
+}

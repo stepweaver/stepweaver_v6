@@ -1,5 +1,8 @@
 node_modules
 
+# Local rebuild notes
+BUILD_PLAN.md
+
 # Output
 .output
 .vercel
