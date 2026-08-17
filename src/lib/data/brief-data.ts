@@ -63,7 +63,7 @@ export const briefData = {
 		categories: [
 			{
 				label: 'Frontend',
-				items: ['Next.js', 'React', 'Tailwind CSS', 'TypeScript'] as const
+				items: ['Next.js', 'React', 'SvelteKit', 'Tailwind CSS', 'TypeScript'] as const
 			},
 			{
 				label: 'Backend',
@@ -75,7 +75,7 @@ export const briefData = {
 			},
 			{
 				label: 'Infra',
-				items: ['Vercel', 'Neon', 'GitHub', 'Notion API'] as const
+				items: ['Vercel', 'Neon', 'Cloudflare', 'GitHub', 'Notion API'] as const
 			}
 		] as const
 	}
