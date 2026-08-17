@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ActionLink from '$lib/components/ui/ActionLink.svelte';
 	import { briefData } from '$lib/data/brief-data';
 </script>
 
@@ -6,7 +7,7 @@
 	<title>About | λstepweaver</title>
 	<meta
 		name="description"
-		content="Where Stephen Weaver fits: product-minded systems builder for operations, internal tools, and AI-assisted workflows."
+		content="Where Stephen Weaver fits: product-minded systems builder for operations, internal tools, and AI-assisted workflows. Selective consulting when the fit is right."
 	/>
 </svelte:head>
 
@@ -116,6 +117,17 @@
 					</div>
 				{/each}
 			</div>
+		</div>
+
+		<div class="border-border/20 flex flex-wrap gap-3 border-t pt-4">
+			{#each briefData.ctas as cta (cta.href)}
+				<ActionLink
+					href={cta.href}
+					label={cta.label}
+					variant={cta.variant}
+					external={'external' in cta && cta.external}
+				/>
+			{/each}
 		</div>
 	</section>
 </div>

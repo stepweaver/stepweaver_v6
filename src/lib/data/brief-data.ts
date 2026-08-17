@@ -78,5 +78,29 @@ export const briefData = {
 				items: ['Vercel', 'Neon', 'Cloudflare', 'GitHub', 'Notion API'] as const
 			}
 		] as const
-	}
+	},
+
+	ctas: [
+		{
+			label: 'View Resume',
+			href: '/resume',
+			variant: 'primary' as const
+		},
+		{
+			label: 'See Work',
+			href: '/work',
+			variant: 'secondary' as const
+		},
+		{
+			label: 'GitHub',
+			href: 'https://github.com/stepweaver',
+			variant: 'secondary' as const,
+			external: true
+		},
+		{
+			label: 'Contact',
+			href: '/contact?intent=hire',
+			variant: 'secondary' as const
+		}
+	] as const
 } as const;

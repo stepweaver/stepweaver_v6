@@ -5,9 +5,10 @@
 		href: string;
 		label: string;
 		variant?: Variant;
+		external?: boolean;
 	};
 
-	let { href, label, variant = 'secondary' }: Props = $props();
+	let { href, label, variant = 'secondary', external = false }: Props = $props();
 
 	const baseClasses =
 		'inline-flex items-center justify-center border px-5 py-3 font-ocr text-sm uppercase tracking-wide transition-colors';
@@ -18,6 +19,11 @@
 	};
 </script>
 
-<a {href} class={`${baseClasses} ${variantClasses[variant]}`}>
+<a
+	{href}
+	target={external ? '_blank' : undefined}
+	rel={external ? 'noopener noreferrer' : undefined}
+	class={`${baseClasses} ${variantClasses[variant]}`}
+>
 	{label}
 </a>
