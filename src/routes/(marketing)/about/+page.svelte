@@ -46,5 +46,76 @@
 				{/each}
 			</ul>
 		</div>
+
+		<div class="border-border/25 bg-panel/15 border p-4">
+			<p class="font-ocr text-label mb-2 text-xs tracking-wider uppercase">Selective Consulting</p>
+
+			<p class="text-secondary mb-3 text-sm leading-relaxed">
+				Hiring is the primary path. I also take on custom data workflows and ops systems when the
+				people and problem fit, when there is a need I can get passionate about. Not volume
+				consulting; relationship-gated work.
+			</p>
+
+			<a href="/services" class="text-neon hover:text-accent text-xs transition-colors">
+				See how consulting fits →
+			</a>
+		</div>
+
+		<div>
+			<p class="font-ocr text-label mb-3 text-xs tracking-wider uppercase">Flagship Work</p>
+
+			<div class="space-y-4">
+				{#each briefData.flagshipProjects as project (project.slug)}
+					<div class="border-border/25 bg-panel/15 border p-4">
+						<div class="mb-1 flex flex-wrap items-baseline gap-2">
+							<span class="text-text text-sm">{project.label}</span>
+							<span class="font-ocr text-neon/45 text-[10px] tracking-wider uppercase">
+								{project.type}
+							</span>
+						</div>
+
+						<p class="text-secondary mb-2 text-xs leading-relaxed">
+							{project.summary}
+						</p>
+
+						<div class="mb-2 flex flex-wrap gap-1.5">
+							{#each project.tags as tag (tag)}
+								<span class="border-border/30 text-meta border px-1.5 py-0.5 text-[10px]">
+									{tag}
+								</span>
+							{/each}
+						</div>
+
+						<a href={project.href} class="text-neon hover:text-accent text-xs transition-colors">
+							View case study →
+						</a>
+					</div>
+				{/each}
+			</div>
+		</div>
+
+		<div>
+			<p class="font-ocr text-label mb-3 text-xs tracking-wider uppercase">
+				{briefData.stackSnapshot.title}
+			</p>
+
+			<div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+				{#each briefData.stackSnapshot.categories as category (category.label)}
+					<div>
+						<p class="font-ocr text-neon/50 mb-2 text-[10px] tracking-[0.18em] uppercase">
+							{category.label}
+						</p>
+
+						<ul class="space-y-1">
+							{#each category.items as item (item)}
+								<li class="text-secondary text-xs">
+									{item}
+								</li>
+							{/each}
+						</ul>
+					</div>
+				{/each}
+			</div>
+		</div>
 	</section>
 </div>

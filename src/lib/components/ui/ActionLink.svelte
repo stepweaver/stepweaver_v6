@@ -18,6 +18,6 @@
 	};
 </script>
 
-<a href={href} class={`${baseClasses} ${variantClasses[variant]}`}>
+<a {href} class={`${baseClasses} ${variantClasses[variant]}`}>
 	{label}
 </a>
