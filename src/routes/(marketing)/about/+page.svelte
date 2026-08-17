@@ -1,4 +1,5 @@
 <script lang="ts">
+	import BackgroundBio from '$lib/components/about/BackgroundBio.svelte';
 	import ActionLink from '$lib/components/ui/ActionLink.svelte';
 	import { briefData } from '$lib/data/brief-data';
 </script>
@@ -129,5 +130,27 @@
 				/>
 			{/each}
 		</div>
+	</section>
+
+	<section
+		class="border-neon/20 bg-surface mt-8 scroll-mt-24 border p-6 sm:p-8"
+		aria-labelledby="about-background"
+	>
+		<div class="mb-4 flex items-start justify-between gap-4">
+			<p
+				id="about-background"
+				class="font-ocr text-label text-xs tracking-[0.18em] uppercase sm:text-sm"
+			>
+				Background
+			</p>
+
+			<div class="text-muted shrink-0 text-right text-xs">
+				<div class="font-ocr text-meta text-xs tracking-[0.18em] uppercase">Section</div>
+
+				<div class="text-secondary whitespace-nowrap">BIO-01</div>
+			</div>
+		</div>
+
+		<BackgroundBio />
 	</section>
 </div>
