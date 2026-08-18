@@ -156,6 +156,20 @@
 					</a>
 				</div>
 			</section>
+
+			<section>
+				<div class="text-label mb-3">
+					{resumeData.education.title.toUpperCase()}
+				</div>
+
+				<ul class="space-y-2">
+					{#each resumeData.education.items as item (item)}
+						<li class="text-secondary text-sm leading-relaxed">
+							{item}
+						</li>
+					{/each}
+				</ul>
+			</section>
 		</div>
 	</div>
 </div>
