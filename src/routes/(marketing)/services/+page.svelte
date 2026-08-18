@@ -41,9 +41,8 @@
 			</p>
 
 			<p>
-				This is not an agency menu and not volume consulting. If you are looking for a partner who
-				maps how work actually moves, then ships software, automation, or AI-assisted tools with
-				clear boundaries, start a conversation.
+				This is not an agency menu and not volume consulting. I'm just passionate about building
+				systems and tools that help people work smarter.
 			</p>
 		</div>
 
