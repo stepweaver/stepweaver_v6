@@ -125,4 +125,21 @@
 			{/each}
 		</div>
 	</section>
+
+	<div
+		class="border-border/25 bg-surface flex flex-col gap-4 border p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8"
+	>
+		<div>
+			<div class="text-label mb-2">NEXT STEP</div>
+
+			<p class="text-secondary max-w-xl text-sm">
+				Tell me what is broken, what you are building, and why it matters. If it is a hire
+				conversation, say that too.
+			</p>
+		</div>
+
+		<div class="shrink-0">
+			<ActionLink href="/contact?intent=consult" label="Get in Touch" variant="primary" />
+		</div>
+	</div>
 </div>
