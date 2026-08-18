@@ -118,7 +118,7 @@ export const resumeData = {
       items: [
         "B.A. Communication Studies, Grand Valley State University",
         "A.A. Business Administration, Ivy Tech Community College",
-        "Certificate, Intensive Spanish Language Program, Defense Language Institute Foreign Language Center (DLI)",
+        "Certificate, Intensive Spanish Language Program, Defense Language Institute, Foreign Language Center (DLI)",
       ] as const,
     },
   } as const;
