@@ -4,6 +4,7 @@
 	type IntentCopy = {
 		title: string;
 		blurb: string;
+		placeholder: string;
 	};
 
 	function getIntentCopy(intent: string | null): IntentCopy {
@@ -11,7 +12,8 @@
 			return {
 				title: 'Consulting inquiry',
 				blurb:
-					'Tell me about the workflow, data movement, or ops problem. Selective fit: if we vibe and the need is real, we can talk scope.'
+					'Tell me about the workflow, data movement, or ops problem. Selective fit: if we vibe and the need is real, we can talk scope.',
+				placeholder: "What's broken, who feels it, and what a good outcome looks like..."
 			};
 		}
 
@@ -19,14 +21,16 @@
 			return {
 				title: 'Hiring conversation',
 				blurb:
-					'Open to roles where operations, internal tools, and practical AI meet. Share the team, stack, and what you need built.'
+					'Open to roles where operations, internal tools, and practical AI meet. Share the team, stack, and what you need built.',
+				placeholder: 'Role, team context, and why this might be a fit...'
 			};
 		}
 
 		return {
 			title: 'Get in Touch',
 			blurb:
-				"Hiring is the primary path. Selective consulting for custom data workflows when the fit is right. Say which lane you're in."
+				"Hiring is the primary path. Selective consulting for custom data workflows when the fit is right. Say which lane you're in.",
+			placeholder: "Tell me what you're looking for..."
 		};
 	}
 
@@ -36,6 +40,14 @@
 	let hireActive = $derived(intent === 'hire' || intent === 'brief');
 	let consultActive = $derived(intent === 'consult');
 	let generalActive = $derived(!intent);
+
+	let name = $state('');
+	let email = $state('');
+	let message = $state('');
+
+	function handleSubmit(event: SubmitEvent) {
+		event.preventDefault();
+	}
 </script>
 
 <svelte:head>
@@ -45,7 +57,9 @@
 
 <div class="mx-auto max-w-2xl px-4 py-16 pt-24 sm:px-6">
 	<header class="mb-8">
-		<p class="font-ocr text-neon mb-2 text-sm tracking-wider">// CONTACT</p>
+		<p class="font-ocr text-neon mb-2 text-sm tracking-wider">
+			// CONTACT
+		</p>
 
 		<h1 class="text-text mb-4 text-3xl sm:text-4xl">
 			{copy.title}
@@ -62,7 +76,9 @@
 			<a
 				href="/contact?intent=hire"
 				class={`border px-2 py-1 transition-colors ${
-					hireActive ? 'border-neon text-neon' : 'border-border/30 text-meta hover:border-neon/50'
+					hireActive
+						? 'border-neon text-neon'
+						: 'border-border/30 text-meta hover:border-neon/50'
 				}`}
 			>
 				HIRE
@@ -91,4 +107,64 @@
 			</a>
 		</nav>
 	</header>
+
+	<form
+		onsubmit={handleSubmit}
+		class="border-border/25 bg-surface space-y-6 border p-6 sm:p-8"
+	>
+		<div>
+			<label for="name" class="text-label mb-2 block">
+				Name
+			</label>
+
+			<input
+				id="name"
+				name="name"
+				type="text"
+				bind:value={name}
+				required
+				placeholder="Your name"
+				class="bg-panel border-border/30 text-text focus:border-neon font-ibm w-full border px-3 py-2 text-sm transition-colors outline-none"
+			/>
+		</div>
+
+		<div>
+			<label for="email" class="text-label mb-2 block">
+				Email
+			</label>
+
+			<input
+				id="email"
+				name="email"
+				type="email"
+				bind:value={email}
+				required
+				placeholder="you@example.com"
+				class="bg-panel border-border/30 text-text focus:border-neon font-ibm w-full border px-3 py-2 text-sm transition-colors outline-none"
+			/>
+		</div>
+
+		<div>
+			<label for="message" class="text-label mb-2 block">
+				Message
+			</label>
+
+			<textarea
+				id="message"
+				name="message"
+				bind:value={message}
+				required
+				rows={6}
+				placeholder={copy.placeholder}
+				class="bg-panel border-border/30 text-text focus:border-neon font-ibm w-full resize-none border px-3 py-2 text-sm transition-colors outline-none"
+			></textarea>
+		</div>
+
+		<button
+			type="submit"
+			class="font-ocr border-neon text-neon hover:bg-neon/10 w-full border px-4 py-2 text-sm tracking-wide transition-colors sm:w-auto"
+		>
+			Send Message
+		</button>
+	</form>
 </div>
