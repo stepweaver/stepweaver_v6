@@ -121,6 +121,41 @@
 					{/each}
 				</div>
 			</section>
+
+			<section>
+				<div class="text-label mb-4">
+					{resumeData.projects.title.toUpperCase()}
+				</div>
+
+				<div class="space-y-4">
+					{#each resumeData.projects.items as project (project.href)}
+						<div class="border-border/25 bg-panel/15 border p-4">
+							<div class="mb-1 flex flex-wrap items-baseline gap-3">
+								<span class="font-ibm text-text text-sm">
+									{project.label}
+								</span>
+
+								<a
+									href={project.href}
+									class="text-neon hover:text-accent text-xs transition-colors"
+								>
+									View case study →
+								</a>
+							</div>
+
+							<p class="text-secondary text-xs leading-relaxed">
+								{project.summary}
+							</p>
+						</div>
+					{/each}
+				</div>
+
+				<div class="mt-4">
+					<a href="/work" class="text-neon hover:text-accent text-sm transition-colors">
+						View all projects →
+					</a>
+				</div>
+			</section>
 		</div>
 	</div>
 </div>
