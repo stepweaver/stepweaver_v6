@@ -18,6 +18,37 @@
 			detail: 'Consulting is secondary and selective.'
 		}
 	];
+
+	const offers = [
+		{
+			id: 'discovery',
+			title: 'Systems Discovery Sprint',
+			description:
+				'Workflow mapping, current-state audit, failure analysis, and a priority roadmap. Useful when you know something is broken but not what to build first.',
+			fit: 'Founders, PMs, ops leads'
+		},
+		{
+			id: 'workflows',
+			title: 'Custom Data Workflows & Automation',
+			description:
+				'n8n flows, API handoffs, intake/routing, reporting, and data movement shaped around how your team actually works, not shelf-ware.',
+			fit: 'Ops-heavy teams with brittle handoffs'
+		},
+		{
+			id: 'ai-ops',
+			title: 'AI-Assisted Ops Tools',
+			description:
+				'Guardrailed assistants, approval-gated drafting, retrieval-lite features, and provider routing with explicit trust boundaries.',
+			fit: 'Teams that want AI inside real workflows'
+		},
+		{
+			id: 'cleanup',
+			title: 'Technical Cleanup & Rationalization',
+			description:
+				'Platform cleanup, form/analytics hygiene, content architecture, and migration planning when the stack no longer matches the business.',
+			fit: 'Product teams stuck in accidental complexity'
+		}
+	];
 </script>
 
 <svelte:head>
@@ -72,4 +103,26 @@
 			</div>
 		{/each}
 	</div>
+
+	<section>
+		<div class="text-label mb-4">HOW I CAN HELP</div>
+
+		<div class="border-border/20 bg-border/15 grid grid-cols-1 gap-px border md:grid-cols-2">
+			{#each offers as offer (offer.id)}
+				<div id={offer.id} class="bg-panel scroll-mt-24 p-6">
+					<h2 class="font-ibm text-text mb-2 text-lg">
+						{offer.title}
+					</h2>
+
+					<p class="text-secondary mb-3 text-sm leading-relaxed">
+						{offer.description}
+					</p>
+
+					<p class="font-ocr text-meta text-xs tracking-wide">
+						Fit: {offer.fit}
+					</p>
+				</div>
+			{/each}
+		</div>
+	</section>
 </div>
