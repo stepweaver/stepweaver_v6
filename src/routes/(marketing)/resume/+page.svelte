@@ -29,21 +29,11 @@
 			</div>
 
 			<div class="flex flex-wrap gap-2">
-				<ActionLink
-					href="/weaver_resume.pdf"
-					label="Download PDF"
-					variant="primary"
-				/>
+				<ActionLink href="/weaver_resume.pdf" label="Download PDF" variant="primary" />
 
-				<ActionLink
-					href="/about"
-					label="About"
-				/>
+				<ActionLink href="/about" label="About" />
 
-				<ActionLink
-					href="/contact?intent=hire"
-					label="Contact"
-				/>
+				<ActionLink href="/contact?intent=hire" label="Contact" />
 			</div>
 		</header>
 
@@ -71,6 +61,34 @@
 						</li>
 					{/each}
 				</ul>
+			</section>
+
+			<section>
+				<p class="mb-4 font-ocr text-xs uppercase tracking-wider text-label">
+					{resumeData.skills.title}
+				</p>
+
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+					{#each resumeData.skills.groups as group (group.label)}
+						<div class="border border-border/25 bg-panel/15 p-4">
+							<p
+								class="mb-3 font-ocr text-[10px] uppercase tracking-[0.18em] text-neon/50"
+							>
+								{group.label}
+							</p>
+
+							<ul class="flex flex-wrap gap-2">
+								{#each group.items as skill (skill)}
+									<li
+										class="border border-border/30 px-2 py-1 text-xs text-secondary"
+									>
+										{skill}
+									</li>
+								{/each}
+							</ul>
+						</div>
+					{/each}
+				</div>
 			</section>
 		</div>
 	</div>
