@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -25,13 +26,14 @@
 	</header>
 
 	<section aria-labelledby="projects-heading">
-		<h2 id="projects-heading" class="font-ocr text-label mb-3 text-sm tracking-wider">
-			PROJECTS
-		</h2>
+		<h2 id="projects-heading" class="font-ocr text-label mb-3 text-sm tracking-wider">PROJECTS</h2>
 
 		<div class="border-border/20 bg-border/15 grid grid-cols-1 gap-px border md:grid-cols-2">
 			{#each data.projects as project (project.slug)}
-				<article class="bg-panel p-6">
+				<a
+					href={resolve('/(marketing)/work/[slug]', { slug: project.slug })}
+					class="bg-panel hover:bg-surface group block p-6 transition-colors"
+				>
 					<div class="mb-3 flex items-start justify-between gap-4">
 						<p class="text-label font-ocr text-xs tracking-wider">
 							{project.slug.toUpperCase().replaceAll('-', '_')}
@@ -42,7 +44,7 @@
 						</p>
 					</div>
 
-					<h3 class="text-text mb-2 text-lg">
+					<h3 class="text-text group-hover:text-neon mb-2 text-lg transition-colors">
 						{project.title}
 					</h3>
 
@@ -69,7 +71,7 @@
 							</span>
 						{/if}
 					</div>
-				</article>
+				</a>
 			{/each}
 		</div>
 	</section>
