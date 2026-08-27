@@ -1,0 +1,27 @@
+@layer base {
+	html {
+		min-block-size: 100%;
+		background: var(--canvas);
+		color-scheme: dark;
+		scroll-behavior: smooth;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	body {
+		min-block-size: 100vh;
+		min-block-size: 100dvb;
+		background: var(--canvas);
+		color: var(--text);
+	}
+
+	::selection {
+		background: color-mix(in oklch, var(--neon) 30%, transparent);
+		color: var(--text);
+	}
+
+	:focus-visible {
+		outline: 2px solid var(--neon);
+		outline-offset: 2px;
+	}
+}

@@ -1,10 +1,16 @@
 <script lang="ts">
 	import Hero from '$lib/components/home/Hero.svelte';
+	import { identity } from '$lib/data/identity';
+	import FeaturedSystems from './_components/FeaturedSystems.svelte';
+	import type { PageProps } from './$types';
+
+	let { data }: PageProps = $props();
 </script>
 
 <svelte:head>
-	<title>Stephen Weaver | stepweaver.dev</title>
-	<meta name="description" content="Product-minded systems builder for operations-heavy teams." />
+	<title>{identity.name} | {identity.site}</title>
+	<meta name="description" content={identity.positioning.short} />
 </svelte:head>
 
 <Hero />
+<FeaturedSystems projects={data.projects} />

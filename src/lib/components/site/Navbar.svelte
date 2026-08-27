@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { identity } from '$lib/data/identity';
+
 	let menuOpen = $state(false);
 
 	const navLinks = [
@@ -13,55 +15,42 @@
 	];
 </script>
 
-<header class="border-border/20 bg-canvas border-b">
-	<div class="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
-		<a href="/" class="font-ocr text-neon text-sm tracking-wider"> λstepweaver </a>
+<header class="site-header">
+	<div class="site-header-inner">
+		<a href="/" class="site-logo"> {identity.brand} </a>
 
-		<!-- Desktop navigation -->
-		<nav class="hidden items-center gap-6 lg:flex" aria-label="Primary navigation">
+		<nav class="desktop-nav" aria-label="Primary navigation">
 			{#each navLinks as link (link.href)}
-				<a
-					href={link.href}
-					class="text-muted hover:text-accent text-xs tracking-wider uppercase transition-colors"
-				>
+				<a href={link.href} class="nav-link">
 					{link.label}
 				</a>
 			{/each}
 		</nav>
 
-		<!-- Mobile menu button -->
 		<button
 			type="button"
-			class="border-border/30 text-neon flex h-10 w-10 items-center justify-center border lg:hidden"
+			class="menu-toggle"
 			aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
 			aria-expanded={menuOpen}
 			onclick={() => (menuOpen = !menuOpen)}
 		>
 			{#if menuOpen}
-				<span class="font-ocr text-xl">×</span>
+				<span class="menu-close" aria-hidden="true">×</span>
 			{:else}
-				<span class="flex flex-col gap-1.5">
-					<span class="bg-neon block h-px w-5"></span>
-					<span class="bg-neon block h-px w-5"></span>
-					<span class="bg-neon block h-px w-5"></span>
+				<span class="menu-icon" aria-hidden="true">
+					<span></span>
+					<span></span>
+					<span></span>
 				</span>
 			{/if}
 		</button>
 	</div>
 
-	<!-- Mobile navigation -->
 	{#if menuOpen}
-		<nav
-			class="border-border/20 bg-surface border-t px-6 py-4 lg:hidden"
-			aria-label="Mobile navigation"
-		>
-			<div class="mx-auto flex max-w-7xl flex-col">
+		<nav class="mobile-nav" aria-label="Mobile navigation">
+			<div class="mobile-nav-inner">
 				{#each navLinks as link (link.href)}
-					<a
-						href={link.href}
-						class="border-border/10 text-muted hover:text-accent border-b py-3 text-sm tracking-wider uppercase transition-colors last:border-b-0"
-						onclick={() => (menuOpen = false)}
-					>
+					<a href={link.href} class="mobile-link" onclick={() => (menuOpen = false)}>
 						{link.label}
 					</a>
 				{/each}
@@ -69,3 +58,110 @@
 		</nav>
 	{/if}
 </header>
+
+<style>
+	.site-header {
+		background: var(--canvas);
+		border-block-end: 1px solid var(--border-muted);
+	}
+
+	.site-header-inner {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		max-inline-size: var(--content-width-wide);
+		block-size: var(--nav-height);
+		margin-inline: auto;
+		padding-inline: var(--space-lg);
+	}
+
+	.site-logo {
+		font-family: var(--font-family-ocr);
+		font-size: var(--font-size-sm);
+		color: var(--neon);
+		letter-spacing: var(--letter-spacing-wide);
+	}
+
+	.desktop-nav {
+		display: none;
+		align-items: center;
+		gap: var(--space-lg);
+	}
+
+	.nav-link,
+	.mobile-link {
+		font-size: var(--font-size-xs);
+		color: var(--text-muted);
+		letter-spacing: var(--letter-spacing-wide);
+		text-transform: uppercase;
+		transition: color var(--duration) var(--ease);
+
+		&:hover {
+			color: var(--accent);
+		}
+	}
+
+	.menu-toggle {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		inline-size: 2.5rem;
+		block-size: 2.5rem;
+		color: var(--neon);
+		border: 1px solid color-mix(in oklch, var(--border) 30%, transparent);
+	}
+
+	.menu-close {
+		font-family: var(--font-family-ocr);
+		font-size: var(--font-size-xl);
+		line-height: 1;
+	}
+
+	.menu-icon {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+
+		span {
+			display: block;
+			inline-size: 1.25rem;
+			block-size: 1px;
+			background: var(--neon);
+		}
+	}
+
+	.mobile-nav {
+		background: var(--surface);
+		border-block-start: 1px solid var(--border-muted);
+		padding-inline: var(--space-lg);
+		padding-block: var(--space-md);
+	}
+
+	.mobile-nav-inner {
+		display: flex;
+		flex-direction: column;
+		max-inline-size: var(--content-width-wide);
+		margin-inline: auto;
+	}
+
+	.mobile-link {
+		font-size: var(--font-size-sm);
+		padding-block: var(--space-sm);
+		border-block-end: 1px solid color-mix(in oklch, var(--border) 10%, transparent);
+
+		&:last-child {
+			border-block-end: none;
+		}
+	}
+
+	@media (width >= 64rem) {
+		.desktop-nav {
+			display: flex;
+		}
+
+		.menu-toggle,
+		.mobile-nav {
+			display: none;
+		}
+	}
+</style>

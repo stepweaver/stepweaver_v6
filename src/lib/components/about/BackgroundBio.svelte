@@ -1,14 +1,14 @@
+<script lang="ts">
+	import { identity } from '$lib/data/identity';
+</script>
+
 <h2 class="text-text mb-5 text-xl leading-tight md:text-2xl">
-	I translate business workflows into working systems.
+	{identity.philosophy.headline}
 </h2>
 
 <div class="text-secondary space-y-4 text-sm leading-relaxed md:text-base">
 	<p>
-		My path into software came through operations, analysis, and real-world process work: Airborne
-		Cryptologic Linguist in the U.S. Air Force, then restaurant operations, business analysis, and
-		finally development. That background still defines how I build. I start with workflows,
-		handoffs, data, integrations, and risk, then turn them into systems people can use, maintain,
-		and trust.
+		{identity.philosophy.body}
 	</p>
 
 	<p class="font-ocr text-text text-xs tracking-wider uppercase">Trajectory</p>
@@ -18,7 +18,7 @@
 		<li>Restaurant operations and management</li>
 		<li>Business analysis</li>
 		<li>Self-taught developer</li>
-		<li>Current focus: DevOps and infrastructure</li>
+		<li>{identity.currently}</li>
 	</ul>
 </div>
 
@@ -28,14 +28,14 @@
 	<p class="text-text text-sm leading-relaxed md:text-base">
 		Check out my
 		<a
-			href="/resume"
+			href={identity.links.resume}
 			class="text-neon hover:text-accent font-semibold underline transition-colors hover:no-underline"
 		>
 			resume
 		</a>
 		or
 		<a
-			href="/contact"
+			href={identity.links.contact}
 			class="text-neon hover:text-accent font-semibold underline transition-colors hover:no-underline"
 		>
 			send me a message

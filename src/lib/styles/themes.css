@@ -1,0 +1,22 @@
+@layer theme {
+	:root {
+		--canvas: oklch(14.6% 0.019 249.1);
+		--panel: oklch(16.2% 0.02 255.3);
+		--surface: oklch(16.7% 0.021 258.2);
+		--chrome: oklch(18.9% 0.024 254.4);
+
+		--text: oklch(93% 0.015 158.2);
+		--text-secondary: oklch(79.6% 0.027 158.1);
+		--text-muted: oklch(62.9% 0.036 161.7);
+		--text-meta: oklch(58.5% 0.032 159.3);
+		--text-label: oklch(71.6% 0.059 159);
+
+		--neon: oklch(77.7% 0.164 162.7);
+		--accent: oklch(83.5% 0.124 218.5);
+		--warning: oklch(87.5% 0.144 97.4);
+		--danger: oklch(66.5% 0.167 22.7);
+
+		--border: var(--neon);
+		--border-muted: color-mix(in oklch, var(--neon) 20%, transparent);
+	}
+}

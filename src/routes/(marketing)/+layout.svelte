@@ -5,7 +5,7 @@
 	let { children } = $props();
 </script>
 
-<div class="bg-canvas text-text min-h-screen">
+<div class="site-shell">
 	<Navbar />
 
 	<main>
@@ -14,3 +14,12 @@
 
 	<Footer />
 </div>
+
+<style>
+	.site-shell {
+		min-block-size: 100vh;
+		min-block-size: 100dvb;
+		background: var(--canvas);
+		color: var(--text);
+	}
+</style>

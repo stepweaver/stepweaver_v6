@@ -1,0 +1,41 @@
+@layer tokens {
+	:root {
+		--font-family-ibm: 'IBM 3270', ui-monospace, monospace;
+		--font-family-ocr: 'OCR A', ui-monospace, monospace;
+
+		--font-size-xs: 0.75rem;
+		--font-size-sm: 0.875rem;
+		--font-size-base: 1rem;
+		--font-size-lg: 1.125rem;
+		--font-size-xl: 1.25rem;
+		--font-size-2xl: 1.5rem;
+		--font-size-3xl: 1.875rem;
+
+		--line-height-tight: 1.15;
+		--line-height-snug: 1.35;
+		--line-height-body: 1.6;
+		--line-height-relaxed: 1.75;
+
+		--letter-spacing-wide: 0.05em;
+		--letter-spacing-label: 0.25em;
+
+		--space-xs: 0.375rem;
+		--space-sm: 0.75rem;
+		--space-md: 1rem;
+		--space-lg: 1.5rem;
+		--space-xl: 2rem;
+		--space-2xl: 4rem;
+		--space-3xl: 6rem;
+
+		--content-width: 72rem;
+		--content-width-wide: 80rem;
+		--content-width-narrow: 64rem;
+
+		--nav-height: 3.5rem;
+
+		--radius: 0;
+
+		--duration: 150ms;
+		--ease: ease;
+	}
+}

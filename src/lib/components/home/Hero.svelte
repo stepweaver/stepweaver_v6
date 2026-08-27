@@ -1,29 +1,84 @@
 <script lang="ts">
 	import ActionLink from '$lib/components/ui/ActionLink.svelte';
+	import { identity } from '$lib/data/identity';
 </script>
 
-<section class="bg-canvas text-text min-h-screen px-6 py-24">
-	<div class="mx-auto flex min-h-[70vh] max-w-5xl items-center">
-		<div class="max-w-3xl">
-			<p class="font-ocr text-neon mb-4 text-sm tracking-[0.25em] uppercase">
-				λstepweaver // systems builder
-			</p>
+<section class="hero">
+	<div class="hero-inner">
+		<div class="hero-copy">
+			<p class="hero-eyebrow">{identity.positioning.eyebrow}</p>
 
-			<h1 class="text-4xl leading-tight font-semibold sm:text-5xl lg:text-6xl">
-				Product-minded systems
-				<span class="text-neon block">for operations-heavy teams</span>
+			<h1 class="hero-title">
+				{identity.positioning.headline}
+				<span class="hero-title-accent">{identity.positioning.headlineAccent}</span>
 			</h1>
 
-			<p class="text-muted mt-6 max-w-2xl text-base leading-7">
-				I design and ship internal tools, workflow automations, and AI-assisted systems that turn
-				messy business processes into dependable software.
+			<p class="hero-lede">
+				{identity.positioning.lede}
 			</p>
 
-			<div class="mt-8 flex flex-wrap gap-3">
-				<ActionLink href="/work" label="View Work" variant="primary" />
-				<ActionLink href="/resume" label="Resume" />
-				<ActionLink href="/contact?intent=hire" label="Contact" />
+			<div class="hero-actions">
+				<ActionLink href={identity.links.work} label="View Work" variant="primary" />
+				<ActionLink href={identity.links.resume} label="Resume" />
+				<ActionLink href={identity.links.contactHire} label="Contact" />
 			</div>
 		</div>
 	</div>
 </section>
+
+<style>
+	.hero {
+		min-block-size: 100vh;
+		padding-inline: var(--space-lg);
+		padding-block: var(--space-3xl);
+		background: var(--canvas);
+		color: var(--text);
+	}
+
+	.hero-inner {
+		display: flex;
+		align-items: center;
+		min-block-size: 70vh;
+		max-inline-size: var(--content-width-narrow);
+		margin-inline: auto;
+	}
+
+	.hero-copy {
+		max-inline-size: 48rem;
+	}
+
+	.hero-eyebrow {
+		margin-block-end: var(--space-md);
+		font-family: var(--font-family-ocr);
+		font-size: var(--font-size-sm);
+		color: var(--neon);
+		letter-spacing: var(--letter-spacing-label);
+		text-transform: uppercase;
+	}
+
+	.hero-title {
+		font-size: clamp(2.25rem, 1.4rem + 4vw, 3.75rem);
+		font-weight: 600;
+		line-height: var(--line-height-tight);
+	}
+
+	.hero-title-accent {
+		display: block;
+		color: var(--neon);
+	}
+
+	.hero-lede {
+		max-inline-size: 42rem;
+		margin-block-start: var(--space-lg);
+		font-size: var(--font-size-base);
+		line-height: var(--line-height-relaxed);
+		color: var(--text-muted);
+	}
+
+	.hero-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-sm);
+		margin-block-start: var(--space-xl);
+	}
+</style>

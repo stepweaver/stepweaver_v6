@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ActionLink from '$lib/components/ui/ActionLink.svelte';
+	import { identity } from '$lib/data/identity';
 	import { resumeData } from '$lib/data/resume-data';
 </script>
 
@@ -29,11 +30,11 @@
 			</div>
 
 			<div class="flex flex-wrap gap-2">
-				<ActionLink href="/weaver_resume.pdf" label="Download PDF" variant="primary" />
+				<ActionLink href={identity.links.resumePdf} label="Download PDF" variant="primary" />
 
-				<ActionLink href="/about" label="About" />
+				<ActionLink href={identity.links.about} label="About" />
 
-				<ActionLink href="/contact?intent=hire" label="Contact" />
+				<ActionLink href={identity.links.contactHire} label="Contact" />
 			</div>
 		</header>
 

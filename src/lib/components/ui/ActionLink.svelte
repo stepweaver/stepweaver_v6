@@ -9,21 +9,54 @@
 	};
 
 	let { href, label, variant = 'secondary', external = false }: Props = $props();
-
-	const baseClasses =
-		'inline-flex items-center justify-center border px-5 py-3 font-ocr text-sm uppercase tracking-wide transition-colors';
-
-	const variantClasses: Record<Variant, string> = {
-		primary: 'border-neon bg-neon/10 text-neon hover:bg-neon/20',
-		secondary: 'border-muted/50 text-text hover:border-neon hover:text-neon'
-	};
 </script>
 
 <a
 	{href}
 	target={external ? '_blank' : undefined}
 	rel={external ? 'noopener noreferrer' : undefined}
-	class={`${baseClasses} ${variantClasses[variant]}`}
+	class="action-link"
+	class:action-link--primary={variant === 'primary'}
+	class:action-link--secondary={variant === 'secondary'}
 >
 	{label}
 </a>
+
+<style>
+	.action-link {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding-inline: 1.25rem;
+		padding-block: 0.75rem;
+		border: 1px solid;
+		font-family: var(--font-family-ocr);
+		font-size: var(--font-size-sm);
+		letter-spacing: 0.025em;
+		text-transform: uppercase;
+		transition:
+			color var(--duration) var(--ease),
+			background-color var(--duration) var(--ease),
+			border-color var(--duration) var(--ease);
+	}
+
+	.action-link--primary {
+		border-color: var(--neon);
+		background: color-mix(in oklch, var(--neon) 10%, transparent);
+		color: var(--neon);
+
+		&:hover {
+			background: color-mix(in oklch, var(--neon) 20%, transparent);
+		}
+	}
+
+	.action-link--secondary {
+		border-color: color-mix(in oklch, var(--text-muted) 50%, transparent);
+		color: var(--text);
+
+		&:hover {
+			border-color: var(--neon);
+			color: var(--neon);
+		}
+	}
+</style>

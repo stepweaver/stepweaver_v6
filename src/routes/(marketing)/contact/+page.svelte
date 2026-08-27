@@ -57,9 +57,7 @@
 
 <div class="mx-auto max-w-2xl px-4 py-16 pt-24 sm:px-6">
 	<header class="mb-8">
-		<p class="font-ocr text-neon mb-2 text-sm tracking-wider">
-			// CONTACT
-		</p>
+		<p class="font-ocr text-neon mb-2 text-sm tracking-wider">// CONTACT</p>
 
 		<h1 class="text-text mb-4 text-3xl sm:text-4xl">
 			{copy.title}
@@ -76,9 +74,7 @@
 			<a
 				href="/contact?intent=hire"
 				class={`border px-2 py-1 transition-colors ${
-					hireActive
-						? 'border-neon text-neon'
-						: 'border-border/30 text-meta hover:border-neon/50'
+					hireActive ? 'border-neon text-neon' : 'border-border/30 text-meta hover:border-neon/50'
 				}`}
 			>
 				HIRE
@@ -108,14 +104,9 @@
 		</nav>
 	</header>
 
-	<form
-		onsubmit={handleSubmit}
-		class="border-border/25 bg-surface space-y-6 border p-6 sm:p-8"
-	>
+	<form onsubmit={handleSubmit} class="border-border/25 bg-surface space-y-6 border p-6 sm:p-8">
 		<div>
-			<label for="name" class="text-label mb-2 block">
-				Name
-			</label>
+			<label for="name" class="text-label mb-2 block"> Name </label>
 
 			<input
 				id="name"
@@ -129,9 +120,7 @@
 		</div>
 
 		<div>
-			<label for="email" class="text-label mb-2 block">
-				Email
-			</label>
+			<label for="email" class="text-label mb-2 block"> Email </label>
 
 			<input
 				id="email"
@@ -145,9 +134,7 @@
 		</div>
 
 		<div>
-			<label for="message" class="text-label mb-2 block">
-				Message
-			</label>
+			<label for="message" class="text-label mb-2 block"> Message </label>
 
 			<textarea
 				id="message"

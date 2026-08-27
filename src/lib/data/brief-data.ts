@@ -1,8 +1,10 @@
+import { identity } from './identity';
+
 export const briefData = {
 	identity: {
 		eyebrow: 'λstepweaver // about',
-		name: 'Stephen Weaver',
-		roles: ['Full-Stack Developer', 'Systems Builder', 'Automation & AI Integration'] as const,
+		name: identity.name,
+		roles: identity.roles,
 		statement:
 			'I came into software through operations, analysis, and real-world process work. My edge is not just shipping code. It is understanding how work moves through a team, where it breaks, and how to turn that into dependable solutions, workflows, and tools.'
 	},
@@ -83,23 +85,23 @@ export const briefData = {
 	ctas: [
 		{
 			label: 'View Resume',
-			href: '/resume',
+			href: identity.links.resume,
 			variant: 'primary' as const
 		},
 		{
 			label: 'See Work',
-			href: '/work',
+			href: identity.links.work,
 			variant: 'secondary' as const
 		},
 		{
 			label: 'GitHub',
-			href: 'https://github.com/stepweaver',
+			href: identity.links.github,
 			variant: 'secondary' as const,
 			external: true
 		},
 		{
 			label: 'Contact',
-			href: '/contact?intent=hire',
+			href: identity.links.contactHire,
 			variant: 'secondary' as const
 		}
 	] as const
