@@ -29,8 +29,18 @@ Captured 2026-11-08 from `http://127.0.0.1:5173/` on `feat/m1-reconciled`, with 
 | `docs/parity/v6/home-tablet-dark.png`    | 768×1024      | dark   |
 | `docs/parity/v6/home-mobile-dark.png`    | 390×844 at 2x | dark   |
 | `docs/parity/v6/home-desktop-skynet.png` | 1440×900      | skynet |
+| `docs/parity/v6/home-390-dark.png`       | 390×844       | dark   |
+| `docs/parity/v6/home-390-card.png`       | 390×844       | dark   |
+| `docs/parity/v6/home-390-menu.png`       | 390×844       | dark   |
+| `docs/parity/v6/home-390-skynet.png`     | 390×844       | skynet |
+| `docs/parity/v6/home-464-dark.png`       | 464×900       | dark   |
+| `docs/parity/v6/home-768-dark.png`       | 768×1024      | dark   |
+| `docs/parity/v6/home-1440-dark.png`      | 1440×900      | dark   |
+| `docs/parity/v6/home-1440-light.png`     | 1440×900      | light  |
 
-Compared with the v5 captures: the IBM 3270 headline, green-on-near-black dark theme, light theme, skynet red portrait, HMFIC-01 card, `// λstepweaver` wordmark, and five-link nav are present. Still short of production: the card's denser corner brackets and side-by-side portrait row, the animated circuit canvas, scanlines, the matrix handshake sequence, the chat widget, and the featured-project strip. The v5 light and skynet files still show a doubled hero and are not a clean reference.
+The `home-390` through `home-1440` files are the mobile-review pass. At 390, 464, and 768 the headline, introduction, and contact action come before the operator card, and the header stays one row. The 390 card and skynet shots are scrolled to the portrait. The menu shot shows the full appearance selector. At 1440 the operator card stays on the left.
+
+Compared with the v5 captures: the IBM 3270 headline, green-on-near-black dark theme, light theme, skynet red portrait, HMFIC-01 card, `// λstepweaver` wordmark, and five-link nav are present. The operator card keeps a side-by-side portrait on wide screens. Below 640px the long role sits under the portrait so it is not squeezed beside the photograph. Still short of production: the card's denser corner brackets, the animated circuit canvas, scanlines, the matrix handshake sequence, the chat widget, and the featured-project strip. The v5 light and skynet files still show a doubled hero and are not a clean reference.
 
 ## Homepage, observed
 

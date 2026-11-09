@@ -63,21 +63,23 @@
 			/>
 			<img src="/images/pixarMe_terminator.png" alt="" style:opacity={skynet ? 1 : 0} />
 		</div>
-		<div>
+		<div class="role">
 			<p class="label">Role</p>
 			<p>{identity.title}</p>
+		</div>
+		<div class="status">
 			<p class="label">Availability</p>
 			<a href="/resume">Open to work</a>
 			<p class="meta">{identity.location}</p>
 		</div>
 	</div>
 
-	<div>
+	<div class="chapter">
 		<p class="label">Current chapter</p>
 		<p>{OPERATOR_CHAPTER}</p>
 	</div>
 
-	<p>
+	<p class="bio">
 		I turn business workflows into dependable software, automation, and AI-assisted systems. I
 		define what should exist, connect the moving parts, supervise implementation, and think through
 		failure points before they become expensive.
@@ -146,7 +148,6 @@
 	}
 
 	.card-top,
-	.portrait-row,
 	.actions,
 	.tags {
 		display: flex;
@@ -155,8 +156,25 @@
 	}
 
 	.portrait-row {
-		flex-wrap: nowrap;
-		align-items: flex-start;
+		display: grid;
+		grid-template-columns: 7rem minmax(0, 1fr);
+		gap: var(--space-sm) var(--space-md);
+		align-items: start;
+	}
+
+	.portrait-bay {
+		grid-column: 1;
+		grid-row: 1 / span 2;
+	}
+
+	.role {
+		grid-column: 2;
+		grid-row: 1;
+	}
+
+	.status {
+		grid-column: 2;
+		grid-row: 2;
 	}
 
 	.card-top {
@@ -220,6 +238,47 @@
 	@keyframes glitch {
 		50% {
 			transform: translateX(1px);
+		}
+	}
+
+	@media (width < 40rem) {
+		.portrait-row {
+			grid-template-columns: 9rem minmax(0, 1fr);
+			grid-template-areas:
+				'photo status'
+				'role role';
+		}
+
+		.portrait-bay {
+			grid-area: photo;
+			inline-size: 9rem;
+			block-size: 9rem;
+		}
+
+		.status {
+			grid-area: status;
+			min-inline-size: 0;
+		}
+
+		.role {
+			grid-area: role;
+			min-inline-size: 0;
+		}
+
+		.role p:last-child {
+			color: var(--text-secondary);
+			font-size: var(--font-size-sm);
+			line-height: var(--line-height-snug);
+		}
+
+		.tags {
+			order: 1;
+		}
+
+		.bio,
+		.actions,
+		.matrix {
+			order: 2;
 		}
 	}
 

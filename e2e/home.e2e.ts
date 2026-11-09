@@ -1,5 +1,92 @@
 import { expect, test } from '@playwright/test';
 
+test('mobile home leads with the offer and keeps one header row', async ({ page }) => {
+	for (const width of [390, 464, 768]) {
+		await page.setViewportSize({ width, height: 900 });
+		await page.goto('/');
+
+		const headline = await page.getByRole('heading', { level: 1 }).boundingBox();
+		const cta = await page
+			.getByRole('link', { name: "Let's talk about your system" })
+			.first()
+			.boundingBox();
+		const card = await page.getByRole('region', { name: 'Operator profile' }).boundingBox();
+		const header = await page.locator('.site-header-inner').boundingBox();
+
+		expect(headline?.y).toBeLessThan(card?.y ?? 0);
+		expect(cta?.y).toBeLessThan(card?.y ?? 0);
+		expect(header?.height ?? 999).toBeLessThan(72);
+		await expect(page.locator('.theme-header').getByLabel('Appearance')).toBeHidden();
+
+		const overflow = await page.evaluate(
+			() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1
+		);
+		expect(overflow).toBe(true);
+		await expect(page.getByRole('button', { name: 'Open command palette' })).toBeVisible();
+		const trigger = await page.getByRole('button', { name: 'Open command palette' }).boundingBox();
+		const separated =
+			!trigger ||
+			!card ||
+			trigger.x + trigger.width <= card.x ||
+			card.x + card.width <= trigger.x ||
+			trigger.y + trigger.height <= card.y ||
+			card.y + card.height <= trigger.y;
+		expect(separated).toBe(true);
+
+		if (width < 640) {
+			const role = await page.locator('.role').boundingBox();
+			const portrait = await page.locator('.portrait-bay').boundingBox();
+			expect(role && card ? role.width : 0).toBeGreaterThan((card?.width ?? 0) * 0.7);
+			expect(portrait?.width ?? 0).toBeGreaterThan(120);
+		}
+	}
+
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto('/');
+	const toggle = page.getByRole('button', { name: 'Switch to light theme' });
+	await expect(toggle).toBeEnabled();
+	await toggle.focus();
+	await page.keyboard.press('Enter');
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+
+	await page.getByRole('button', { name: 'Open navigation menu' }).click();
+	const appearance = page.getByRole('navigation', { name: 'Mobile' }).getByLabel('Appearance');
+	await expect(appearance).toBeEnabled();
+	await appearance.focus();
+	await expect(appearance).toBeFocused();
+	await appearance.selectOption('skynet');
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'skynet');
+	await page.reload();
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'skynet');
+	await expect(page.locator('.portrait-bay img').nth(1)).toHaveCSS('opacity', '1');
+
+	await page.getByRole('button', { name: 'Open command palette' }).click();
+	await expect(page.getByRole('dialog', { name: 'Navigation' })).toBeVisible();
+	await page.keyboard.press('Escape');
+	await expect(page.getByRole('dialog', { name: 'Navigation' })).toBeHidden();
+	await page.keyboard.press('Control+k');
+	await expect(page.getByRole('dialog', { name: 'Navigation' })).toBeVisible();
+});
+
+test('desktop home keeps the operator card on the left', async ({ page }) => {
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto('/');
+
+	const card = await page.getByRole('region', { name: 'Operator profile' }).boundingBox();
+	const headline = await page.getByRole('heading', { level: 1 }).boundingBox();
+	expect(card?.x ?? 0).toBeLessThan(headline?.x ?? 0);
+	await expect(page.locator('.theme-header').getByLabel('Appearance')).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Switch to light theme' })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Open navigation menu' })).toBeHidden();
+	await expect(page.getByRole('button', { name: 'Ctrl+K' })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Open command palette' })).toBeHidden();
+
+	const overflow = await page.evaluate(
+		() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1
+	);
+	expect(overflow).toBe(true);
+});
+
 test('home states the consulting identity and hides the project catalog', async ({ page }) => {
 	await page.goto('/');
 

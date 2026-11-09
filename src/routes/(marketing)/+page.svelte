@@ -17,7 +17,6 @@
 </svelte:head>
 
 <section class="hero">
-	<OperatorCard />
 	<div class="hero-copy">
 		<p class="eyebrow">{identity.positioning.eyebrow}</p>
 		<h1>
@@ -35,6 +34,9 @@
 			<ActionLink href="/writing" label="Writing" />
 			<ActionLink href={identity.links.about} label="About" />
 		</div>
+	</div>
+	<div class="hero-card">
+		<OperatorCard />
 	</div>
 </section>
 
@@ -125,8 +127,8 @@
 
 	.hero {
 		display: grid;
-		gap: var(--space-xl);
-		padding-block: var(--space-2xl);
+		gap: var(--space-lg);
+		padding-block: var(--space-md) var(--space-xl);
 	}
 
 	.hero-copy span {
@@ -205,6 +207,18 @@
 		.hero {
 			grid-template-columns: minmax(22rem, 32rem) minmax(0, 1fr);
 			align-items: start;
+			gap: var(--space-xl);
+			padding-block: var(--space-2xl);
+		}
+
+		.hero-card {
+			grid-column: 1;
+			grid-row: 1;
+		}
+
+		.hero-copy {
+			grid-column: 2;
+			grid-row: 1;
 		}
 	}
 </style>

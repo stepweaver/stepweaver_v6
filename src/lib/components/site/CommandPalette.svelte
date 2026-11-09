@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { page } from '$app/state';
+	import { onPaletteToggle } from '$lib/components/site/palette-bus';
 	import { PALETTE_LINKS } from '$lib/data/navigation';
 
 	let open = $state(false);
@@ -10,28 +12,26 @@
 		if (open && path !== openedAt) open = false;
 	});
 
+	function toggle() {
+		openedAt = path;
+		open = !open;
+	}
+
 	function onKey(event: KeyboardEvent) {
 		if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
 			event.preventDefault();
-			openedAt = path;
-			open = !open;
+			toggle();
 		} else if (event.key === 'Escape') {
 			open = false;
 		}
 	}
+
+	onMount(() => onPaletteToggle(toggle));
 </script>
 
 <svelte:window onkeydown={onKey} />
 
-<button
-	type="button"
-	class="palette-trigger"
-	aria-expanded={open}
-	onclick={() => {
-		openedAt = path;
-		open = !open;
-	}}
->
+<button type="button" class="palette-trigger" aria-expanded={open} onclick={toggle}>
 	Ctrl+K
 </button>
 
@@ -74,6 +74,12 @@
 		background: var(--surface);
 		color: var(--text-muted);
 		padding: 0.4rem 0.6rem;
+	}
+
+	@media (width < 64rem) {
+		.palette-trigger {
+			display: none;
+		}
 	}
 
 	.palette {
