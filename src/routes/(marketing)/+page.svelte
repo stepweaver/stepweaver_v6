@@ -9,6 +9,9 @@
 		identity,
 		WHAT_I_DO
 	} from '$lib/data/identity';
+	import { formatWritingDate } from '$lib/writing/entries';
+
+	let { data } = $props();
 </script>
 
 <svelte:head>
@@ -86,21 +89,41 @@
 
 <section class="band" aria-labelledby="writing">
 	<p class="eyebrow">Recent writing</p>
-	<h2 id="writing">Writing will live here.</h2>
-	<p>
-		Notion is still the CMS. This build does not fetch it yet, so no posts are shown. The empty
-		state is tracked as Milestone 2 in docs/MIGRATION.md.
-	</p>
-	<p><a href="/writing">Writing status</a></p>
+	<h2 id="writing">Notes from the work.</h2>
+	{#if data.writing.status === 'ok'}
+		{#if data.writing.stale}
+			<p role="status">Showing the last copy received. Notion did not answer the latest request.</p>
+		{/if}
+		{#if data.writing.posts.length === 0}
+			<p>No notes are published yet.</p>
+		{:else}
+			<ul class="notes">
+				{#each data.writing.posts as post (post.slug)}
+					<li>
+						<p class="eyebrow">{formatWritingDate(post.date)}</p>
+						<h3><a href={`/writing/${post.slug}`}>{post.title}</a></h3>
+						{#if post.excerpt}
+							<p>{post.excerpt}</p>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		{/if}
+		<p><a href="/writing">All writing</a></p>
+	{:else if data.writing.status === 'unconfigured'}
+		<p>
+			The writing source is not configured for this app. Published notes are not listed, and this is
+			not an empty archive.
+		</p>
+	{:else}
+		<p role="status">Writing is temporarily unavailable. This is not an empty archive.</p>
+	{/if}
 </section>
 
 <section class="band" aria-labelledby="conversation">
 	<p class="eyebrow">Conversation</p>
 	<h2 id="conversation">Tell me about the system.</h2>
-	<p>
-		The contact form does not deliver mail in this build. The contact page shows the address and
-		keeps the fields that were already here.
-	</p>
+	<p>Consulting conversations start on the contact page. Hiring and general notes are there too.</p>
 	<div class="actions">
 		<ActionLink
 			href={identity.links.contactConsult}
@@ -197,6 +220,18 @@
 		border: 1px solid var(--border-muted);
 		background: var(--panel);
 		padding: var(--space-md);
+	}
+
+	.notes {
+		display: grid;
+		gap: var(--space-sm);
+		margin-block: var(--space-lg);
+		padding: 0;
+		list-style: none;
+	}
+
+	.notes h3 {
+		font-size: var(--font-size-lg);
 	}
 
 	a {
