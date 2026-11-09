@@ -8,7 +8,10 @@ export default defineConfig({
 		reuseExistingServer: false,
 		timeout: 120_000,
 		env: {
-			WRITING_SOURCE: 'fixture'
+			WRITING_SOURCE: 'fixture',
+			CONTACT_EMAIL_ADAPTER: 'mock',
+			TURNSTILE_SECRET_KEY: '1x0000000000000000000000000000000AA',
+			PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA'
 		}
 	},
 	use: {

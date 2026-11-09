@@ -123,10 +123,7 @@
 <section class="band" aria-labelledby="conversation">
 	<p class="eyebrow">Conversation</p>
 	<h2 id="conversation">Tell me about the system.</h2>
-	<p>
-		The contact form does not deliver mail in this build. The contact page shows the address and
-		keeps the fields that were already here.
-	</p>
+	<p>Consulting conversations start on the contact page. Hiring and general notes are there too.</p>
 	<div class="actions">
 		<ActionLink
 			href={identity.links.contactConsult}

@@ -116,31 +116,59 @@ test('unpublished project urls stay unavailable', async ({ page }) => {
 	}
 });
 
-test('contact offers email and does not present a working send action', async ({ page }) => {
+test('contact rejects invalid and spam submissions and reports delivery honestly', async ({
+	page
+}) => {
+	async function prepare(message: string, email = 'ada@example.com') {
+		await page.getByLabel('Name').fill('Ada Lovelace');
+		await page.getByLabel('Email').fill(email);
+		await page.getByLabel('Message').fill(message);
+		await page.locator('form').evaluate((form) => {
+			const token = form.querySelector('input[name="cf_turnstile_response"]');
+			const opened = form.querySelector('input[name="opened_at"]');
+			if (token instanceof HTMLInputElement) token.value = 'XXXX.DUMMY.TOKEN.XXXX';
+			if (opened instanceof HTMLInputElement) opened.value = String(Date.now() - 2000);
+			if (form instanceof HTMLFormElement) form.requestSubmit();
+		});
+	}
+
 	await page.goto('/contact');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Consulting inquiry');
+	await expect(page.getByRole('link', { name: 'stephen@stepweaver.dev' }).first()).toHaveAttribute(
+		'href',
+		'mailto:stephen@stepweaver.dev'
+	);
+	for (const width of [390, 464, 768, 1440]) {
+		await page.setViewportSize({ width, height: 900 });
+		const overflow = await page.evaluate(
+			() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1
+		);
+		expect(overflow).toBe(true);
+		await expect(page.getByRole('button', { name: 'Send message' })).toBeVisible();
+	}
+	await page.setViewportSize({ width: 1280, height: 900 });
 
-	const mail = page.getByRole('link', { name: 'stephen@stepweaver.dev' }).first();
-	await expect(mail).toBeVisible();
-	await expect(mail).toHaveAttribute('href', 'mailto:stephen@stepweaver.dev');
-	await expect(
-		page.getByText('Submission is turned off until mail delivery is connected.')
-	).toBeVisible();
-	await expect(page.getByRole('button', { name: /send/i })).toHaveCount(0);
-	await expect(page.locator('form button')).toHaveCount(0);
-	await expect(page.getByLabel('Name')).toBeVisible();
-	await expect(page.getByLabel('Email')).toBeVisible();
-	await expect(page.getByLabel('Message')).toBeVisible();
+	await prepare('A workflow question.', 'not-an-email');
+	await expect(page.getByRole('alert')).toContainText('Check the highlighted fields.');
+	await expect(page.getByText('Your message was sent')).toHaveCount(0);
 
-	await page.getByLabel('Name').fill('Ada Lovelace');
-	await page.getByLabel('Email').fill('ada@example.com');
-	await page.getByLabel('Message').fill('A workflow question.');
-	await page.locator('form').evaluate((form) => {
-		if (form instanceof HTMLFormElement) form.requestSubmit();
-	});
+	await page.goto('/contact?intent=hire');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Hiring conversation');
+	await page.locator('#company_website').fill('https://spam.example', { force: true });
+	await prepare('A role to discuss.');
+	await expect(page.getByRole('alert')).toHaveText('The message was not sent.');
+	await expect(page.getByText('Your message was sent')).toHaveCount(0);
 
-	await expect(page.getByRole('status')).toContainText('cannot send a message');
-	await expect(page).toHaveURL(/\/contact$/);
-	await expect(page.getByText(/message sent|thank you/i)).toHaveCount(0);
+	await page.goto('/contact?intent=general');
+	await prepare('A short general note.');
+	await expect(page.getByRole('status')).toHaveText(
+		'Your message was sent. I will read it and reply.'
+	);
+
+	await page.goto('/contact');
+	await prepare('Please fail [[force-fail]]');
+	await expect(page.getByRole('alert')).toContainText('Nothing was delivered');
+	await expect(page.getByText('Your message was sent')).toHaveCount(0);
 });
 
 test('work explains that no case studies are public', async ({ page }) => {
