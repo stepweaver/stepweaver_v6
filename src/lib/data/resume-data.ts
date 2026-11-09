@@ -9,6 +9,8 @@ export const resumeData = {
 	},
 	summary: {
 		title: 'Professional Summary',
+		practice:
+			'Business analysis and software engineering are one practice here: understand the workflow, then use integration, automation, and reviewed AI-assisted development to make that workflow dependable.',
 		body: identity.summary
 	},
 	skills: {
