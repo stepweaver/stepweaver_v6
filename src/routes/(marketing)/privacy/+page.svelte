@@ -23,8 +23,8 @@
 			<h2 class="font-ibm text-text mb-2 text-lg">Data Collection</h2>
 
 			<p class="text-secondary text-sm leading-relaxed">
-				This site collects minimal analytics data through Vercel Analytics. Contact form submissions
-				are sent via email and not stored. No personal data is sold or shared with third parties.
+				This build does not run analytics, and the contact form does not deliver or store a message.
+				No personal data is sold or shared with third parties.
 			</p>
 		</section>
 

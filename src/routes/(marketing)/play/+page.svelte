@@ -37,7 +37,7 @@
 	<title>Play | λstepweaver</title>
 	<meta
 		name="description"
-		content="Playground lane: terminal, field journal, Meshtastic, and experiments. Personality without crowding the hiring path."
+		content="Playground index. The linked tools are not connected in this build."
 	/>
 </svelte:head>
 
@@ -48,8 +48,7 @@
 		<h1 class="text-text mb-4 text-3xl sm:text-4xl">Playground</h1>
 
 		<p class="text-secondary max-w-2xl text-sm">
-			Experiments and personality surfaces. The hiring path lives on Work, About, Resume, and
-			Contact. This lane is for curiosity.
+			This index is kept from the earlier shell. The tools it names are not connected in this build.
 		</p>
 	</header>
 
