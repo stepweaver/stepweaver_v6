@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { identity } from '$lib/data/identity';
 
 	type IntentCopy = {
 		title: string;
@@ -44,9 +45,13 @@
 	let name = $state('');
 	let email = $state('');
 	let message = $state('');
+	let submissionBlocked = $state(false);
+
+	const contactEmail = identity.email;
 
 	function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
+		submissionBlocked = true;
 	}
 </script>
 
@@ -66,10 +71,17 @@
 		<p class="text-secondary max-w-xl text-sm">
 			{copy.blurb}
 		</p>
+		<p class="mt-4">
+			<a
+				class="font-ocr border-neon text-neon hover:bg-neon/10 inline-block border px-4 py-2 text-sm tracking-wide transition-colors"
+				href="mailto:{contactEmail}"
+			>
+				{contactEmail}
+			</a>
+		</p>
 		<p class="text-meta mt-3 max-w-xl text-sm">
-			This form does not deliver mail yet. Nothing typed here is stored. Email
-			<a class="text-neon" href="mailto:stephen@stepweaver.dev">stephen@stepweaver.dev</a>
-			until delivery is connected.
+			Email is the way to reach me. The form is kept for Milestone 2. Submission is turned off, and
+			nothing typed here is stored or sent.
 		</p>
 
 		<nav
@@ -152,11 +164,12 @@
 			></textarea>
 		</div>
 
-		<button
-			type="submit"
-			class="font-ocr border-neon text-neon hover:bg-neon/10 w-full border px-4 py-2 text-sm tracking-wide transition-colors sm:w-auto"
-		>
-			Send Message
-		</button>
+		<p class="text-meta text-sm">Submission is turned off until mail delivery is connected.</p>
+		{#if submissionBlocked}
+			<p class="text-secondary text-sm" role="status">
+				This form cannot send a message. Email
+				<a class="text-neon" href="mailto:{contactEmail}">{contactEmail}</a>.
+			</p>
+		{/if}
 	</form>
 </div>

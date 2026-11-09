@@ -27,3 +27,38 @@ test('unpublished project urls stay unavailable', async ({ page }) => {
 		await expect(page.getByRole('heading', { name: 'stepweaver.dev' })).toHaveCount(0);
 	}
 });
+
+test('contact offers email and does not present a working send action', async ({ page }) => {
+	await page.goto('/contact');
+
+	const mail = page.getByRole('link', { name: 'stephen@stepweaver.dev' }).first();
+	await expect(mail).toBeVisible();
+	await expect(mail).toHaveAttribute('href', 'mailto:stephen@stepweaver.dev');
+	await expect(
+		page.getByText('Submission is turned off until mail delivery is connected.')
+	).toBeVisible();
+	await expect(page.getByRole('button', { name: /send/i })).toHaveCount(0);
+	await expect(page.locator('form button')).toHaveCount(0);
+	await expect(page.getByLabel('Name')).toBeVisible();
+	await expect(page.getByLabel('Email')).toBeVisible();
+	await expect(page.getByLabel('Message')).toBeVisible();
+
+	await page.getByLabel('Name').fill('Ada Lovelace');
+	await page.getByLabel('Email').fill('ada@example.com');
+	await page.getByLabel('Message').fill('A workflow question.');
+	await page.locator('form').evaluate((form) => {
+		if (form instanceof HTMLFormElement) form.requestSubmit();
+	});
+
+	await expect(page.getByRole('status')).toContainText('cannot send a message');
+	await expect(page).toHaveURL(/\/contact$/);
+	await expect(page.getByText(/message sent|thank you/i)).toHaveCount(0);
+});
+
+test('work explains that no case studies are public', async ({ page }) => {
+	await page.goto('/work');
+
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('No case studies are public.');
+	await expect(page.getByText('every one of them is unpublished')).toBeVisible();
+	await expect(page.locator('a[href^="/work/"]')).toHaveCount(0);
+});
