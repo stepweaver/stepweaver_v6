@@ -94,7 +94,8 @@ test('home states the consulting identity and hides the project catalog', async 
 	await expect(page.getByRole('heading', { level: 1 })).toContainText(
 		'Systems Integration Consultant'
 	);
-	await expect(page.getByText('no posts are shown')).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Workflow handoffs' })).toBeVisible();
+	await expect(page.getByText('Unpublished operations note')).toHaveCount(0);
 	await expect(page.getByText('HMFIC-01')).toBeVisible();
 	await expect(page.getByRole('link', { name: 'GitHub' })).toHaveAttribute(
 		'href',
