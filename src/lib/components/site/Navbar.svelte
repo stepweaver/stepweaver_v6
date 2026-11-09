@@ -1,38 +1,43 @@
 <script lang="ts">
+	import { page } from '$app/state';
+	import ThemeControls from '$lib/components/site/ThemeControls.svelte';
 	import { identity } from '$lib/data/identity';
+	import { PRIMARY_NAV } from '$lib/data/navigation';
 
 	let menuOpen = $state(false);
+	let openedAt = '';
+	const path = $derived(page.url.pathname);
 
-	const navLinks = [
-		{ label: 'Work', href: '/work' },
-		{ label: 'About', href: '/about' },
-		{ label: 'Writing', href: '/writing' },
-		{ label: 'Field Journal', href: '/field-journal' },
-		{ label: 'Resume', href: '/resume' },
-		{ label: 'Contact', href: '/contact' },
-		{ label: 'Services', href: '/services' },
-		{ label: 'Play', href: '/play' }
-	];
+	$effect(() => {
+		if (menuOpen && path !== openedAt) menuOpen = false;
+	});
+
+	function toggleMenu() {
+		openedAt = path;
+		menuOpen = !menuOpen;
+	}
 </script>
 
 <header class="site-header">
 	<div class="site-header-inner">
-		<a href="/" class="site-logo"> {identity.brand} </a>
+		<a href="/" class="site-logo">// {identity.brand}</a>
 
-		<nav class="desktop-nav" aria-label="Primary navigation">
-			{#each navLinks as link (link.href)}
-				<a href={link.href} class="nav-link">
+		<nav class="desktop-nav" aria-label="Primary">
+			{#each PRIMARY_NAV as link (link.href)}
+				<a href={link.href} class="nav-link" aria-current={path === link.href ? 'page' : undefined}>
 					{link.label}
 				</a>
 			{/each}
 		</nav>
+
+		<ThemeControls />
 
 		<button
 			type="button"
 			class="menu-toggle"
 			aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
 			aria-expanded={menuOpen}
-			onclick={() => (menuOpen = !menuOpen)}
+			onclick={toggleMenu}
 		>
 			{#if menuOpen}
 				<span class="menu-close" aria-hidden="true">×</span>
@@ -47,10 +52,14 @@
 	</div>
 
 	{#if menuOpen}
-		<nav class="mobile-nav" aria-label="Mobile navigation">
+		<nav class="mobile-nav" aria-label="Mobile">
 			<div class="mobile-nav-inner">
-				{#each navLinks as link (link.href)}
-					<a href={link.href} class="mobile-link" onclick={() => (menuOpen = false)}>
+				{#each PRIMARY_NAV as link (link.href)}
+					<a
+						href={link.href}
+						class="mobile-link"
+						aria-current={path === link.href ? 'page' : undefined}
+					>
 						{link.label}
 					</a>
 				{/each}
@@ -67,10 +76,12 @@
 
 	.site-header-inner {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
+		gap: var(--space-md);
 		max-inline-size: var(--content-width-wide);
-		block-size: var(--nav-height);
+		min-block-size: var(--nav-height);
 		margin-inline: auto;
 		padding-inline: var(--space-lg);
 	}

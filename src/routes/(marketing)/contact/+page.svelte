@@ -66,6 +66,11 @@
 		<p class="text-secondary max-w-xl text-sm">
 			{copy.blurb}
 		</p>
+		<p class="text-meta mt-3 max-w-xl text-sm">
+			This form does not deliver mail yet. Nothing typed here is stored. Email
+			<a class="text-neon" href="mailto:stephen@stepweaver.dev">stephen@stepweaver.dev</a>
+			until delivery is connected.
+		</p>
 
 		<nav
 			class="font-ocr mt-4 flex flex-wrap gap-2 text-xs tracking-wide"
