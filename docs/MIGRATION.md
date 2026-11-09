@@ -41,6 +41,17 @@ Milestone 2 and Milestone 3 can be prepared in parallel after Milestone 1, but c
 | 3 Terminal and λlambda     | Unpublished-project filter from M1, Workers-compatible rate limits             | Keep v5 `/terminal` and `/api/chat`.        |
 | 4 Cutover                  | Staging on Cloudflare, acceptance against v5                                   | DNS stays pointed at v5. Revert the record. |
 
+## Milestone 2 status
+
+Done on `feat/m2-writing-contact-resume`, with the configuration gaps below.
+
+- Writing reads published Notion pages only. Drafts stay off the index, article routes, RSS, and sitemap. Cache is 300 seconds. A failed refresh keeps the last good copy. A failure with no copy says the archive is unavailable instead of empty. Missing credentials render a not-configured state and do not crash.
+- The live database has no Slug property. Ten published URLs audited on 2026-11-09 are frozen by page id. `/writing/p/{pageId}` redirects to the canonical slug.
+- Contact accepts consulting, hiring, and general intents. It validates on the server, rejects honeypot and oversized submissions, verifies Turnstile, and rate-limits. Resend is the HTTP sender. Production fails closed without the secret, a from-address, Turnstile, or the Workers rate-limit binding. `CONTACT_EMAIL_ADAPTER=mock` works only in development. Tests do not send real mail.
+- The résumé page keeps every existing role, date, and education line. The visible title is Business Systems Developer & Systems Integration Consultant. `static/weaver_resume.pdf` is unchanged. `/resume/draft.pdf` is generated from `resume-data.ts` and labeled as a draft.
+
+Still required from Stephen before production mail or a live writing deploy: Notion token and database id as Worker secrets, a Turnstile site key and secret for the new hostname, a Resend API key with `stepweaver.dev` verified, `CONTACT_FROM_EMAIL` and `CONTACT_TO_EMAIL`, and approval of the draft PDF before it replaces the production file. Do not add DNS records for Resend in this pass.
+
 ## Milestone 1 status
 
 Done in this branch, with the gaps below.
@@ -48,7 +59,7 @@ Done in this branch, with the gaps below.
 - Canonical identity, primary nav, home, About, What I Do
 - Project gate: 23 records, all `draft`, sitemap and structured data exclude them
 - Visual shell: fonts, copied theme tokens, operator card, light/dark and novelty theme control
-- Missing on purpose: contact send, terminal, chat, Notion, new PDF
+- Missing on purpose after Milestone 1, now addressed in Milestone 2 except where noted: contact send needs provider secrets; terminal and chat are still absent; Notion works when credentials are present; the new PDF is a draft beside the old file.
 
 ## Risks
 
@@ -57,7 +68,7 @@ Done in this branch, with the gaps below.
 | A `live` registry status gets treated as public | Old data says live for routes that merely exist                                                                                              | Publication is a separate allow-list, empty                                                                                                              |
 | Case-study prose leaks through a slug URL       | Old URLs are indexed on the production domain                                                                                                | Unpublished and unknown slugs share one 404 and render no record                                                                                         |
 | Placeholder routes look like working tools      | Terminal and chat are signature features                                                                                                     | Status pages say they are not rebuilt and link to production                                                                                             |
-| Stale PDF presented as the new title            | Title changed; PDF did not                                                                                                                   | Resume page says the production file is not regenerated                                                                                                  |
+| Stale PDF presented as the new title            | Title changed; the production PDF did not                                                                                                    | The page labels the repository file as current and the generated file as a draft                                                            |
 | Cutover before parity                           | Contact, writing, terminal, and chat would disappear                                                                                         | No deploy, no DNS, no database change in this pass                                                                                                       |
 | Theme CSS drift                                 | `themes.css` is a copy                                                                                                                       | Provenance comment names the v5 SHA. Re-copy rather than improvising palettes                                                                            |
 | Workers runtime mismatch                        | v5 uses Nodemailer and Vercel KV                                                                                                             | Do not port those clients blindly in Milestone 2 or 3                                                                                                    |
