@@ -7,3 +7,13 @@ bun.lockb
 
 # Miscellaneous
 /static/
+
+# Copied from stepweaver_v5. Keep the source formatting.
+src/lib/styles/themes.css
+src/lib/styles/theme-toggle.css
+
+# Generated. Wrangler compares this file byte-for-byte.
+worker-configuration.d.ts
+
+# Owner source document. Do not reflow its tables.
+REBUILD_PLAN.md
