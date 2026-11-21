@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import { requestPaletteToggle } from '$lib/components/site/palette-bus';
 	import ThemeControls from '$lib/components/site/ThemeControls.svelte';
-	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import { identity } from '$lib/data/identity';
 	import { PRIMARY_NAV } from '$lib/data/navigation';
 

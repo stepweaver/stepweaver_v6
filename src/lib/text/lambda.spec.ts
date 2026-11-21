@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { LAMBDA, upperLabel } from './lambda';
+import { LAMBDA, splitLambda, upperLabel } from './lambda';
 
 const sourceRoot = fileURLToPath(new URL('../../..', import.meta.url));
 
@@ -29,6 +29,10 @@ describe('lowercase lambda', () => {
 		expect(upperLabel('λstepweaver // systems')).toBe('λSTEPWEAVER // SYSTEMS');
 		expect(upperLabel('Professional Experience')).toBe('PROFESSIONAL EXPERIENCE');
 		expect(upperLabel('λstepweaver')).not.toContain(String.fromCodePoint(0x039b));
+		expect(splitLambda(`before ${String.fromCodePoint(0x039b)} after`)).toEqual([
+			'before ',
+			' after'
+		]);
 	});
 
 	it('keeps U+039B out of the app source', () => {

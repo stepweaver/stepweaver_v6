@@ -1,6 +1,6 @@
 <script lang="ts">
-	import ActionLink from '$lib/components/ui/ActionLink.svelte';
 	import LambdaText from '$lib/components/site/LambdaText.svelte';
+	import ActionLink from '$lib/components/ui/ActionLink.svelte';
 	import { identity } from '$lib/data/identity';
 	import { resumeData } from '$lib/data/resume-data';
 	import { upperLabel } from '$lib/text/lambda';

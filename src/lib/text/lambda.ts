@@ -2,7 +2,7 @@
 export const LAMBDA = '\u03BB';
 
 export function splitLambda(text: string): string[] {
-	return text.split(LAMBDA);
+	return text.replaceAll(String.fromCodePoint(0x039b), LAMBDA).split(LAMBDA);
 }
 
 /** Uppercase a label without turning a lowercase lambda into U+039B. */
