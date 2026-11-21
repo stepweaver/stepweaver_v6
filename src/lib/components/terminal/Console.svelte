@@ -11,12 +11,11 @@
 
 	let session = $state(createSession());
 	let inputEl = $state<HTMLInputElement>();
-	let logEl = $state<HTMLDivElement>();
+	let screenEl = $state<HTMLDivElement>();
 
 	async function reveal() {
 		await tick();
-		if (!logEl) return;
-		logEl.scrollTop = logEl.scrollHeight;
+		if (screenEl) screenEl.scrollTop = screenEl.scrollHeight;
 	}
 
 	function onInput(event: Event) {
@@ -35,10 +34,13 @@
 
 	function onKeydown(event: KeyboardEvent) {
 		const typed = inputEl?.value ?? session.input;
+		if (event.isComposing) return;
 		if (event.key === 'Enter') {
 			event.preventDefault();
+			const screen = screenEl;
+			const follow = !screen || screen.scrollHeight - screen.clientHeight - screen.scrollTop <= 2;
 			session = submitLine(replaceInput(session, typed));
-			void reveal();
+			if (follow) void reveal();
 			return;
 		}
 		if (event.key === 'ArrowUp') {
@@ -56,21 +58,12 @@
 
 	onMount(() => {
 		inputEl?.setAttribute('data-ready', 'true');
-		inputEl?.focus();
-		const onViewport = () => {
-			if (document.activeElement === inputEl) void reveal();
-		};
-		window.visualViewport?.addEventListener('resize', onViewport);
-		window.visualViewport?.addEventListener('scroll', onViewport);
-		return () => {
-			window.visualViewport?.removeEventListener('resize', onViewport);
-			window.visualViewport?.removeEventListener('scroll', onViewport);
-		};
+		if (window.matchMedia('(pointer: fine)').matches) inputEl?.focus({ preventScroll: true });
 	});
 </script>
 
-<div class="console-screen">
-	<div class="log" role="log" aria-label="Terminal transcript" bind:this={logEl}>
+<div class="console-screen" bind:this={screenEl}>
+	<div class="log" role="log" aria-label="Terminal transcript">
 		{#each session.lines as line (line.id)}
 			<p class="line {line.variant}">
 				{#if line.href}
@@ -108,14 +101,13 @@
 		flex-direction: column;
 		min-block-size: 0;
 		min-inline-size: 0;
+		overflow: auto;
+		overscroll-behavior: contain;
 	}
 
 	.log {
-		flex: 1 1 auto;
-		min-block-size: 0;
-		overflow: auto;
+		flex: none;
 		padding: 0.75rem 0.75rem 0.35rem;
-		overscroll-behavior: contain;
 	}
 
 	.line {
@@ -165,6 +157,22 @@
 		padding: 0.55rem 0.75rem 0.75rem;
 		border-block-start: 1px solid var(--border-muted);
 		background: color-mix(in oklab, var(--panel) 62%, transparent);
+	}
+
+	@media (width < 64rem), (pointer: coarse) {
+		.prompt-row {
+			position: sticky;
+			inset-block-end: 0;
+			margin-block-start: auto;
+		}
+	}
+
+	@media (width >= 64rem) and (pointer: fine) {
+		.prompt-row {
+			padding-block-start: 0;
+			border-block-start: 0;
+			background: transparent;
+		}
 	}
 
 	.prompt {
