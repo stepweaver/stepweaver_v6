@@ -56,7 +56,7 @@ Compared with the v5 captures: the IBM 3270 headline, green-on-near-black dark t
 | Experience                      | λstepweaver, Notre Dame, field-operations note                                            | Kept                                                                                                        |
 | Skills grid and "8+ years" line | Present                                                                                   | Not carried. Not re-verified as a claim to repeat                                                           |
 | Testimonial                     | Hero Point Consulting, Griffin H., visible on the homepage                                | Not republished. Text was not copied into the app                                                           |
-| Writing strip                   | At least "AI Resume Guide", dated 2026-02-11 on the homepage                              | Empty placeholder. Post was not imported                                                                    |
+| Writing strip                   | At least "AI Resume Guide", dated 2026-02-11 on the homepage                              | Latest three published notes. AI Resume Guide remains published and is not always in those three           |
 | Close                           | Resume, contact, work, quiet lab/terminal                                                 | Conversation CTA. Terminal and Lab go to status pages                                                       |
 | Chat widget                     | "Open chat" button                                                                        | Absent. No fake chat                                                                                        |
 | Command palette                 | Ctrl+K, present                                                                           | Page navigation only. Does not run commands                                                                 |
@@ -72,26 +72,26 @@ Production route tree includes marketing, terminal, embed, and log groups. Publi
 | `/`                                       | Full lobby                                | New narrative shell                                      | Code and unit gate. Browser check of the new app is listed in the pass report |
 | `/about`                                  | Brief plus flagship links                 | Narrative, no project links                              | Not browser-verified                                                          |
 | `/services`                               | Selective consulting, hiring-primary copy | What I do                                                | Not browser-verified                                                          |
-| `/writing`                                | Notion published posts                    | Status page, noindex                                     | Not browser-verified                                                          |
-| `/work`                                   | Six proofs                                | Curation page, no cards                                  | Not browser-verified                                                          |
-| `/work/[slug]`                            | Case study                                | 404 with no record body                                  | Unit-tested gate only                                                         |
-| `/resume`                                 | HTML plus PDF                             | Chronology from `resume-data.ts` plus the repository PDF | PDF bytes were not read. The page says the file was not regenerated           |
-| `/contact`                                | Turnstile, validation, mail               | Email only, no submit                                    | Not submitted                                                                 |
-| `/terminal`                               | Commands, chat, games                     | Status page                                              | Not exercised against production terminal                                     |
-| `/lab`                                    | Lab index                                 | Status page                                              | Not exercised                                                                 |
-| Chat `/api/chat`                          | Shared λlambda                            | Absent                                                   | Not called                                                                    |
-| Contact `/api/contact`                    | Mail                                      | Absent                                                   | Not called                                                                    |
-| Notion `/api/codex`, `/api/notion-blocks` | Writing                                   | Absent                                                   | Not called                                                                    |
+| `/writing`                                | Notion published posts                    | Published index, articles, RSS                           | Fixture browser tests. A local read on 2026-11-09 returned the 10 published titles, 404 for the draft, and a 301 from the page id |
+| `/work`                                   | Six proofs                                | Curation page, no cards                                  | Browser test                                                                 |
+| `/work/[slug]`                            | Case study                                | 404 with no record body                                  | Browser test and unit gate                                                   |
+| `/resume`                                 | HTML plus PDF                             | Full chronology, current PDF, labeled draft PDF          | Browser test read both PDF responses                                         |
+| `/contact`                                | Turnstile, validation, mail               | Form action, Turnstile, rate limit, Resend or mock       | Browser test against the mock adapter and Turnstile test keys               |
+| `/terminal`                               | Commands, chat, games                     | Status page                                              | Not exercised against production terminal                                    |
+| `/lab`                                    | Lab index                                 | Status page                                              | Not exercised                                                                |
+| Chat `/api/chat`                          | Shared λlambda                            | Absent                                                   | Not called                                                                   |
+| Contact form action                       | Mail via Nodemailer                       | Resend HTTP. Nodemailer is not used                      | Mock delivery in tests. No real message sent                                 |
+| Notion                                    | Published filter, 300s cache              | Data-source query, same filter and cache                 | Unit tests with a fake API. One local read-only pass returned the published titles |
 
 ## APIs left on v5
 
-`/api/chat`, `/api/contact`, `/api/weather`, `/api/rss` (Syntax.fm proxy, not a first-party blog feed), `/api/codex`, `/api/notion-blocks`, `/api/notion-image`, `/api/terminal/codex`, `/api/book-shower`, carrier-journal, carrier-log, footwear. None were ported. None were called.
+`/api/chat`, `/api/weather`, `/api/rss` (Syntax.fm proxy, not a first-party blog feed), `/api/codex`, `/api/notion-blocks`, `/api/notion-image`, `/api/terminal/codex`, `/api/book-shower`, carrier-journal, carrier-log, footwear. Writing is server-rendered, not those v5 APIs. The first-party feed is `/writing/rss.xml`. Contact is a SvelteKit form action, not `/api/contact`.
 
 ## Secrets
 
-Names only, from reading v5 integration points. Values were not opened.
+Names only. Values are not stored in this repo.
 
-Likely names used by production: Notion token, chat provider keys, email SMTP or API credentials, Turnstile secret, Vercel KV or equivalent rate-limit store. This app has no `.env` and no bindings for them in `wrangler.jsonc`.
+`NOTION_API_KEY`, `NOTION_BLOG_DB_ID`, `PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`, `CONTACT_FROM_EMAIL`, `CONTACT_TO_EMAIL`. `CONTACT_EMAIL_ADAPTER=mock` is development-only. The Worker rate limiter is `CONTACT_RATE_LIMITER` in `wrangler.jsonc` (5 requests per 60 seconds). Gmail SMTP from v5 is not used.
 
 ## Project visibility
 
@@ -100,7 +100,7 @@ Likely names used by production: Notion token, chat provider keys, email SMTP or
 | Home                 | No project titles                                                         |
 | `/work`              | No cards                                                                  |
 | `/work/[slug]`       | Unavailable unless `APPROVED_PUBLIC_SLUGS` contains the slug              |
-| Related writing      | No writing records yet, so no related-project links                       |
+| Related writing      | Article pages do not link to project case studies                         |
 | Terminal and λlambda | Not built. No project knowledge module                                    |
 | Sitemap              | `publicSitemapPaths()` adds `/work/[slug]` only for `getPublicProjects()` |
 | Structured data      | Person and WebSite only                                                   |

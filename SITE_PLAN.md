@@ -46,12 +46,12 @@ Terminal and Lab are quiet status links. They are not in the primary nav, and th
 
 | Route               | Public role in this milestone                                                    |
 | ------------------- | -------------------------------------------------------------------------------- |
-| `/`                 | Identity, what I do, how I work, background, writing placeholder, conversation   |
-| `/services`         | What I do                                                                        |
-| `/about`            | Narrative, chronology, stack. No case-study links                                |
-| `/writing`          | Status page until Notion is connected. `noindex`                                 |
-| `/resume`           | Canonical chronology plus the current production PDF, labeled as not regenerated |
-| `/contact`          | Email and intent. No form submission                                             |
+| `/`                 | Identity, what I do, how I work, background, latest published writing, conversation |
+| `/services`         | What I do                                                                           |
+| `/about`            | Narrative, chronology, stack. No case-study links                                   |
+| `/writing`          | Published Notion notes, tag filter, pagination, stable article URLs, RSS            |
+| `/resume`           | Canonical chronology, current production PDF, and a labeled draft PDF               |
+| `/contact`          | Consulting, hiring, and general. Server validation, Turnstile, rate limit, mail     |
 | `/work`             | Empty curation. `noindex`. Not a catalog                                         |
 | `/work/[slug]`      | Unavailable for every current slug. Same response for unknown and unpublished    |
 | `/terminal`, `/lab` | Status pages that point at production. `noindex`                                 |
@@ -65,8 +65,8 @@ Keep historic production URLs alive on v5. Do not add casual redirects in this a
 2. **What I do.** Discovery, integration, automation, custom software, applied AI.
 3. **How I work.** Understand the workflow, design the architecture, build and integrate, validate and maintain. Include the human-ownership note for agent-written code.
 4. **Background.** λstepweaver and Notre Dame dates from the résumé, plus the field-operations chapter as context.
-5. **Recent writing.** Empty, with an explicit note that Notion is not connected. Do not hard-code production posts.
-6. **Conversation.** Contact path that does not pretend to send mail. Quiet terminal and lab status links.
+5. **Recent writing.** The latest three published notes, with dates and excerpts. If Notion is down or not configured, say so. Do not invent posts.
+6. **Conversation.** Contact path for a consulting conversation. Quiet terminal and lab status links.
 
 No featured-project carousel.
 
@@ -85,7 +85,7 @@ The inventory is `docs/PROJECT_REVIEW.md`. Full case-study bodies stay in v5 unt
 
 ## Writing
 
-Notion stays the CMS. Milestone 2 adds published-post ingestion, a stable slug field, legacy redirects, and a first-party feed. v5 `/api/rss` is a Syntax.fm proxy and is not a blog feed. Do not recreate it as the writing feed.
+Notion stays the CMS. The app reads published pages through the 2025-09-03 data source when the database exposes one, and falls back to the 2022-06-28 database query. There is no Slug property. Existing public URLs are frozen in `src/lib/writing/slug-registry.ts`. A later title change redirects the new title slug to the frozen slug. New pages use an editable Slug property if one is added, otherwise `slugify(title)`, and `/writing/p/{pageId}` always redirects to the canonical slug. Add a new page id to the registry before renaming its title. The first-party feed is `/writing/rss.xml`. v5 `/api/rss` remains the Syntax.fm proxy and is not ported.
 
 ## Visual system
 
@@ -97,4 +97,4 @@ There is no Tailwind bridge in this working tree. Do not add one during parity w
 
 ## Out of scope until a later milestone
 
-Contact delivery, résumé PDF regeneration, Notion writing, terminal commands, λlambda, Field Journal, lab tools, analytics, and production deploy or DNS.
+Terminal commands, λlambda, Field Journal, lab tools, analytics, and production deploy or DNS. The contact form sends only when Resend and Turnstile are configured. The production résumé PDF stays in place until the draft is approved.
