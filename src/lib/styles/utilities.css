@@ -1,4 +1,8 @@
 @layer utilities {
+	.lambda-glyph {
+		text-transform: none;
+	}
+
 	.visually-hidden {
 		position: absolute;
 		overflow: hidden;

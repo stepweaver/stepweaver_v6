@@ -1,12 +1,13 @@
 <script lang="ts">
 	import ActionLink from '$lib/components/ui/ActionLink.svelte';
+	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import { identity } from '$lib/data/identity';
 </script>
 
 <section class="hero">
 	<div class="hero-inner">
 		<div class="hero-copy">
-			<p class="hero-eyebrow">{identity.positioning.eyebrow}</p>
+			<p class="hero-eyebrow"><LambdaText text={identity.positioning.eyebrow} /></p>
 
 			<h1 class="hero-title">
 				{identity.positioning.headline}

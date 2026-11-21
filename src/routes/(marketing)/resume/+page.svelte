@@ -1,7 +1,9 @@
 <script lang="ts">
 	import ActionLink from '$lib/components/ui/ActionLink.svelte';
+	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import { identity } from '$lib/data/identity';
 	import { resumeData } from '$lib/data/resume-data';
+	import { upperLabel } from '$lib/text/lambda';
 </script>
 
 <svelte:head>
@@ -17,7 +19,7 @@
 		<header class="resume-header">
 			<div>
 				<p class="kicker">
-					{resumeData.identity.eyebrow}
+					<LambdaText text={resumeData.identity.eyebrow} />
 				</p>
 
 				<h1>
@@ -92,7 +94,7 @@
 
 			<section>
 				<div class="plain-label">
-					{resumeData.experience.title.toUpperCase()}
+					{upperLabel(resumeData.experience.title)}
 				</div>
 
 				<div class="roles">
@@ -104,9 +106,7 @@
 										{role.role}
 									</div>
 
-									<div class="role-org">
-										{role.org}
-									</div>
+									<div class="role-org"><LambdaText text={role.org} /></div>
 								</div>
 
 								<div class="role-when">
@@ -118,7 +118,7 @@
 								{#each role.bullets as bullet (bullet)}
 									<li>
 										<span class="bullet" aria-hidden="true">·</span>
-										<span>{bullet}</span>
+										<span><LambdaText text={bullet} /></span>
 									</li>
 								{/each}
 							</ul>
@@ -137,7 +137,7 @@
 
 			<section>
 				<div class="plain-label education-label">
-					{resumeData.education.title.toUpperCase()}
+					{upperLabel(resumeData.education.title)}
 				</div>
 
 				<ul class="education">

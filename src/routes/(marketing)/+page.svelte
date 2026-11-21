@@ -1,5 +1,6 @@
 <script lang="ts">
 	import OperatorCard from '$lib/components/home/OperatorCard.svelte';
+	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import ActionLink from '$lib/components/ui/ActionLink.svelte';
 	import {
 		AGENT_OWNERSHIP_NOTE,
@@ -21,7 +22,7 @@
 
 <section class="hero">
 	<div class="hero-copy">
-		<p class="eyebrow">{identity.positioning.eyebrow}</p>
+		<p class="eyebrow"><LambdaText text={identity.positioning.eyebrow} /></p>
 		<h1>
 			{identity.positioning.headline}
 			<span>{identity.positioning.headlineAccent}</span>
@@ -77,7 +78,7 @@
 	<div class="grid">
 		{#each HOMEPAGE_EXPERIENCE as role (`${role.org}-${role.role}`)}
 			<article>
-				<h3>{role.role} · {role.org}</h3>
+				<h3>{role.role} · <LambdaText text={role.org} /></h3>
 				<p class="eyebrow">{role.when}</p>
 				<p>{role.body}</p>
 			</article>
@@ -101,7 +102,7 @@
 				{#each data.writing.posts as post (post.slug)}
 					<li>
 						<p class="eyebrow">{formatWritingDate(post.date)}</p>
-						<h3><a href={`/writing/${post.slug}`}>{post.title}</a></h3>
+						<h3><a href={`/writing/${post.slug}`}><LambdaText text={post.title} /></a></h3>
 						{#if post.excerpt}
 							<p>{post.excerpt}</p>
 						{/if}
@@ -133,8 +134,8 @@
 		<ActionLink href={identity.links.resume} label="Resume" />
 	</div>
 	<p class="quiet">
-		Terminal and Lab are not rebuilt here.
-		<a href="/terminal">Terminal status</a>
+		The terminal runs help, resume, and clear.
+		<a href="/terminal">Open the terminal</a>
 		·
 		<a href="/lab">Lab status</a>
 	</p>

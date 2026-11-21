@@ -1,5 +1,6 @@
 <script lang="ts">
 	import BlockBody from '$lib/components/writing/BlockBody.svelte';
+	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import { jsonLdScript } from '$lib/seo/json-ld';
 	import { SITE_ORIGIN } from '$lib/seo/site';
 	import { formatWritingDate } from '$lib/writing/entries';
@@ -52,7 +53,7 @@
 				· Updated {formatWritingDate(data.post.updated)}
 			{/if}
 		</p>
-		<h1>{data.post.title}</h1>
+		<h1><LambdaText text={data.post.title} /></h1>
 		{#if data.post.excerpt}
 			<p class="dek">{data.post.excerpt}</p>
 		{/if}
@@ -60,7 +61,7 @@
 			<ul class="article-tags">
 				{#each data.post.tags as tag (tag)}
 					<li>
-						<a href={`/writing?tag=${encodeURIComponent(tag)}`}>#{tag}</a>
+						<a href={`/writing?tag=${encodeURIComponent(tag)}`}>#<LambdaText text={tag} /></a>
 					</li>
 				{/each}
 			</ul>

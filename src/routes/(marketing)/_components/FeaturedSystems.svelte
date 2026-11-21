@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import { identity } from '$lib/data/identity';
 	import type { Project } from '$lib/projects/types';
+	import { upperLabel } from '$lib/text/lambda';
 
 	type Props = {
 		projects: readonly Project[];
@@ -24,15 +26,15 @@
 				<a class="featured-card" href={resolve('/(marketing)/work/[slug]', { slug: project.slug })}>
 					<div class="featured-card-meta">
 						<p class="featured-card-id">
-							{project.slug.toUpperCase().replaceAll('-', '_')}
+							{upperLabel(project.slug).replaceAll('-', '_')}
 						</p>
 
 						<p class="featured-card-status">
-							[{project.status.toUpperCase()}]
+							[{upperLabel(project.status)}]
 						</p>
 					</div>
 
-					<h3 class="featured-card-title">{project.title}</h3>
+					<h3 class="featured-card-title"><LambdaText text={project.title} /></h3>
 
 					{#if project.cardBuiltFor}
 						<p class="featured-card-context">{project.cardBuiltFor}</p>

@@ -8,6 +8,7 @@
 
 	let { children } = $props();
 	const structured = $derived(page.data.structuredData);
+	const consoleRoute = $derived(page.url.pathname === '/terminal');
 </script>
 
 <svelte:head>
@@ -17,7 +18,7 @@
 	{/if}
 </svelte:head>
 
-<div class="site-shell">
+<div class="site-shell" class:console-route={consoleRoute}>
 	<SignatureBackground />
 	<a class="skip-link" href="#main">Skip to main content</a>
 	<Navbar />
@@ -26,7 +27,9 @@
 		{@render children()}
 	</main>
 
-	<Footer />
+	{#if !consoleRoute}
+		<Footer />
+	{/if}
 	<CommandPalette />
 </div>
 
@@ -54,5 +57,24 @@
 
 	.skip-link:focus {
 		transform: none;
+	}
+
+	.site-shell.console-route {
+		display: flex;
+		flex-direction: column;
+		block-size: var(--console-viewport-height, 100dvb);
+		min-block-size: 0;
+		overflow: hidden;
+	}
+
+	.site-shell.console-route main {
+		display: flex;
+		flex: 1 1 auto;
+		flex-direction: column;
+		min-block-size: 0;
+	}
+
+	.console-route :global(.palette-trigger) {
+		display: none;
 	}
 </style>

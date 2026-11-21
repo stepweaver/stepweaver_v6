@@ -65,7 +65,7 @@
 			onclick={onToggle}
 			disabled={!ready}
 		>
-			<span class="scheme-mark" aria-hidden="true">λ</span>
+			<span class="scheme-mark lambda-glyph" aria-hidden="true">λ</span>
 			<span class="scheme-text">{label}</span>
 		</button>
 	</div>
@@ -102,6 +102,7 @@
 
 	.scheme-mark {
 		display: none;
+		text-transform: none;
 	}
 
 	.scheme-toggle:disabled,

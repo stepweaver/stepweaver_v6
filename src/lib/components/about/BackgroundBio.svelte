@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import { identity } from '$lib/data/identity';
 </script>
 
@@ -18,7 +19,7 @@
 		<li>Restaurant operations and management</li>
 		<li>Business analysis</li>
 		<li>Self-taught developer</li>
-		<li>{identity.currently}</li>
+		<li><LambdaText text={identity.currently} /></li>
 	</ul>
 </div>
 

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { SITE_ORIGIN } from '$lib/seo/site';
+	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import { formatWritingDate } from '$lib/writing/entries';
 	import { normalizeTag as tagKey } from '$lib/writing/slug';
 
@@ -78,7 +79,7 @@
 						class:tag-idle={tagKey(tag) !== activeTag}
 						href={pageHref(1, tag)}
 					>
-						{tag}
+						<LambdaText text={tag} />
 					</a>
 				{/each}
 			</nav>
@@ -96,13 +97,17 @@
 							{formatWritingDate(post.date)}
 						</p>
 						<h2 class="post-title">
-							<a href={`/writing/${post.slug}`}>{post.title}</a>
+							<a href={`/writing/${post.slug}`}><LambdaText text={post.title} /></a>
 						</h2>
 						{#if post.excerpt}
 							<p class="excerpt">{post.excerpt}</p>
 						{/if}
 						{#if post.tags.length > 0}
-							<p class="post-tags">{post.tags.join(' · ')}</p>
+							<p class="post-tags">
+								{#each post.tags as tag, index (tag)}
+									{#if index > 0}<span aria-hidden="true"> · </span>{/if}<LambdaText text={tag} />
+								{/each}
+							</p>
 						{/if}
 					</li>
 				{/each}

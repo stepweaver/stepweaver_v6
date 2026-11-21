@@ -3,7 +3,7 @@
 		{
 			href: '/terminal',
 			label: 'Terminal',
-			description: 'Command-style portfolio shell: resume, chat, codex, weather, games.'
+			description: 'Command console for the résumé: help, resume, and clear.'
 		},
 		{
 			href: '/field-journal',
@@ -48,7 +48,8 @@
 		<h1>Playground</h1>
 
 		<p class="lede">
-			This index is kept from the earlier shell. The tools it names are not connected in this build.
+			This index is kept from the earlier shell. The terminal console is available. The other tools
+			are not connected in this build.
 		</p>
 	</header>
 

@@ -18,7 +18,7 @@ export const PALETTE_LINKS: NavLink[] = [
 	{ href: '/', label: 'Home' },
 	...PRIMARY_NAV,
 	{ href: '/work', label: 'Work', note: 'Curation page. No case studies are public.' },
-	{ href: '/terminal', label: 'Terminal', note: 'Not rebuilt in this app.' },
+	{ href: '/terminal', label: 'Terminal', note: 'help, resume, and clear.' },
 	{ href: '/lab', label: 'Lab', note: 'Not rebuilt in this app.' },
 	{ href: '/play', label: 'Play', note: 'Index only. The tools are not connected.' },
 	{ href: '/privacy', label: 'Privacy' }

@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
+	import LambdaText from '$lib/components/site/LambdaText.svelte';
+	import { upperLabel } from '$lib/text/lambda';
 
 	let { data }: PageProps = $props();
 
@@ -17,7 +19,7 @@
 
 	{#if record}
 		<section class="record">
-			<h1>{record.card.title}</h1>
+			<h1><LambdaText text={record.card.title} /></h1>
 			<p>{record.card.description}</p>
 		</section>
 	{/if}
@@ -29,11 +31,11 @@
 					<p class="panel-label brief-label">SYS.BRIEF</p>
 
 					<h1>
-						{project.title}
+						<LambdaText text={project.title} />
 					</h1>
 
 					<p class="status">
-						[{project.status.toUpperCase()}]
+						[{upperLabel(project.status)}]
 					</p>
 
 					<p class="brief-copy">

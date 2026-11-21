@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import { identity } from '$lib/data/identity';
 
 	type FooterLink = {
@@ -37,7 +38,7 @@
 <footer class="site-footer">
 	<div class="site-footer-inner">
 		<div class="site-footer-mark">
-			<a href="/terminal">{identity.brand}</a>
+			<a href="/terminal"><LambdaText text={identity.brand} /></a>
 			© {year}
 		</div>
 

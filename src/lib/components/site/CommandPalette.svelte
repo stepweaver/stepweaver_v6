@@ -38,7 +38,7 @@
 {#if open}
 	<div class="palette" role="dialog" aria-label="Navigation">
 		<div class="palette-head">
-			<p>Pages only. Terminal commands are not available in this build.</p>
+			<p>Pages only. Commands run on the terminal page.</p>
 			<button type="button" onclick={() => (open = false)}>Close</button>
 		</div>
 		<ul>
