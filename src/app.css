@@ -1,7 +1,5 @@
 @layer reset, tokens, theme, base, typography, components, utilities;
 
-@import 'tailwindcss';
-
 @import './lib/styles/reset.css';
 @import './lib/styles/tokens.css';
 @import './lib/styles/themes.css';
@@ -9,33 +7,3 @@
 @import './lib/styles/typography.css';
 @import './lib/styles/utilities.css';
 @import './lib/styles/appearance.css';
-
-/*
- * Temporary Tailwind theme bridge.
- *
- * Unmigrated pages still use semantic Tailwind utilities such as
- * bg-canvas, text-neon, and font-ocr. Keep this mapping until those
- * components are converted to native CSS, then remove Tailwind.
- */
-@theme inline {
-	--font-ibm: var(--font-family-ibm);
-	--font-ocr: var(--font-family-ocr);
-
-	--color-canvas: var(--canvas);
-	--color-panel: var(--panel);
-	--color-surface: var(--surface);
-	--color-chrome: var(--chrome);
-
-	--color-text: var(--text);
-	--color-secondary: var(--text-secondary);
-	--color-muted: var(--text-muted);
-	--color-meta: var(--text-meta);
-	--color-label: var(--text-label);
-
-	--color-neon: var(--neon);
-	--color-accent: var(--accent);
-	--color-warning: var(--warning);
-	--color-danger: var(--danger);
-
-	--color-border: var(--border);
-}

@@ -2,18 +2,18 @@
 	import { identity } from '$lib/data/identity';
 </script>
 
-<h2 class="text-text mb-5 text-xl leading-tight md:text-2xl">
+<h2 class="headline">
 	{identity.philosophy.headline}
 </h2>
 
-<div class="text-secondary space-y-4 text-sm leading-relaxed md:text-base">
+<div class="bio">
 	<p>
 		{identity.philosophy.body}
 	</p>
 
-	<p class="font-ocr text-text text-xs tracking-wider uppercase">Trajectory</p>
+	<p class="trajectory">Trajectory</p>
 
-	<ul class="list-disc space-y-2 pl-5">
+	<ul class="trajectory-list">
 		<li>U.S. Air Force veteran; Airborne Cryptologic Linguist</li>
 		<li>Restaurant operations and management</li>
 		<li>Business analysis</li>
@@ -22,23 +22,97 @@
 	</ul>
 </div>
 
-<footer class="border-border/20 mt-8 space-y-2 border-t pt-6">
-	<p class="text-accent text-base md:text-lg">Curious about my work or want to chat?</p>
+<footer class="bio-footer">
+	<p class="invitation">Curious about my work or want to chat?</p>
 
-	<p class="text-text text-sm leading-relaxed md:text-base">
+	<p class="contact-copy">
 		Check out my
-		<a
-			href={identity.links.resume}
-			class="text-neon hover:text-accent font-semibold underline transition-colors hover:no-underline"
-		>
-			resume
-		</a>
+		<a href={identity.links.resume} class="bio-link"> resume </a>
 		or
-		<a
-			href={identity.links.contact}
-			class="text-neon hover:text-accent font-semibold underline transition-colors hover:no-underline"
-		>
-			send me a message
-		</a>.
+		<a href={identity.links.contact} class="bio-link"> send me a message </a>.
 	</p>
 </footer>
+
+<style>
+	.headline {
+		margin-bottom: 1.25rem;
+		color: var(--text);
+		font-size: var(--font-size-xl);
+		line-height: 1.25;
+	}
+
+	.bio {
+		display: grid;
+		gap: var(--space-md);
+		color: var(--text-secondary);
+	}
+
+	.bio,
+	.contact-copy {
+		font-size: var(--font-size-sm);
+		line-height: 1.625;
+	}
+
+	.trajectory,
+	.contact-copy {
+		color: var(--text);
+	}
+
+	.trajectory {
+		font: var(--font-size-xs) / 1rem var(--font-family-ocr);
+		letter-spacing: var(--letter-spacing-wide);
+		text-transform: uppercase;
+	}
+
+	.trajectory-list {
+		list-style: disc;
+		padding-inline-start: 1.25rem;
+	}
+
+	.trajectory-list li + li,
+	.contact-copy {
+		margin-top: 0.5rem;
+	}
+
+	.bio-footer {
+		margin-top: var(--space-xl);
+		border-top: 1px solid color-mix(in oklab, var(--border) 20%, transparent);
+		padding-top: var(--space-lg);
+	}
+
+	.invitation {
+		color: var(--accent);
+		font-size: var(--font-size-base);
+		line-height: 1.5rem;
+	}
+
+	.bio-link {
+		color: var(--neon);
+		font-weight: 600;
+		text-decoration: underline;
+		transition: color var(--duration) var(--ease);
+	}
+
+	@media (hover: hover) {
+		.bio-link:hover {
+			color: var(--accent);
+			text-decoration: none;
+		}
+	}
+
+	@media (min-width: 48rem) {
+		.headline {
+			font-size: var(--font-size-2xl);
+		}
+
+		.bio,
+		.contact-copy {
+			font-size: var(--font-size-base);
+		}
+
+		.invitation {
+			font-size: var(--font-size-lg);
+			line-height: 1.75rem;
+		}
+	}
+</style>

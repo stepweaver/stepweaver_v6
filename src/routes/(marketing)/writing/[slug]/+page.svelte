@@ -41,41 +41,130 @@
 	{@html structured}
 </svelte:head>
 
-<article class="mx-auto max-w-3xl px-4 py-16 pt-24 sm:px-6">
-	<p class="mb-8">
-		<a class="font-ocr text-neon text-xs tracking-wider uppercase" href="/writing">← Writing</a>
+<article class="article">
+	<p class="back">
+		<a href="/writing">← Writing</a>
 	</p>
-	<header class="mb-8">
-		<p class="font-ocr text-meta text-xs tracking-wider">
+	<header class="article-header">
+		<p class="dateline">
 			{formatWritingDate(data.post.date)}
 			{#if data.post.updated && data.post.updated !== data.post.date}
 				· Updated {formatWritingDate(data.post.updated)}
 			{/if}
 		</p>
-		<h1 class="text-text mt-3 text-3xl leading-tight sm:text-5xl">{data.post.title}</h1>
+		<h1>{data.post.title}</h1>
 		{#if data.post.excerpt}
-			<p class="text-secondary mt-4 max-w-2xl text-base leading-relaxed">{data.post.excerpt}</p>
+			<p class="dek">{data.post.excerpt}</p>
 		{/if}
 		{#if data.post.tags.length > 0}
-			<ul class="mt-4 flex flex-wrap gap-2">
+			<ul class="article-tags">
 				{#each data.post.tags as tag (tag)}
 					<li>
-						<a
-							class="font-ocr border-border/40 text-secondary hover:border-neon hover:text-neon border px-2 py-1 text-xs tracking-wide uppercase"
-							href={`/writing?tag=${encodeURIComponent(tag)}`}
-						>
-							#{tag}
-						</a>
+						<a href={`/writing?tag=${encodeURIComponent(tag)}`}>#{tag}</a>
 					</li>
 				{/each}
 			</ul>
 		{/if}
 	</header>
 	{#if data.blocksUnavailable}
-		<p class="text-secondary" role="status">
+		<p class="unavailable" role="status">
 			The article text is temporarily unavailable. The title above is still the published note.
 		</p>
 	{:else}
 		<BlockBody blocks={data.blocks} />
 	{/if}
 </article>
+
+<style>
+	.article {
+		max-inline-size: 48rem;
+		margin-inline: auto;
+		padding: var(--space-3xl) var(--space-md) var(--space-2xl);
+	}
+
+	.back {
+		margin-bottom: var(--space-xl);
+	}
+
+	.back a,
+	.dateline,
+	.article-tags a {
+		font-family: var(--font-family-ocr);
+		letter-spacing: var(--letter-spacing-wide);
+	}
+
+	.back a,
+	.article-tags a {
+		font-size: var(--font-size-xs);
+		line-height: 1rem;
+		letter-spacing: 0.025em;
+		text-transform: uppercase;
+	}
+
+	.back a {
+		color: var(--neon);
+		letter-spacing: var(--letter-spacing-wide);
+	}
+
+	.article-header {
+		margin-bottom: var(--space-xl);
+	}
+
+	.dateline {
+		color: var(--text-meta);
+		font-size: var(--font-size-xs);
+		line-height: 1rem;
+	}
+
+	h1 {
+		margin-top: 0.75rem;
+		color: var(--text);
+		font-size: var(--font-size-3xl);
+		line-height: 1.25;
+	}
+
+	.dek,
+	.unavailable {
+		color: var(--text-secondary);
+	}
+
+	.dek {
+		max-inline-size: 42rem;
+		margin-top: var(--space-md);
+		font-size: var(--font-size-base);
+		line-height: 1.625;
+	}
+
+	.article-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin-top: var(--space-md);
+	}
+
+	.article-tags a {
+		border: 1px solid color-mix(in oklab, var(--border) 40%, transparent);
+		padding: 0.25rem 0.5rem;
+		color: var(--text-secondary);
+		transition:
+			color var(--duration) var(--ease),
+			border-color var(--duration) var(--ease);
+	}
+
+	@media (hover: hover) {
+		.article-tags a:hover {
+			border-color: var(--neon);
+			color: var(--neon);
+		}
+	}
+
+	@media (min-width: 40rem) {
+		.article {
+			padding-inline: var(--space-lg);
+		}
+
+		h1 {
+			font-size: 3rem;
+		}
+	}
+</style>

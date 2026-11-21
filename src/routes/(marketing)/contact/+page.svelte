@@ -99,36 +99,30 @@
 	/>
 </svelte:head>
 
-<div class="mx-auto max-w-2xl px-4 py-16 pt-24 sm:px-6">
-	<header class="mb-8">
-		<p class="font-ocr text-neon mb-2 text-sm tracking-wider">// CONTACT</p>
-		<h1 class="text-text mb-4 text-3xl sm:text-4xl">{copy.title}</h1>
-		<p class="text-secondary max-w-xl text-sm">{copy.blurb}</p>
-		<p class="mt-4">
-			<a
-				class="font-ocr border-neon text-neon hover:bg-neon/10 inline-block border px-4 py-2 text-sm tracking-wide transition-colors"
-				href="mailto:{identity.email}"
-			>
+<div class="contact">
+	<header class="intro">
+		<p class="kicker">// CONTACT</p>
+		<h1>{copy.title}</h1>
+		<p class="blurb">{copy.blurb}</p>
+		<p class="email-row">
+			<a class="email-link" href="mailto:{identity.email}">
 				{identity.email}
 			</a>
 		</p>
-		<nav
-			class="font-ocr mt-4 flex flex-wrap gap-2 text-xs tracking-wide"
-			aria-label="Contact intent"
-		>
+		<nav class="intents" aria-label="Contact intent">
 			<a
 				href="/contact?intent=consult"
-				class={`border px-2 py-1 transition-colors ${consultActive ? 'border-neon text-neon' : 'border-border/30 text-meta hover:border-neon/50'}`}
+				class:active={consultActive}
 				aria-current={consultActive ? 'page' : undefined}>CONSULT</a
 			>
 			<a
 				href="/contact?intent=hire"
-				class={`border px-2 py-1 transition-colors ${hireActive ? 'border-neon text-neon' : 'border-border/30 text-meta hover:border-neon/50'}`}
+				class:active={hireActive}
 				aria-current={hireActive ? 'page' : undefined}>HIRE</a
 			>
 			<a
 				href="/contact?intent=general"
-				class={`border px-2 py-1 transition-colors ${generalActive ? 'border-neon text-neon' : 'border-border/30 text-meta hover:border-neon/50'}`}
+				class:active={generalActive}
 				aria-current={generalActive ? 'page' : undefined}>GENERAL</a
 			>
 		</nav>
@@ -136,7 +130,6 @@
 
 	<form
 		method="POST"
-		class="border-border/25 bg-surface space-y-6 border p-6 sm:p-8"
 		novalidate
 		use:enhance={() => {
 			submitting = true;
@@ -161,8 +154,8 @@
 			/>
 		</div>
 
-		<div>
-			<label for="name" class="text-label mb-2 block">Name</label>
+		<div class="field">
+			<label for="name">Name</label>
 			<input
 				id="name"
 				name="name"
@@ -174,15 +167,14 @@
 				aria-invalid={form?.fieldErrors?.name ? 'true' : undefined}
 				aria-describedby={form?.fieldErrors?.name ? 'name-error' : undefined}
 				placeholder="Your name"
-				class="bg-panel border-border/30 text-text focus:border-neon font-ibm w-full border px-3 py-2 text-sm transition-colors outline-none"
 			/>
 			{#if form?.fieldErrors?.name}
-				<p id="name-error" class="text-sm text-red-400">{form.fieldErrors.name}</p>
+				<p id="name-error" class="field-error">{form.fieldErrors.name}</p>
 			{/if}
 		</div>
 
-		<div>
-			<label for="email" class="text-label mb-2 block">Email</label>
+		<div class="field">
+			<label for="email">Email</label>
 			<input
 				id="email"
 				name="email"
@@ -194,15 +186,14 @@
 				aria-invalid={form?.fieldErrors?.email ? 'true' : undefined}
 				aria-describedby={form?.fieldErrors?.email ? 'email-error' : undefined}
 				placeholder="you@example.com"
-				class="bg-panel border-border/30 text-text focus:border-neon font-ibm w-full border px-3 py-2 text-sm transition-colors outline-none"
 			/>
 			{#if form?.fieldErrors?.email}
-				<p id="email-error" class="text-sm text-red-400">{form.fieldErrors.email}</p>
+				<p id="email-error" class="field-error">{form.fieldErrors.email}</p>
 			{/if}
 		</div>
 
-		<div>
-			<label for="message" class="text-label mb-2 block">Message</label>
+		<div class="field">
+			<label for="message">Message</label>
 			<textarea
 				id="message"
 				name="message"
@@ -212,18 +203,16 @@
 				bind:value={message}
 				aria-invalid={form?.fieldErrors?.message ? 'true' : undefined}
 				aria-describedby={form?.fieldErrors?.message ? 'message-error' : undefined}
-				placeholder={copy.placeholder}
-				class="bg-panel border-border/30 text-text focus:border-neon font-ibm w-full resize-none border px-3 py-2 text-sm transition-colors outline-none"
-			></textarea>
+				placeholder={copy.placeholder}></textarea>
 			{#if form?.fieldErrors?.message}
-				<p id="message-error" class="text-sm text-red-400">{form.fieldErrors.message}</p>
+				<p id="message-error" class="field-error">{form.fieldErrors.message}</p>
 			{/if}
 		</div>
 
 		{#if siteKey}
 			<div bind:this={widget}></div>
 		{:else}
-			<p class="text-meta text-sm">
+			<p class="form-note">
 				The bot check is not configured in this environment. A submission will not be sent.
 			</p>
 		{/if}
@@ -231,23 +220,175 @@
 		{#if form?.message}
 			<p
 				role={form.success ? 'status' : 'alert'}
-				class={form.success ? 'text-neon text-sm' : 'text-sm text-red-400'}
+				class="form-status"
+				class:form-status-ok={form.success}
+				class:form-status-error={!form.success}
 			>
 				{form.message}
 			</p>
 		{/if}
 
-		<button
-			type="submit"
-			class="font-ocr border-neon text-neon hover:bg-neon/10 border px-4 py-2 text-sm tracking-wide disabled:opacity-60"
-			disabled={submitting}
-		>
+		<button type="submit" disabled={submitting}>
 			{submitting ? 'Sending...' : 'Send message'}
 		</button>
 	</form>
 </div>
 
 <style>
+	.contact {
+		max-inline-size: 42rem;
+		margin-inline: auto;
+		padding: var(--space-3xl) var(--space-md) var(--space-2xl);
+	}
+
+	.intro {
+		margin-bottom: var(--space-xl);
+	}
+
+	.kicker,
+	.email-link,
+	.intents,
+	button {
+		font-family: var(--font-family-ocr);
+	}
+
+	.kicker {
+		margin-bottom: 0.5rem;
+		color: var(--neon);
+		font-size: var(--font-size-sm);
+		line-height: 1.25rem;
+		letter-spacing: var(--letter-spacing-wide);
+	}
+
+	h1 {
+		margin-bottom: var(--space-md);
+		color: var(--text);
+		font-size: var(--font-size-3xl);
+		line-height: 2.25rem;
+	}
+
+	.blurb {
+		max-inline-size: 36rem;
+		color: var(--text-secondary);
+		font-size: var(--font-size-sm);
+		line-height: 1.25rem;
+	}
+
+	.email-row {
+		margin-top: var(--space-md);
+	}
+
+	.email-link,
+	button {
+		border: 1px solid var(--neon);
+		color: var(--neon);
+		font-size: var(--font-size-sm);
+		line-height: 1.25rem;
+		letter-spacing: 0.025em;
+		transition:
+			background-color var(--duration) var(--ease),
+			border-color var(--duration) var(--ease),
+			color var(--duration) var(--ease);
+	}
+
+	.email-link {
+		display: inline-block;
+		padding: 0.5rem 1rem;
+	}
+
+	.intents {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin-top: var(--space-md);
+		font-size: var(--font-size-xs);
+		line-height: 1rem;
+		letter-spacing: 0.025em;
+	}
+
+	.intents a {
+		border: 1px solid color-mix(in oklab, var(--border) 30%, transparent);
+		padding: 0.25rem 0.5rem;
+		color: var(--text-meta);
+		transition:
+			color var(--duration) var(--ease),
+			border-color var(--duration) var(--ease);
+	}
+
+	.intents a.active {
+		border-color: var(--neon);
+		color: var(--neon);
+	}
+
+	form {
+		border: 1px solid color-mix(in oklab, var(--border) 25%, transparent);
+		background: var(--surface);
+		padding: var(--space-lg);
+	}
+
+	form > :not(:last-child) {
+		margin-bottom: var(--space-lg);
+	}
+
+	.field label {
+		display: block;
+		margin-bottom: 0.5rem;
+		color: var(--text-label);
+	}
+
+	.field input,
+	.field textarea {
+		box-sizing: border-box;
+		width: 100%;
+		border: 1px solid color-mix(in oklab, var(--border) 30%, transparent);
+		background: var(--panel);
+		padding: 0.5rem 0.75rem;
+		color: var(--text);
+		font-family: var(--font-family-ibm);
+		font-size: var(--font-size-sm);
+		line-height: 1.25rem;
+		transition: border-color var(--duration) var(--ease);
+	}
+
+	.field textarea {
+		resize: none;
+	}
+
+	.field input:focus,
+	.field textarea:focus {
+		border-color: var(--neon);
+		outline: none;
+	}
+
+	.field-error,
+	.form-status-error {
+		color: var(--danger);
+		font-size: var(--font-size-sm);
+		line-height: 1.25rem;
+	}
+
+	.form-note,
+	.form-status {
+		font-size: var(--font-size-sm);
+		line-height: 1.25rem;
+	}
+
+	.form-note {
+		color: var(--text-meta);
+	}
+
+	.form-status-ok {
+		color: var(--neon);
+	}
+
+	button {
+		padding: 0.5rem 1rem;
+	}
+
+	button:disabled {
+		opacity: 0.6;
+	}
+
 	.hp {
 		position: absolute;
 		inline-size: 1px;
@@ -255,5 +396,31 @@
 		overflow: hidden;
 		clip-path: inset(50%);
 		white-space: nowrap;
+	}
+
+	@media (hover: hover) {
+		.email-link:hover,
+		button:hover {
+			background: color-mix(in oklab, var(--neon) 10%, transparent);
+		}
+
+		.intents a:hover {
+			border-color: color-mix(in oklab, var(--neon) 50%, transparent);
+		}
+	}
+
+	@media (min-width: 40rem) {
+		.contact {
+			padding-inline: var(--space-lg);
+		}
+
+		h1 {
+			font-size: 2.25rem;
+			line-height: 2.5rem;
+		}
+
+		form {
+			padding: var(--space-xl);
+		}
 	}
 </style>
