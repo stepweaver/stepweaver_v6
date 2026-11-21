@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import SignatureBackground from '$lib/components/effects/SignatureBackground.svelte';
 	import CommandPalette from '$lib/components/site/CommandPalette.svelte';
 	import Footer from '$lib/components/site/Footer.svelte';
 	import Navbar from '$lib/components/site/Navbar.svelte';
@@ -17,6 +18,7 @@
 </svelte:head>
 
 <div class="site-shell">
+	<SignatureBackground />
 	<a class="skip-link" href="#main">Skip to main content</a>
 	<Navbar />
 
@@ -30,6 +32,9 @@
 
 <style>
 	.site-shell {
+		position: relative;
+		z-index: 0;
+		isolation: isolate;
 		min-block-size: 100vh;
 		min-block-size: 100dvb;
 		background: var(--canvas);
