@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import ActionLink from '$lib/components/ui/ActionLink.svelte';
 	import { identity } from '$lib/data/identity';
 	import { resumeData } from '$lib/data/resume-data';
@@ -17,7 +18,7 @@
 		<header class="resume-header">
 			<div>
 				<p class="kicker">
-					{resumeData.identity.eyebrow}
+					<LambdaText text={resumeData.identity.eyebrow} />
 				</p>
 
 				<h1>

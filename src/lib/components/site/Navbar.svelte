@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import { requestPaletteToggle } from '$lib/components/site/palette-bus';
 	import ThemeControls from '$lib/components/site/ThemeControls.svelte';
 	import { identity } from '$lib/data/identity';
@@ -29,7 +30,7 @@
 
 <header class="site-header">
 	<div class="site-header-inner">
-		<a href="/" class="site-logo">// {identity.brand}</a>
+		<a href="/" class="site-logo">// <LambdaText text={identity.brand} /></a>
 
 		<nav class="desktop-nav" aria-label="Primary">
 			{#each PRIMARY_NAV as link (link.href)}

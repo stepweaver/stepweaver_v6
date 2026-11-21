@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import MatrixLink from '$lib/components/home/MatrixLink.svelte';
 	import { identity, OPERATOR_CHAPTER, OPERATOR_TAGS } from '$lib/data/identity';
 	import { currentTheme } from '$lib/theme/apply-theme';
 	import type { ThemeId } from '$lib/theme/themes';
@@ -99,8 +100,7 @@
 	</ul>
 
 	<div class="matrix">
-		<p class="label">Matrix link // status // unplugged</p>
-		<p class="meta">Link dormant. The animated matrix sequence is not ported.</p>
+		<MatrixLink />
 	</div>
 </section>
 
@@ -113,6 +113,10 @@
 		background: color-mix(in srgb, var(--panel) 88%, transparent);
 		border: 1px solid var(--border-muted);
 		color: var(--text);
+	}
+
+	.matrix {
+		min-inline-size: 0;
 	}
 
 	.corner {

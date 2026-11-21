@@ -102,6 +102,7 @@
 
 	.scheme-mark {
 		display: none;
+		text-transform: none;
 	}
 
 	.scheme-toggle:disabled,

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import OperatorCard from '$lib/components/home/OperatorCard.svelte';
+	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import ActionLink from '$lib/components/ui/ActionLink.svelte';
 	import {
 		AGENT_OWNERSHIP_NOTE,
@@ -21,7 +22,7 @@
 
 <section class="hero">
 	<div class="hero-copy">
-		<p class="eyebrow">{identity.positioning.eyebrow}</p>
+		<p class="eyebrow"><LambdaText text={identity.positioning.eyebrow} /></p>
 		<h1>
 			{identity.positioning.headline}
 			<span>{identity.positioning.headlineAccent}</span>
