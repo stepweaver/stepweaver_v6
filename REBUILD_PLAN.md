@@ -147,6 +147,10 @@ Improve the reading experience: readable width, clear headline/excerpt/date, app
 ### Milestone 3: Terminal and λlambda parity
 
 - Port headless terminal domain logic before presentation: parser, modes, history, navigation, résumé, Codex, weather, dice, blackjack, Zork and contact wizard.
+- Restore the inline prompt at the end of the desktop transcript. On phones, keep the same command input reachable above the software keyboard with a sticky prompt. Preserve the prompt draft, focus, and history across viewport changes. Follow new output while the reader is at the end of the transcript and preserve their scroll position when they read older output.
+- Restore the standalone `/dice-roller` and terminal `roll` command together. Share notation parsing, validation, and roll evaluation. Preserve v5 notation and advantage/disadvantage, then improve invalid-notation feedback, touch controls, and roll result breakdowns. Review v5's saved history format before changing persistence.
+- Preserve city lookup, optional geolocation, and forecast in `weather`. Keep city entry available after location denial, offer a choice for ambiguous results where supported, and label units and forecast times.
+- Reuse published content for Codex, an explicit route map for `cd`, and the existing validated contact delivery flow for the terminal contact wizard. Preserve blackjack and the existing text adventure flow, including save and restore where supported in v5.
 - Integrate client terminal with one shared chat backend. Preserve full website chat UX, project-context behavior only for approved public case studies.
 - Port security controls and integration tests; verify Cloudflare Worker compatibility under staging credentials.
 
