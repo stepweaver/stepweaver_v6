@@ -247,6 +247,27 @@ describe('homepage writing selection', () => {
 });
 
 describe('notion block rendering', () => {
+	it('starts article sections at h2 and preserves nested heading levels', () => {
+		const headingOne = { type: 'heading_1', heading_1: { rich_text: [{ plain_text: 'Part' }] } };
+		const headingTwo = { type: 'heading_2', heading_2: { rich_text: [{ plain_text: 'Section' }] } };
+		const headingThree = {
+			type: 'heading_3',
+			heading_3: { rich_text: [{ plain_text: 'Detail' }] }
+		};
+		const paragraph = { type: 'paragraph', paragraph: { rich_text: [{ plain_text: 'Body' }] } };
+
+		expect(renderBlocks([headingTwo, paragraph, headingThree])).toMatchObject([
+			{ type: 'heading', level: 2, text: 'Section', id: 'section' },
+			{ type: 'paragraph', spans: [{ text: 'Body' }] },
+			{ type: 'heading', level: 3, text: 'Detail' }
+		]);
+		expect(renderBlocks([headingOne, headingTwo, headingThree])).toMatchObject([
+			{ type: 'heading', level: 2 },
+			{ type: 'heading', level: 3 },
+			{ type: 'heading', level: 4 }
+		]);
+	});
+
 	it('renders the supported blocks and drops unsafe urls', () => {
 		const blocks = renderBlocks([
 			{ type: 'heading_2', heading_2: { rich_text: [{ plain_text: 'A heading' }] } },

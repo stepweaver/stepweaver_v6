@@ -81,8 +81,22 @@
 	h2,
 	h3,
 	h4 {
-		margin-block: 1.6rem 0.6rem;
-		line-height: 1.25;
+		margin-block: 1.75em 0.5em;
+		font-weight: 700;
+		line-height: 1.3;
+		overflow-wrap: anywhere;
+	}
+
+	h2 {
+		font-size: clamp(1.4rem, 1.15rem + 1vw, 1.85rem);
+	}
+
+	h3 {
+		font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+	}
+
+	h4 {
+		font-size: 1.125rem;
 	}
 
 	pre {
