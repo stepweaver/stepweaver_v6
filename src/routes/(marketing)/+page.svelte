@@ -134,7 +134,7 @@
 		<ActionLink href={identity.links.resume} label="Resume" />
 	</div>
 	<p class="quiet">
-		The terminal runs help, resume, and clear.
+		The terminal runs the résumé, published writing, navigation, and dice.
 		<a href="/terminal">Open the terminal</a>
 		·
 		<a href="/lab">Lab status</a>

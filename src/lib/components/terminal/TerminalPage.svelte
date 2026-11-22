@@ -4,8 +4,11 @@
 	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import { requestPaletteToggle } from '$lib/components/site/palette-bus';
 	import { identity } from '$lib/data/identity';
+	import type { CodexLibrary } from '$lib/terminal/codex';
 	import { SHELL_HOST, commandGuide, commandModules } from '$lib/terminal/commands';
 	import { consoleViewportFrame } from '$lib/terminal/viewport';
+
+	let { library }: { library: CodexLibrary } = $props();
 
 	const guide = commandGuide();
 	const modules = commandModules();
@@ -47,7 +50,7 @@
 	<title>Terminal | λstepweaver</title>
 	<meta
 		name="description"
-		content="A command console for the résumé. This shell runs help, resume, and clear."
+		content="A command console for this site: résumé, published writing, page navigation, and dice."
 	/>
 </svelte:head>
 
@@ -89,7 +92,10 @@
 			<section class="panel">
 				<p class="panel-label">SYS.BRIEF</p>
 				<p class="brief-title">Interactive terminal.</p>
-				<p class="brief-copy">A command-line interface for the résumé published on this site.</p>
+				<p class="brief-copy">
+					Résumé, published writing, site navigation, and dice. The same pages the rest of the site
+					uses.
+				</p>
 				<p class="brief-hint">Type <span>help</span> to get started.</p>
 			</section>
 
@@ -119,7 +125,7 @@
 
 			<ul class="notes">
 				<li>Browser-first interface</li>
-				<li>help, resume, and clear run in the page</li>
+				<li>Commands in the guide are the ones this shell runs</li>
 			</ul>
 		</aside>
 
@@ -133,7 +139,7 @@
 				<span class="window-path">~/terminal</span>
 				<span class="host-name">{SHELL_HOST}</span>
 			</div>
-			<Console />
+			<Console {library} />
 		</section>
 	</div>
 

@@ -1,21 +1,26 @@
 import { identity } from '$lib/data/identity';
 import { resumeData } from '$lib/data/resume-data';
+import {
+	evaluateKeep,
+	evaluateNotation,
+	formatRollResult,
+	rollDie,
+	type DieSource
+} from '$lib/dice/engine';
+import { codexOpening, type CodexLibrary } from './codex';
+import { destinationNames, resolveDestination } from './routes';
+import type { ShellEffect, TerminalLine } from './types';
 
 export const SHELL_HOST = 'user@stepweaver.dev';
 export const PROMPT = `${SHELL_HOST}:~$`;
 
-export type LineVariant =
-	'default' | 'prompt' | 'lambda' | 'success' | 'error' | 'warning' | 'dimmed';
-
-export type TerminalLine = {
-	content: string;
-	variant: LineVariant;
-	href?: string;
-};
+export type { LineVariant, ShellEffect, ShellMode, TerminalLine } from './types';
 
 export type CommandResult = {
 	lines: TerminalLine[];
 	clear?: boolean;
+	enter?: 'codex';
+	effect?: ShellEffect;
 };
 
 export type CommandGuideEntry = {
@@ -30,11 +35,17 @@ export type CommandModule = {
 	command: string;
 };
 
+export type DispatchContext = {
+	library?: CodexLibrary;
+	rollDie?: DieSource;
+	now?: () => string;
+};
+
 type CommandSpec = {
 	name: string;
 	usage: string;
 	summary: string;
-	run: (_args: string[]) => CommandResult;
+	run: (_args: string[], _context: DispatchContext) => CommandResult;
 };
 
 const MODULES: readonly CommandModule[] = [
@@ -43,10 +54,26 @@ const MODULES: readonly CommandModule[] = [
 		tag: 'MOD-01',
 		body: 'Experience, education, and skills from the résumé on this site, with the current PDF.',
 		command: 'resume'
+	},
+	{
+		title: 'Codex',
+		tag: 'MOD-02',
+		body: 'Browse the published writing on this site. ls lists posts, cat opens one, grep filters by tag.',
+		command: 'codex'
+	},
+	{
+		title: 'Dice',
+		tag: 'MOD-03',
+		body: 'Roll notation, advantage, and disadvantage. The same engine runs on /dice-roller.',
+		command: 'roll'
 	}
 ];
 
-function line(content: string, variant: LineVariant = 'default', href?: string): TerminalLine {
+function line(
+	content: string,
+	variant: TerminalLine['variant'] = 'default',
+	href?: string
+): TerminalLine {
 	return href ? { content, variant, href } : { content, variant };
 }
 
@@ -84,6 +111,73 @@ function resumeLines(): TerminalLine[] {
 	return lines;
 }
 
+function cdLines(args: string[]): CommandResult {
+	const dest = args[0]?.toLowerCase();
+	if (!dest) {
+		return {
+			lines: [
+				line('Usage: cd <place>', 'warning'),
+				...destinationNames().map((name) => {
+					const place = resolveDestination(name);
+					return line(`  ${name}: ${place?.href ?? ''}`, 'dimmed');
+				})
+			]
+		};
+	}
+	const target = resolveDestination(dest);
+	if (!target) {
+		return {
+			lines: [
+				line(`Unknown destination: ${dest}`, 'error'),
+				line(`Places: ${destinationNames().join(', ')}`, 'dimmed')
+			]
+		};
+	}
+	return {
+		lines: [
+			line(
+				target.external
+					? `Opening ${target.name}: ${target.href}`
+					: `Navigating to ${target.name}...`,
+				'success',
+				target.href
+			)
+		],
+		effect: { type: 'navigate', href: target.href, external: target.external }
+	};
+}
+
+function rollLines(args: string[], context: DispatchContext): CommandResult {
+	const raw = args.join(' ').trim();
+	if (!raw) {
+		return {
+			lines: [
+				line('Usage: roll <notation>. Examples: 3d6+2, 1d20, advantage, disadvantage.', 'warning')
+			]
+		};
+	}
+	const source = context.rollDie ?? ((sides: number) => rollDie(sides));
+	const timestamp = context.now?.() ?? new Date().toISOString();
+	const lower = raw.toLowerCase();
+	try {
+		const result =
+			lower === 'advantage' || lower === 'adv'
+				? evaluateKeep('advantage', source, timestamp)
+				: lower === 'disadvantage' || lower === 'dis'
+					? evaluateKeep('disadvantage', source, timestamp)
+					: evaluateNotation(raw, source, timestamp);
+		return {
+			lines: formatRollResult(result)
+				.split('\n')
+				.map((content, index) => line(content, index === 0 ? 'success' : 'lambda'))
+		};
+	} catch (error) {
+		return {
+			lines: [line(error instanceof Error ? error.message : 'Roll failed', 'error')]
+		};
+	}
+}
+
 const COMMANDS: readonly CommandSpec[] = [
 	{
 		name: 'help',
@@ -92,16 +186,45 @@ const COMMANDS: readonly CommandSpec[] = [
 		run: () => ({ lines: helpLines() })
 	},
 	{
+		name: 'clear',
+		usage: 'clear',
+		summary: 'Clear screen',
+		run: () => ({ lines: [], clear: true })
+	},
+	{
 		name: 'resume',
 		usage: 'resume',
 		summary: 'View experience',
 		run: () => ({ lines: resumeLines() })
 	},
 	{
-		name: 'clear',
-		usage: 'clear',
-		summary: 'Clear screen',
-		run: () => ({ lines: [], clear: true })
+		name: 'cd',
+		usage: 'cd <place>',
+		summary: 'Open a listed page',
+		run: (args) => cdLines(args)
+	},
+	{
+		name: 'codex',
+		usage: 'codex',
+		summary: 'Browse published writing',
+		run: (_args, context) => ({
+			enter: 'codex',
+			lines: codexOpening(context.library ?? { status: 'unconfigured', posts: [] })
+		})
+	},
+	{
+		name: 'roll',
+		usage: 'roll <notation>',
+		summary: 'Roll dice',
+		run: (args, context) => rollLines(args, context)
+	},
+	{
+		name: 'cancel',
+		usage: 'cancel',
+		summary: 'Leave the current mode',
+		run: () => ({
+			lines: [line('At the main shell, nothing to cancel.', 'dimmed')]
+		})
 	}
 ];
 
@@ -143,7 +266,7 @@ export function parseCommand(input: string): { name: string; args: string[] } | 
 	return { name, args: parts.slice(1) };
 }
 
-export function dispatchCommand(input: string): CommandResult {
+export function dispatchCommand(input: string, context: DispatchContext = {}): CommandResult {
 	const parsed = parseCommand(input);
 	if (!parsed) return { lines: [] };
 	const command = COMMANDS.find((entry) => entry.name === parsed.name);
@@ -155,5 +278,5 @@ export function dispatchCommand(input: string): CommandResult {
 			]
 		};
 	}
-	return command.run(parsed.args);
+	return command.run(parsed.args, context);
 }

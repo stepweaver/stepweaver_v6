@@ -112,7 +112,23 @@ Names only. Values are not stored in this repo.
 | Structured data      | Person and WebSite only                                                   |
 | Public API           | No project API                                                            |
 
-Enforced in `src/lib/projects/index.ts` and `src/lib/projects/publication.spec.ts`.
+Enforced in `src/lib/projects/publication.ts` and `src/lib/projects/publication.spec.ts`.
+
+## Milestone 3 checks
+
+Checked 2026-11-21 on the local dev server. Playwright used `WRITING_SOURCE=fixture`. Desktop is 1440×900. Narrow is a 390-wide viewport, not a physical phone.
+
+### Navigation, Codex, and dice
+
+`cd` prints the pages this app serves, including `/writing` and `/dice-roller`, and the GitHub profile `https://github.com/stepweaver`. `cd field-journal` is rejected because that route is not in this app. `cd codex` goes to `/writing`. `cd dice` goes to `/dice-roller`.
+
+Codex reads the published catalog. With the fixture source, `ls` shows Workflow handoffs and does not show the unpublished draft. `grep systems` links `/writing/workflow-handoffs`. `exit` returns to the shell. The unsent draft and Up/Down history still work after that.
+
+`roll 1d6` prints the die and a total. `roll 2d6foo` says the text is not dice notation. `roll advantage` reports both d20s and which one was kept. After the résumé, scrolling to the top and submitting another command leaves that scroll position. Focusing the prompt still brings it into view, because on a wide screen the prompt sits at the end of the transcript.
+
+`/dice-roller` uses that same engine. The d6 control is at least 44px tall at 1440 and 390. Invalid notation disables Roll and explains the problem. Advantage is saved under `diceRollerHistory` and is still there after reload. The page does not scroll sideways at either width.
+
+The existing terminal check still finds one circuit canvas, one λ canvas, and a lowercase λ in the terminal title. Weather, the contact wizard, λlambda, blackjack, and the adventure are not in this pass.
 
 ## Visual tokens
 

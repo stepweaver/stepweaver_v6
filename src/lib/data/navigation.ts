@@ -18,8 +18,13 @@ export const PALETTE_LINKS: NavLink[] = [
 	{ href: '/', label: 'Home' },
 	...PRIMARY_NAV,
 	{ href: '/work', label: 'Work', note: 'Curation page. No case studies are public.' },
-	{ href: '/terminal', label: 'Terminal', note: 'help, resume, and clear.' },
+	{ href: '/terminal', label: 'Terminal', note: 'help, resume, cd, codex, roll, and clear.' },
+	{
+		href: '/dice-roller',
+		label: 'Dice roller',
+		note: 'Shared notation with the terminal roll command.'
+	},
 	{ href: '/lab', label: 'Lab', note: 'Not rebuilt in this app.' },
-	{ href: '/play', label: 'Play', note: 'Index only. The tools are not connected.' },
+	{ href: '/play', label: 'Play', note: 'Dice roller is connected. The other tools are not.' },
 	{ href: '/privacy', label: 'Privacy' }
 ];

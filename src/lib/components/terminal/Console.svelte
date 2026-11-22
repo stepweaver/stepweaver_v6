@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { onMount, tick } from 'svelte';
 	import { PROMPT } from '$lib/terminal/commands';
+	import type { CodexLibrary } from '$lib/terminal/codex';
 	import {
 		createSession,
 		moveNewer,
@@ -9,13 +11,29 @@
 		submitLine
 	} from '$lib/terminal/session';
 
+	let { library }: { library: CodexLibrary } = $props();
+
 	let session = $state(createSession());
 	let inputEl = $state<HTMLInputElement>();
 	let screenEl = $state<HTMLDivElement>();
 
-	async function reveal() {
+	async function settleScroll(follow: boolean, anchor: number) {
 		await tick();
-		if (screenEl) screenEl.scrollTop = screenEl.scrollHeight;
+		const apply = () => {
+			const screen = screenEl;
+			if (!screen) return;
+			if (!follow) {
+				screen.scrollTop = anchor;
+				return;
+			}
+			if (screen.scrollTop + 2 < anchor) return;
+			screen.scrollTop = screen.scrollHeight;
+		};
+		apply();
+		requestAnimationFrame(() => {
+			apply();
+			requestAnimationFrame(apply);
+		});
 	}
 
 	function onInput(event: Event) {
@@ -38,9 +56,16 @@
 		if (event.key === 'Enter') {
 			event.preventDefault();
 			const screen = screenEl;
-			const follow = !screen || screen.scrollHeight - screen.clientHeight - screen.scrollTop <= 2;
-			session = submitLine(replaceInput(session, typed));
-			if (follow) void reveal();
+			const anchor = screen?.scrollTop ?? 0;
+			const follow = !screen || screen.scrollHeight - screen.clientHeight - anchor <= 2;
+			session = submitLine(replaceInput(session, typed), { library });
+			const effect = session.effect;
+			if (effect) session = { ...session, effect: null };
+			void settleScroll(follow, anchor);
+			if (effect?.type === 'navigate') {
+				if (effect.external) window.open(effect.href, '_blank', 'noopener,noreferrer');
+				else void goto(effect.href);
+			}
 			return;
 		}
 		if (event.key === 'ArrowUp') {

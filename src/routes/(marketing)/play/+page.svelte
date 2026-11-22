@@ -3,7 +3,7 @@
 		{
 			href: '/terminal',
 			label: 'Terminal',
-			description: 'Command console for the résumé: help, resume, and clear.'
+			description: 'Command console: résumé, writing, navigation, and dice.'
 		},
 		{
 			href: '/field-journal',
@@ -18,7 +18,7 @@
 		{
 			href: '/dice-roller',
 			label: 'Dice Roller',
-			description: 'RPG dice utility with local persistence.'
+			description: 'RPG dice with the same notation engine as the terminal, saved in this browser.'
 		},
 		{
 			href: '/yankee-samurai',
@@ -37,7 +37,7 @@
 	<title>Play | λstepweaver</title>
 	<meta
 		name="description"
-		content="Playground index. The linked tools are not connected in this build."
+		content="Playground index. The terminal and dice roller are available. The other tools are not connected."
 	/>
 </svelte:head>
 
@@ -48,8 +48,8 @@
 		<h1>Playground</h1>
 
 		<p class="lede">
-			This index is kept from the earlier shell. The terminal console is available. The other tools
-			are not connected in this build.
+			This index is kept from the earlier shell. The terminal and the dice roller are available. The
+			other tools are not connected in this build.
 		</p>
 	</header>
 

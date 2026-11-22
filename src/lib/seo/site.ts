@@ -5,7 +5,17 @@ export const SITE_ORIGIN = 'https://stepweaver.dev';
 
 /** Indexable routes. Holding pages and unimplemented tools stay out. */
 export function publicSitemapPaths(): string[] {
-	const paths = ['/', '/about', '/services', '/writing', '/writing/rss.xml', '/resume', '/contact'];
+	const paths = [
+		'/',
+		'/about',
+		'/services',
+		'/writing',
+		'/writing/rss.xml',
+		'/resume',
+		'/contact',
+		'/terminal',
+		'/dice-roller'
+	];
 	for (const project of getPublicWorkCards()) {
 		paths.push(`/work/${project.slug}`);
 	}
