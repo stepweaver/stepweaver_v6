@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import SignatureBackground from '$lib/components/effects/SignatureBackground.svelte';
 	import CommandPalette from '$lib/components/site/CommandPalette.svelte';
@@ -10,6 +11,31 @@
 	let { children } = $props();
 	const structured = $derived(page.data.structuredData);
 	const consoleRoute = $derived(page.url.pathname === '/terminal');
+
+	let main: HTMLElement | undefined;
+	let pageFade: Animation | undefined;
+
+	afterNavigate(({ from, to, type }) => {
+		pageFade?.cancel();
+
+		if (
+			!main ||
+			!from ||
+			!to ||
+			type === 'popstate' ||
+			from.url.pathname === to.url.pathname ||
+			from.route.id === '/(marketing)/terminal' ||
+			to.route.id === '/(marketing)/terminal' ||
+			window.matchMedia('(prefers-reduced-motion: reduce)').matches
+		) {
+			return;
+		}
+
+		pageFade = main.animate([{ opacity: 0.6 }, { opacity: 1 }], {
+			duration: 160,
+			easing: 'ease-out'
+		});
+	});
 </script>
 
 <svelte:head>
@@ -24,7 +50,7 @@
 	<a class="skip-link" href="#main">Skip to main content</a>
 	<Navbar />
 
-	<main id="main">
+	<main id="main" bind:this={main}>
 		{@render children()}
 	</main>
 
