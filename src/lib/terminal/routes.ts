@@ -23,7 +23,8 @@ export const SHELL_DESTINATIONS: readonly ShellDestination[] = [
 	{ name: 'github', href: identity.links.github, external: true }
 ];
 
-const ALIASES: Record<string, string> = {
+/** Same names the terminal `cd` command accepts. */
+export const DESTINATION_ALIASES: Readonly<Record<string, string>> = {
 	'~': 'home',
 	codex: 'writing',
 	dice: 'dice-roller',
@@ -35,6 +36,6 @@ export function destinationNames(): string[] {
 }
 
 export function resolveDestination(token: string): ShellDestination | null {
-	const key = ALIASES[token] ?? token;
+	const key = DESTINATION_ALIASES[token] ?? token;
 	return SHELL_DESTINATIONS.find((destination) => destination.name === key) ?? null;
 }

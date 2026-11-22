@@ -80,7 +80,7 @@
 	.article {
 		max-inline-size: 48rem;
 		margin-inline: auto;
-		padding: var(--space-3xl) var(--space-md) var(--space-2xl);
+		padding: var(--space-lg) var(--space-md) var(--space-2xl);
 	}
 
 	.back {
@@ -120,8 +120,9 @@
 	h1 {
 		margin-top: 0.75rem;
 		color: var(--text);
-		font-size: var(--font-size-3xl);
+		font-size: clamp(1.35rem, 8.25vw - 0.3rem, 3rem);
 		line-height: 1.25;
+		text-wrap: balance;
 	}
 
 	.dek,
@@ -161,11 +162,7 @@
 
 	@media (min-width: 40rem) {
 		.article {
-			padding-inline: var(--space-lg);
-		}
-
-		h1 {
-			font-size: 3rem;
+			padding: var(--space-3xl) var(--space-lg) var(--space-2xl);
 		}
 	}
 </style>

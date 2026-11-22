@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
+	import { registerSharedChatDraft } from '$lib/chat/shared-draft';
 	import LambdaText from '$lib/components/site/LambdaText.svelte';
 
 	type Turn = { role: 'user' | 'assistant'; content: string; error?: boolean };
@@ -9,9 +10,17 @@
 	let turns = $state<Turn[]>([]);
 	let sending = $state(false);
 	let ready = $state(false);
+	let field = $state<HTMLInputElement | null>(null);
+
+	function showDraft(next: string) {
+		open = true;
+		draft = next;
+		void tick().then(() => field?.focus());
+	}
 
 	onMount(() => {
 		ready = true;
+		return registerSharedChatDraft(showDraft);
 	});
 
 	async function send() {
@@ -79,14 +88,19 @@
 		>
 			<label>
 				Message
-				<input bind:value={draft} autocomplete="off" maxlength="2000" />
+				<input bind:this={field} bind:value={draft} autocomplete="off" maxlength="2000" />
 			</label>
-			<button type="submit" disabled={sending || !draft.trim()}>{sending ? 'Sending' : 'Send'}</button>
+			<button type="submit" disabled={sending || !draft.trim()}
+				>{sending ? 'Sending' : 'Send'}</button
+			>
 		</form>
 	</section>
 {:else}
-	<button type="button" class="open" data-ready={ready ? 'true' : 'false'} onclick={() => (open = true)}
-		>Open chat</button
+	<button
+		type="button"
+		class="open"
+		data-ready={ready ? 'true' : 'false'}
+		onclick={() => (open = true)}>Open chat</button
 	>
 {/if}
 

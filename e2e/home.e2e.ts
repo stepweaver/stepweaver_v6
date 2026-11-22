@@ -22,8 +22,8 @@ test('mobile home leads with the offer and keeps one header row', async ({ page 
 			() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1
 		);
 		expect(overflow).toBe(true);
-		await expect(page.getByRole('button', { name: 'Open command palette' })).toBeVisible();
-		const trigger = await page.getByRole('button', { name: 'Open command palette' }).boundingBox();
+		await expect(page.getByRole('button', { name: 'Search' })).toBeVisible();
+		const trigger = await page.getByRole('button', { name: 'Search' }).boundingBox();
 		const separated =
 			!trigger ||
 			!card ||
@@ -60,12 +60,12 @@ test('mobile home leads with the offer and keeps one header row', async ({ page 
 	await expect(page.locator('html')).toHaveAttribute('data-theme', 'skynet');
 	await expect(page.locator('.portrait-bay img').nth(1)).toHaveCSS('opacity', '1');
 
-	await page.getByRole('button', { name: 'Open command palette' }).click();
-	await expect(page.getByRole('dialog', { name: 'Navigation' })).toBeVisible();
+	await page.getByRole('button', { name: 'Search' }).click();
+	await expect(page.getByRole('dialog', { name: 'Command palette' })).toBeVisible();
 	await page.keyboard.press('Escape');
-	await expect(page.getByRole('dialog', { name: 'Navigation' })).toBeHidden();
+	await expect(page.getByRole('dialog', { name: 'Command palette' })).toBeHidden();
 	await page.keyboard.press('Control+k');
-	await expect(page.getByRole('dialog', { name: 'Navigation' })).toBeVisible();
+	await expect(page.getByRole('dialog', { name: 'Command palette' })).toBeVisible();
 });
 
 test('desktop home keeps the operator card on the left', async ({ page }) => {
@@ -79,7 +79,7 @@ test('desktop home keeps the operator card on the left', async ({ page }) => {
 	await expect(page.getByRole('button', { name: 'Switch to light theme' })).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Open navigation menu' })).toBeHidden();
 	await expect(page.getByRole('button', { name: 'Ctrl+K' })).toBeVisible();
-	await expect(page.getByRole('button', { name: 'Open command palette' })).toBeHidden();
+	await expect(page.getByRole('button', { name: 'Search' })).toBeHidden();
 
 	const overflow = await page.evaluate(
 		() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1
@@ -169,6 +169,43 @@ test('contact rejects invalid and spam submissions and reports delivery honestly
 	await prepare('Please fail [[force-fail]]');
 	await expect(page.getByRole('alert')).toContainText('Nothing was delivered');
 	await expect(page.getByText('Your message was sent')).toHaveCount(0);
+});
+
+test('home title keeps each phrase to two lines on a phone', async ({ page }) => {
+	for (const width of [320, 390, 464]) {
+		await page.setViewportSize({ width, height: 800 });
+		await page.goto('/');
+		await page.evaluate(() => document.fonts.ready);
+		const lines = await page.locator('h1 .phrase').evaluateAll((nodes) =>
+			nodes.map((node) => {
+				const style = getComputedStyle(node);
+				const line = parseFloat(style.lineHeight);
+				return Math.round(node.getBoundingClientRect().height / line);
+			})
+		);
+		expect(lines).toHaveLength(2);
+		for (const count of lines) {
+			expect(count).toBeGreaterThanOrEqual(1);
+			expect(count).toBeLessThanOrEqual(2);
+		}
+		const overflow = await page.evaluate(
+			() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1
+		);
+		expect(overflow).toBe(true);
+	}
+
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto('/');
+	await page.evaluate(() => document.fonts.ready);
+	const type = await page.evaluate(() => ({
+		title: parseFloat(getComputedStyle(document.querySelector('h1')!).fontSize),
+		body: parseFloat(getComputedStyle(document.body).fontSize),
+		text: document.querySelector('h1')?.textContent ?? ''
+	}));
+	expect(Math.round(type.title)).toBe(60);
+	expect(Math.round(type.body)).toBe(16);
+	expect(type.text).toContain('Business Systems Developer');
+	expect(type.text).toContain('Systems Integration Consultant');
 });
 
 test('work explains that no case studies are public', async ({ page }) => {

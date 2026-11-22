@@ -24,8 +24,8 @@
 	<div class="hero-copy">
 		<p class="eyebrow"><LambdaText text={identity.positioning.eyebrow} /></p>
 		<h1>
-			{identity.positioning.headline}
-			<span>{identity.positioning.headlineAccent}</span>
+			<span class="phrase">{identity.positioning.headline}</span>
+			<span class="phrase accent">{identity.positioning.headlineAccent}</span>
 		</h1>
 		<p class="lede">{identity.positioning.lede}</p>
 		<p class="support">{identity.supportingLine}</p>
@@ -156,14 +156,19 @@
 		padding-block: var(--space-md) var(--space-xl);
 	}
 
-	.hero-copy span {
-		display: block;
-		color: var(--neon);
+	h1 {
+		font-size: clamp(1.15rem, 7.05vw - 0.25rem, 2rem);
+		line-height: var(--line-height-tight);
 	}
 
-	h1 {
-		font-size: clamp(2.25rem, 1.4rem + 4vw, 3.75rem);
-		line-height: var(--line-height-tight);
+	.phrase {
+		display: block;
+		max-inline-size: 100%;
+		text-wrap: balance;
+	}
+
+	.accent {
+		color: var(--neon);
 	}
 
 	h2 {
@@ -241,6 +246,10 @@
 	}
 
 	@media (width >= 64rem) {
+		h1 {
+			font-size: clamp(2.25rem, 1.4rem + 4vw, 3.75rem);
+		}
+
 		.hero {
 			grid-template-columns: minmax(22rem, 32rem) minmax(0, 1fr);
 			align-items: start;

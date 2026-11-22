@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import DieIcon from '$lib/components/dice/DieIcon.svelte';
 	import {
 		DICE_SIDES,
 		MAX_DICE_COUNT,
@@ -8,6 +9,7 @@
 		evaluateKeep,
 		evaluateNotation,
 		formatRollResult,
+		parseDiceNotation,
 		rerollWithHeldDice,
 		notationError,
 		notationFromPool,
@@ -31,6 +33,7 @@
 	let history = $state<RollResult[]>([]);
 	let held = $state<string[]>([]);
 	let rolling = $state(false);
+	let tumble = $state<{ sides: number; delay: number }[]>([]);
 	let notice = $state('');
 	let loaded = $state(false);
 	let historyOpen = $state(true);
@@ -91,12 +94,30 @@
 		});
 	}
 
-	async function pause() {
-		const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		if (reduce) return;
+	const ROLL_MOTION_MS = 1200;
+
+	function motionReduced() {
+		return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	}
+
+	function tumbleIcons(groups: { count: number; sides: number }[]) {
+		const icons: { sides: number; delay: number }[] = [];
+		groups.forEach((group, groupIndex) => {
+			const shown = Math.min(group.count, 6);
+			for (let index = 0; index < shown; index += 1) {
+				icons.push({ sides: group.sides, delay: (groupIndex * group.count + index) * 80 });
+			}
+		});
+		return icons;
+	}
+
+	async function pause(icons: { sides: number; delay: number }[]) {
+		if (motionReduced()) return;
+		tumble = icons;
 		rolling = true;
-		await new Promise((resolve) => setTimeout(resolve, 280));
+		await new Promise((resolve) => setTimeout(resolve, ROLL_MOTION_MS));
 		rolling = false;
+		tumble = [];
 	}
 
 	function store(result: RollResult) {
@@ -112,7 +133,13 @@
 	async function rollPool() {
 		if (!canRoll) return;
 		const expression = usingTyped ? typed : poolNotation;
-		await pause();
+		let icons: { sides: number; delay: number }[];
+		try {
+			icons = tumbleIcons(parseDiceNotation(expression).groups);
+		} catch {
+			icons = [];
+		}
+		await pause(icons);
 		try {
 			store(evaluateNotation(expression));
 		} catch (error) {
@@ -122,7 +149,10 @@
 
 	async function rollKeep(kind: 'advantage' | 'disadvantage') {
 		if (rolling) return;
-		await pause();
+		await pause([
+			{ sides: 20, delay: 0 },
+			{ sides: 20, delay: 80 }
+		]);
 		store(evaluateKeep(kind));
 	}
 
@@ -137,7 +167,9 @@
 			notice = 'Every die is held. Release one to reroll it.';
 			return;
 		}
-		await pause();
+		await pause(
+			tumbleIcons(current.rolls.map((group) => ({ count: group.count, sides: group.sides })))
+		);
 		const next = rerollWithHeldDice(current, kept);
 		next.comment = current.comment;
 		current = next;
@@ -239,7 +271,15 @@
 			<p class="label">Add dice</p>
 			<div class="dice-row">
 				{#each DICE_SIDES as sides (sides)}
-					<button type="button" class="die-add" onclick={() => addDie(sides)}>d{sides}</button>
+					<button type="button" class="die-add die-d{sides}" onclick={() => addDie(sides)}>
+						<span class="die-mark">
+							<DieIcon {sides} />
+							{#if sides === 100}
+								<span class="percent" aria-hidden="true">%</span>
+							{/if}
+						</span>
+						<span class="die-label">d{sides}</span>
+					</button>
 				{/each}
 			</div>
 
@@ -249,8 +289,11 @@
 			{:else}
 				<ul class="pool">
 					{#each pool as die (die.sides)}
-						<li>
-							<span class="die-name">d{die.sides}</span>
+						<li class="die-d{die.sides}">
+							<span class="pool-die">
+								<DieIcon sides={die.sides} size={28} />
+								<span class="die-name">d{die.sides}</span>
+							</span>
 							<button
 								type="button"
 								class="step"
@@ -346,7 +389,18 @@
 
 		<section class="panel" aria-label="Roll result">
 			<p class="label">Roll session</p>
-			{#if current}
+			{#if rolling}
+				<div class="tumble" aria-live="polite">
+					<div class="tumble-row">
+						{#each tumble as die, index (`${die.sides}-${index}`)}
+							<span class="tumble-die die-d{die.sides}" style:animation-delay="{die.delay}ms">
+								<DieIcon sides={die.sides} size={34} />
+							</span>
+						{/each}
+					</div>
+					<p class="tumble-status">Roll in progress</p>
+				</div>
+			{:else if current}
 				<p class="session-line">
 					<span>Roll</span>
 					{current.notation}
@@ -361,7 +415,16 @@
 						{sessionClock(current.timestamp)}
 					</p>
 				{/if}
-				<pre>{formatRollResult(current)}</pre>
+				<div class="readout">
+					{#each formatRollResult(current).split('\n') as line, index (index)}
+						<p
+							class:readout-total={line.startsWith('Total:')}
+							class:readout-die={line.trimStart().startsWith('die ') || line.includes('d20 ')}
+						>
+							{line}
+						</p>
+					{/each}
+				</div>
 				{#if canHold}
 					<p class="empty">Hold a die to keep it, then re-roll the rest.</p>
 					<div class="faces" aria-label="Individual dice">
@@ -530,13 +593,153 @@
 		font-size: var(--font-size-xs);
 	}
 
-	.dice-row,
 	.actions,
 	.face-row,
-	.history-bar {
+	.history-bar,
+	.tumble-row {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.45rem;
+	}
+
+	.dice-row {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 0.35rem;
+	}
+
+	.die-add {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 0.15rem;
+		min-inline-size: 0;
+		padding: 0.35rem 0.2rem;
+	}
+
+	.die-mark {
+		position: relative;
+		display: block;
+	}
+
+	.percent {
+		position: absolute;
+		inset-inline-end: -0.35rem;
+		inset-block-end: -0.2rem;
+		border: 1px solid var(--neon);
+		background: var(--panel);
+		color: var(--neon);
+		font-family: var(--font-family-ibm);
+		font-size: 0.75rem;
+		line-height: 1;
+		padding: 0.05rem 0.2rem;
+	}
+
+	.die-label,
+	.die-name {
+		font-family: var(--font-family-ocr);
+		font-size: var(--font-size-xs);
+		letter-spacing: 0.08em;
+	}
+
+	.pool-die {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+	}
+
+	.die-d4 {
+		color: var(--accent);
+	}
+
+	.die-d6 {
+		color: var(--neon);
+	}
+
+	.die-d8 {
+		color: var(--warning);
+	}
+
+	.die-d10 {
+		color: color-mix(in oklab, var(--accent) 50%, var(--text) 50%);
+	}
+
+	.die-d12 {
+		color: color-mix(in oklab, var(--danger) 55%, var(--accent) 45%);
+	}
+
+	.die-d20 {
+		color: color-mix(in oklab, var(--danger) 72%, var(--warning) 28%);
+	}
+
+	.die-d100 {
+		color: color-mix(in oklab, var(--accent) 32%, var(--danger) 68%);
+	}
+
+	.tumble {
+		min-block-size: 6.5rem;
+	}
+
+	.tumble-die {
+		display: inline-flex;
+		animation: dice-roll 0.8s ease-in-out infinite;
+	}
+
+	.tumble-status {
+		margin-block-start: 0.45rem;
+		color: var(--neon);
+		font-family: var(--font-family-ocr);
+		font-size: var(--font-size-xs);
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+	}
+
+	.readout p {
+		margin: 0;
+		font-family: var(--font-family-ibm);
+		line-height: 1.45;
+		white-space: pre-wrap;
+	}
+
+	.readout-die {
+		color: var(--text-secondary);
+	}
+
+	.readout-total {
+		margin-block-start: 0.35rem;
+		color: var(--text);
+		font-size: var(--font-size-xl);
+	}
+
+	@keyframes dice-roll {
+		0% {
+			transform: rotate(0deg) scale(1);
+		}
+		25% {
+			transform: rotate(90deg) scale(1.1);
+		}
+		50% {
+			transform: rotate(180deg) scale(0.9);
+		}
+		75% {
+			transform: rotate(270deg) scale(1.1);
+		}
+		100% {
+			transform: rotate(360deg) scale(1);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.tumble-die {
+			animation: none;
+		}
+	}
+
+	@media (width >= 40rem) {
+		.dice-row {
+			grid-template-columns: repeat(7, minmax(0, 1fr));
+		}
 	}
 
 	button,

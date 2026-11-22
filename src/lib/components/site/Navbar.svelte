@@ -41,14 +41,7 @@
 		</nav>
 
 		<div class="header-tools">
-			<button
-				type="button"
-				class="palette-link"
-				aria-label="Open command palette"
-				onclick={requestPaletteToggle}
-			>
-				Ctrl+K
-			</button>
+			<button type="button" class="palette-link" onclick={requestPaletteToggle}>Search</button>
 			<ThemeControls />
 
 			<button
