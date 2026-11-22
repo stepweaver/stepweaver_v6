@@ -4,13 +4,15 @@ import {
 	filterByTag,
 	findByPageId,
 	findBySlug,
+	homeWriting,
+	homeWritingView,
 	paginateWriting,
 	toWritingEntries,
 	type RawWritingPage
 } from './entries';
 import { PUBLISHED_PAGE_SLUGS } from './slug-registry';
 import { slugifyTitle } from './slug';
-import { safeHref, safeImageSrc } from './rich-text';
+import { coverImageSrc, safeHref, safeImageSrc } from './rich-text';
 import { renderWritingRss } from './rss';
 
 describe('published url registry', () => {
@@ -124,6 +126,124 @@ describe('writing entries', () => {
 		expect(page.items).toHaveLength(1);
 		expect(filterByTag(posts, '#Systems').map((post) => post.slug)).toEqual(['authored-slug']);
 	});
+
+	it('prefers a tl;dr, then description, then excerpt, and still lists a bare published note', () => {
+		const posts = toWritingEntries([
+			{
+				id: 'with-tldr',
+				title: 'With a summary',
+				status: 'Published',
+				excerpt: 'Excerpt body',
+				description: 'Longer description',
+				tldr: '  Short version  ',
+				featured: false,
+				cover: 'http://insecure.example/a.png',
+				tags: [],
+				slugProperty: '',
+				created: '2026-04-01',
+				edited: '2026-04-01'
+			},
+			{
+				id: 'description-only',
+				title: 'Described',
+				status: 'Published',
+				excerpt: 'Excerpt body',
+				description: 'Longer description',
+				tags: [],
+				slugProperty: '',
+				created: '2026-03-01',
+				edited: '2026-03-01'
+			},
+			{
+				id: 'bare-note',
+				title: 'Bare note',
+				status: 'Published',
+				excerpt: '',
+				tags: [],
+				slugProperty: '',
+				created: '2026-02-01',
+				edited: ''
+			},
+			{
+				id: 'featured-draft',
+				title: 'Hidden feature',
+				status: 'Draft',
+				excerpt: 'Nope',
+				featured: true,
+				tags: [],
+				slugProperty: '',
+				created: '2026-08-01',
+				edited: '2026-08-01'
+			}
+		]);
+		expect(posts.map((post) => post.slug)).toEqual(['with-a-summary', 'described', 'bare-note']);
+		expect(posts[0]).toMatchObject({
+			summary: 'Short version',
+			excerpt: 'Excerpt body',
+			cover: '',
+			featured: false
+		});
+		expect(posts[1]?.summary).toBe('Longer description');
+		expect(posts[2]).toMatchObject({ summary: '', cover: '', featured: false, title: 'Bare note' });
+	});
+});
+
+describe('homepage writing selection', () => {
+	function page(
+		partial: Partial<RawWritingPage> & Pick<RawWritingPage, 'id' | 'title' | 'created'>
+	): RawWritingPage {
+		return {
+			status: 'Published',
+			excerpt: '',
+			tags: [],
+			slugProperty: '',
+			edited: partial.created,
+			...partial
+		};
+	}
+
+	it('uses the newest featured note, then the newest note, and does not repeat the lead', () => {
+		const posts = toWritingEntries([
+			page({ id: 'new', title: 'Newest', created: '2026-09-01', excerpt: 'New' }),
+			page({
+				id: 'feature-new',
+				title: 'Featured newer',
+				created: '2026-06-02',
+				featured: true,
+				excerpt: 'Feature'
+			}),
+			page({
+				id: 'feature-old',
+				title: 'Featured older',
+				created: '2026-01-01',
+				featured: true
+			}),
+			page({ id: 'mid', title: 'Middle', created: '2026-05-01' }),
+			page({ id: 'early', title: 'Early', created: '2026-04-01' }),
+			page({ id: 'tied-b', title: 'Zulu', created: '2026-03-01' }),
+			page({ id: 'tied-a', title: 'Alpha', created: '2026-03-01' })
+		]);
+		const home = homeWriting(posts);
+		expect(home.lead).toMatchObject({ slug: 'featured-newer', title: 'Featured newer' });
+		expect(home.recent.map((post) => post.slug)).toEqual(['newest', 'middle', 'early']);
+		expect(home.recent.some((post) => post.slug === home.lead?.slug)).toBe(false);
+
+		const fallback = homeWriting(posts.filter((post) => !post.featured));
+		expect(fallback.lead?.slug).toBe('newest');
+		expect(fallback.recent.map((post) => post.slug)).toEqual(['middle', 'early', 'alpha']);
+		expect(homeWriting([])).toEqual({ status: 'ok', lead: null, recent: [] });
+		expect(homeWritingView('unconfigured', posts)).toEqual({
+			status: 'unconfigured',
+			lead: null,
+			recent: []
+		});
+		expect(homeWritingView('unavailable', posts)).toEqual({
+			status: 'unavailable',
+			lead: null,
+			recent: []
+		});
+		expect(homeWritingView('ok', []).lead).toBeNull();
+	});
 });
 
 describe('notion block rendering', () => {
@@ -182,6 +302,10 @@ describe('notion block rendering', () => {
 		expect(list.type === 'list' && list.items).toHaveLength(2);
 		expect(safeHref('javascript:alert(1)')).toBeUndefined();
 		expect(safeImageSrc('http://example.com/a.png')).toBeUndefined();
+		expect(coverImageSrc('https://cdn.example.com/a.png')).toBe('https://cdn.example.com/a.png');
+		expect(coverImageSrc('/images/lambda_stepweaver.png')).toBe('/images/lambda_stepweaver.png');
+		expect(coverImageSrc('/images/../secret.png')).toBeUndefined();
+		expect(coverImageSrc('http://example.com/a.png')).toBeUndefined();
 	});
 });
 
@@ -196,6 +320,9 @@ describe('writing rss', () => {
 				date: '2026-09-01',
 				updated: '2026-09-01',
 				excerpt: 'A note',
+				summary: 'A note',
+				featured: false,
+				cover: '',
 				tags: []
 			}
 		]);

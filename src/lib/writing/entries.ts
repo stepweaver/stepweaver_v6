@@ -1,16 +1,34 @@
+import { coverImageSrc } from './rich-text';
 import { registrySlug } from './slug-registry';
 import { normalizeTag, slugifyTitle } from './slug';
-import type { WritingEntry } from './types';
+import type { WritingEntry, WritingSourceState } from './types';
 
 export type RawWritingPage = {
 	id: string;
 	title: string;
 	status: string | null;
 	excerpt: string;
+	description?: string;
+	tldr?: string;
+	featured?: boolean;
+	cover?: string;
 	tags: string[];
 	slugProperty: string;
 	created: string;
 	edited: string;
+};
+
+export type HomeWritingCard = {
+	slug: string;
+	title: string;
+	summary: string;
+	cover: string;
+};
+
+export type HomeWritingView = {
+	status: WritingSourceState;
+	lead: HomeWritingCard | null;
+	recent: HomeWritingCard[];
 };
 
 const PUBLISHED = 'published';
@@ -56,6 +74,9 @@ export function toWritingEntries(
 		const legacySlugs = [titleSlug, authoredSlug].filter(
 			(slug, index, all) => Boolean(slug) && slug !== canonical && all.indexOf(slug) === index
 		);
+		const excerpt = page.excerpt.trim();
+		const description = (page.description ?? '').trim();
+		const tldr = (page.tldr ?? '').trim();
 		return {
 			id: page.id,
 			title: page.title.trim() || 'Untitled',
@@ -63,7 +84,10 @@ export function toWritingEntries(
 			legacySlugs,
 			date: calendarDate(page.created),
 			updated: calendarDate(page.edited) || calendarDate(page.created),
-			excerpt: page.excerpt.trim(),
+			excerpt,
+			summary: tldr || description || excerpt,
+			featured: page.featured === true,
+			cover: coverImageSrc(page.cover) ?? '',
 			tags: page.tags.map((tag) => tag.trim()).filter(Boolean)
 		};
 	});
@@ -125,4 +149,40 @@ export function paginateWriting(posts: WritingEntry[], page: number) {
 
 export function latestWriting(posts: WritingEntry[], count = 3): WritingEntry[] {
 	return posts.slice(0, count);
+}
+
+function byPublishDate(a: WritingEntry, b: WritingEntry): number {
+	const byDate = b.date.localeCompare(a.date);
+	if (byDate !== 0) return byDate;
+	return a.title.localeCompare(b.title);
+}
+
+function homeCard(post: WritingEntry): HomeWritingCard {
+	return {
+		slug: post.slug,
+		title: post.title,
+		summary: post.summary,
+		cover: post.cover
+	};
+}
+
+/** Newest featured published note, else the newest published note. Recent posts exclude that lead. */
+export function homeWriting(posts: WritingEntry[], recentCount = 3): HomeWritingView {
+	const sorted = [...posts].sort(byPublishDate);
+	const featured = sorted.filter((post) => post.featured);
+	const lead = featured[0] ?? sorted[0] ?? null;
+	const recent = lead ? sorted.filter((post) => post.id !== lead.id).slice(0, recentCount) : [];
+	return {
+		status: 'ok',
+		lead: lead ? homeCard(lead) : null,
+		recent: recent.map(homeCard)
+	};
+}
+
+export function homeWritingView(
+	status: WritingSourceState,
+	posts: WritingEntry[]
+): HomeWritingView {
+	if (status !== 'ok') return { status, lead: null, recent: [] };
+	return homeWriting(posts);
 }

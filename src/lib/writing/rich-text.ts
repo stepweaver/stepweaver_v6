@@ -36,6 +36,15 @@ export function safeImageSrc(value: string | null | undefined): string | undefin
 	return undefined;
 }
 
+/** HTTPS covers use the article image rule. Site portraits stay on local /images paths. */
+export function coverImageSrc(value: string | null | undefined): string | undefined {
+	const remote = safeImageSrc(value);
+	if (remote) return remote;
+	const trimmed = value?.trim() ?? '';
+	if (/^\/images\/[A-Za-z0-9._-]+$/.test(trimmed)) return trimmed;
+	return undefined;
+}
+
 export function richSpans(parts: NotionRichText[] | undefined): RichSpan[] {
 	if (!parts?.length) return [];
 	return parts

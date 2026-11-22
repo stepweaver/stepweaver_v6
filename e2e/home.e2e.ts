@@ -84,6 +84,84 @@ test('desktop home keeps the operator card on the left', async ({ page }) => {
 	expect(overflow).toBe(true);
 });
 
+test('home writing shows one lead story and three recent notes', async ({ page }) => {
+	async function layout() {
+		return page.evaluate(() => {
+			const section = document.querySelector('.writing-home');
+			const lead = section?.querySelector('.lead');
+			const cards = [...(section?.querySelectorAll('.recent a') ?? [])].map((node) =>
+				node.getBoundingClientRect()
+			);
+			const leadBox = lead?.getBoundingClientRect();
+			const photo = section?.querySelector('.lead .photo')?.getBoundingClientRect();
+			const leadTitle = section?.querySelector('.lead h2');
+			const recentTitle = section?.querySelector('.recent h3');
+			return {
+				lead: leadBox
+					? { x: leadBox.x, y: leadBox.y, width: leadBox.width, height: leadBox.height }
+					: null,
+				photo: photo ? { width: photo.width, height: photo.height } : null,
+				cards: cards.map((box) => ({ x: box.x, y: box.y, width: box.width })),
+				leadFont: leadTitle ? parseFloat(getComputedStyle(leadTitle).fontSize) : 0,
+				recentFont: recentTitle ? parseFloat(getComputedStyle(recentTitle).fontSize) : 0,
+				overflow: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1
+			};
+		});
+	}
+
+	for (const width of [390, 464]) {
+		await page.setViewportSize({ width, height: 900 });
+		await page.goto('/');
+		const writing = page.getByRole('region', { name: 'Writing' });
+		await expect(writing.getByRole('link', { name: 'View all writing' })).toHaveAttribute(
+			'href',
+			'/writing'
+		);
+		const measured = await layout();
+		expect(measured.overflow).toBe(true);
+		expect(measured.lead?.y ?? 0).toBeLessThan(measured.cards[0]?.y ?? 0);
+		expect(measured.cards).toHaveLength(3);
+		for (let index = 1; index < measured.cards.length; index += 1) {
+			expect(measured.cards[index].y).toBeGreaterThan(measured.cards[index - 1].y + 8);
+			expect(Math.abs(measured.cards[index].x - measured.cards[0].x)).toBeLessThan(2);
+		}
+		expect(measured.photo?.height ?? 0).toBeGreaterThan(80);
+		expect(measured.leadFont).toBeGreaterThan(measured.recentFont);
+	}
+
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto('/');
+	const writing = page.getByRole('region', { name: 'Writing' });
+	const lead = writing.locator('.lead');
+	await expect(lead).toHaveAttribute('href', '/writing/integration-boundaries');
+	await expect(lead.getByRole('heading', { level: 2 })).toHaveText('Integration boundaries');
+	await expect(lead).toContainText('A boundary is the part of the system you can name.');
+	await expect(lead).not.toContainText('The line between the tools');
+	await expect(lead.locator('img')).toHaveAttribute('src', '/images/lambda_stepweaver.png');
+	await expect(writing.getByRole('link', { name: /Workflow handoffs/ })).toHaveAttribute(
+		'href',
+		'/writing/workflow-handoffs'
+	);
+	await expect(writing.getByRole('link', { name: /Integration boundaries/ })).toHaveCount(1);
+	await expect(writing.getByText('Unpublished operations note')).toHaveCount(0);
+	const hero = page.locator('.hero-copy');
+	await expect(hero.getByRole('link', { name: 'Open Terminal' })).toBeVisible();
+	await expect(hero.getByRole('link', { name: 'Résumé' })).toBeVisible();
+	await expect(page.getByText('MATRIX LINK')).toBeVisible();
+	await expect(page.getByRole('region', { name: 'Operator profile' })).toBeVisible();
+
+	const desktop = await layout();
+	expect(desktop.overflow).toBe(true);
+	expect(desktop.cards).toHaveLength(3);
+	expect(desktop.lead?.y ?? 0).toBeLessThan(desktop.cards[0]?.y ?? 0);
+	expect(Math.abs(desktop.cards[0].y - desktop.cards[1].y)).toBeLessThan(4);
+	expect(Math.abs(desktop.cards[1].y - desktop.cards[2].y)).toBeLessThan(4);
+	expect(desktop.cards[1].x).toBeGreaterThan(desktop.cards[0].x + 40);
+	expect(desktop.cards[2].x).toBeGreaterThan(desktop.cards[1].x + 40);
+	expect(desktop.photo?.width ?? 0).toBeGreaterThan(desktop.cards[0].width);
+	expect(desktop.leadFont).toBeGreaterThan(desktop.recentFont);
+});
+
 test('home states the consulting identity and hides the project catalog', async ({ page }) => {
 	await page.goto('/');
 

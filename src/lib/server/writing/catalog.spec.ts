@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { clearWritingCache, getArticleBlocks, getWritingCatalog } from './catalog';
-import { fetchPublishedPages } from './notion';
+import { fetchPublishedPages, pageToRaw } from './notion';
 import { FIXTURE_DRAFT_TITLE } from '$lib/writing/fixtures';
 
 describe('writing catalog', () => {
@@ -141,6 +141,69 @@ describe('writing catalog', () => {
 			'db'
 		);
 		expect(pages.map((page) => page.title)).toEqual(['Visible']);
+	});
+
+	it('reads optional editorial fields and still maps a note that lacks them', () => {
+		const marked = pageToRaw({
+			id: 'page-marked',
+			created_time: '2026-01-02T00:00:00.000Z',
+			last_edited_time: '2026-01-03T00:00:00.000Z',
+			cover: { type: 'external', external: { url: 'http://insecure.example/cover.jpg' } },
+			properties: {
+				Title: { type: 'title', title: [{ plain_text: 'Marked' }] },
+				Status: { type: 'select', select: { name: 'Published' } },
+				Excerpt: { type: 'rich_text', rich_text: [{ plain_text: 'Excerpt text' }] },
+				Description: { type: 'rich_text', rich_text: [{ plain_text: 'Description text' }] },
+				'TL;DR': { type: 'rich_text', rich_text: [{ plain_text: 'Short version' }] },
+				Featured: { type: 'checkbox', checkbox: true },
+				Cover: {
+					type: 'files',
+					files: [{ type: 'file', file: { url: 'https://cdn.example.com/cover.jpg' } }]
+				},
+				Date: { type: 'created_time' }
+			}
+		});
+		expect(marked).toMatchObject({
+			title: 'Marked',
+			status: 'Published',
+			excerpt: 'Excerpt text',
+			description: 'Description text',
+			tldr: 'Short version',
+			featured: true,
+			cover: 'https://cdn.example.com/cover.jpg',
+			created: '2026-01-02T00:00:00.000Z'
+		});
+
+		const bare = pageToRaw({
+			id: 'page-bare',
+			created_time: '2024-05-01T12:00:00.000Z',
+			properties: {
+				Name: { type: 'title', title: [{ plain_text: 'Older title' }] },
+				Status: { type: 'select', select: { name: 'Published' } }
+			}
+		});
+		expect(bare).toMatchObject({
+			title: 'Older title',
+			excerpt: '',
+			description: '',
+			tldr: '',
+			featured: false,
+			cover: '',
+			created: '2024-05-01T12:00:00.000Z'
+		});
+
+		const pageCover = pageToRaw({
+			id: 'page-cover',
+			cover: { type: 'external', external: { url: 'https://cdn.example.com/page.jpg' } },
+			properties: {
+				Title: { type: 'title', title: [{ plain_text: 'Cover' }] },
+				Featured: { type: 'select', select: { name: 'Yes' } }
+			}
+		});
+		expect(pageCover).toMatchObject({
+			featured: true,
+			cover: 'https://cdn.example.com/page.jpg'
+		});
 	});
 
 	it('does not invent article blocks when the block fetch fails', async () => {

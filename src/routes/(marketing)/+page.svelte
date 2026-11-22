@@ -1,8 +1,11 @@
 <script lang="ts">
 	import OperatorCard from '$lib/components/home/OperatorCard.svelte';
+	import WritingSection from '$lib/components/home/WritingSection.svelte';
 	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import ActionLink from '$lib/components/ui/ActionLink.svelte';
 	import { identity } from '$lib/data/identity';
+
+	let { data } = $props();
 </script>
 
 <svelte:head>
@@ -34,6 +37,8 @@
 		<OperatorCard />
 	</div>
 </section>
+
+<WritingSection writing={data.writing} />
 
 <style>
 	.hero {

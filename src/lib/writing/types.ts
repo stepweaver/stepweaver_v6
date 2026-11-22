@@ -24,6 +24,9 @@ export type WritingEntry = {
 	date: string;
 	updated: string;
 	excerpt: string;
+	summary: string;
+	featured: boolean;
+	cover: string;
 	tags: string[];
 };
 

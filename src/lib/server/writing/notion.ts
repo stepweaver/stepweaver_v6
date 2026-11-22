@@ -1,11 +1,18 @@
 import { isPublishedStatus, type RawWritingPage } from '$lib/writing/entries';
 import { renderBlocks } from '$lib/writing/blocks';
+import { coverImageSrc } from '$lib/writing/rich-text';
 import type { RenderBlock } from '$lib/writing/types';
 
 const DATA_SOURCE_VERSION = '2025-09-03';
 const DATABASE_VERSION = '2022-06-28';
 
 export type NotionFetcher = (url: string, init?: RequestInit) => Promise<Response>;
+
+type NotionFile = {
+	type?: string;
+	external?: { url?: string };
+	file?: { url?: string };
+};
 
 type NotionProperty = {
 	type?: string;
@@ -15,12 +22,15 @@ type NotionProperty = {
 	select?: { name?: string } | null;
 	status?: { name?: string } | null;
 	date?: { start?: string } | null;
+	checkbox?: boolean;
+	files?: NotionFile[];
 };
 
 type NotionPage = {
 	id: string;
 	created_time?: string;
 	last_edited_time?: string;
+	cover?: NotionFile | null;
 	properties?: Record<string, NotionProperty>;
 };
 
@@ -49,10 +59,37 @@ function createdValue(page: NotionPage, property: NotionProperty | undefined): s
 	return page.created_time ?? '';
 }
 
+function fileUrl(source: NotionFile | null | undefined): string {
+	if (!source) return '';
+	const raw = source.type === 'file' ? source.file?.url : source.external?.url;
+	return coverImageSrc(raw) ?? '';
+}
+
+function coverValue(page: NotionPage, properties: Record<string, NotionProperty>): string {
+	const property = properties['Cover Image'] ?? properties.Cover ?? properties.cover;
+	if (property?.type === 'files') {
+		for (const file of property.files ?? []) {
+			const url = fileUrl(file);
+			if (url) return url;
+		}
+	}
+	return fileUrl(page.cover);
+}
+
+function featuredValue(property: NotionProperty | undefined): boolean {
+	if (!property) return false;
+	if (property.type === 'checkbox') return property.checkbox === true;
+	const name = (property.select?.name ?? property.status?.name ?? '').trim().toLowerCase();
+	return name === 'yes' || name === 'true' || name === 'featured';
+}
+
 export function pageToRaw(page: NotionPage): RawWritingPage | null {
 	const properties = page.properties ?? {};
 	const titleProp = properties.Title ?? properties.Name;
-	const excerptProp = properties.Excerpt ?? properties.Description;
+	const excerptProp =
+		properties.Excerpt ?? properties.excerpt ?? properties.Description ?? properties.description;
+	const descriptionProp = properties.Description ?? properties.description;
+	const tldrProp = properties['TL;DR'] ?? properties.TLDR ?? properties.Tldr ?? properties['tl;dr'];
 	const tagsProp = properties.Tags ?? properties.tags;
 	const slugProp = properties.Slug ?? properties.slug;
 	const statusProp = properties.Status ?? properties.status;
@@ -62,6 +99,10 @@ export function pageToRaw(page: NotionPage): RawWritingPage | null {
 		title: plain(titleProp?.title),
 		status: statusName(statusProp),
 		excerpt: plain(excerptProp?.rich_text),
+		description: plain(descriptionProp?.rich_text),
+		tldr: plain(tldrProp?.rich_text),
+		featured: featuredValue(properties.Featured ?? properties.featured),
+		cover: coverValue(page, properties),
 		tags: (tagsProp?.multi_select ?? []).map((tag) => tag.name ?? '').filter(Boolean),
 		slugProperty: plain(slugProp?.rich_text),
 		created: createdValue(page, properties.Date),

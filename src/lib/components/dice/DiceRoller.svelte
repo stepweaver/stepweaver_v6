@@ -274,9 +274,6 @@
 					<button type="button" class="die-add die-d{sides}" onclick={() => addDie(sides)}>
 						<span class="die-mark">
 							<DieIcon {sides} />
-							{#if sides === 100}
-								<span class="percent" aria-hidden="true">%</span>
-							{/if}
 						</span>
 						<span class="die-label">d{sides}</span>
 					</button>
@@ -621,19 +618,6 @@
 	.die-mark {
 		position: relative;
 		display: block;
-	}
-
-	.percent {
-		position: absolute;
-		inset-inline-end: -0.35rem;
-		inset-block-end: -0.2rem;
-		border: 1px solid var(--neon);
-		background: var(--panel);
-		color: var(--neon);
-		font-family: var(--font-family-ibm);
-		font-size: 0.75rem;
-		line-height: 1;
-		padding: 0.05rem 0.2rem;
 	}
 
 	.die-label,
