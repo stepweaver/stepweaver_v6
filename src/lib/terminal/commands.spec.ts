@@ -16,7 +16,7 @@ import {
 	parseCommand
 } from './commands';
 
-const ABSENT = ['weather', 'blackjack', 'zork', 'chat', 'contact'];
+const ABSENT = ['blackjack', 'zork'];
 
 function sequence(values: number[]) {
 	const pending = [...values];
@@ -30,7 +30,18 @@ describe('terminal commands', () => {
 	});
 
 	it('builds help from the implemented commands', () => {
-		expect(commandNames()).toEqual(['help', 'clear', 'resume', 'cd', 'codex', 'roll', 'cancel']);
+		expect(commandNames()).toEqual([
+			'help',
+			'clear',
+			'resume',
+			'cd',
+			'codex',
+			'roll',
+			'weather',
+			'contact',
+			'chat',
+			'cancel'
+		]);
 		const help = helpLines()
 			.filter((entry) => entry.content.startsWith('  '))
 			.map((entry) => entry.content);
@@ -153,6 +164,13 @@ describe('terminal commands', () => {
 	});
 
 	it('offers a module only for a command that exists', () => {
-		expect(commandModules().map((module) => module.command)).toEqual(['resume', 'codex', 'roll']);
+		expect(commandModules().map((module) => module.command)).toEqual([
+			'resume',
+			'codex',
+			'roll',
+			'weather',
+			'contact',
+			'chat'
+		]);
 	});
 });

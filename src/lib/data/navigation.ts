@@ -18,7 +18,11 @@ export const PALETTE_LINKS: NavLink[] = [
 	{ href: '/', label: 'Home' },
 	...PRIMARY_NAV,
 	{ href: '/work', label: 'Work', note: 'Curation page. No case studies are public.' },
-	{ href: '/terminal', label: 'Terminal', note: 'help, resume, cd, codex, roll, and clear.' },
+	{
+		href: '/terminal',
+		label: 'Terminal',
+		note: 'Résumé, writing, dice, weather, contact, and λlambda.'
+	},
 	{
 		href: '/dice-roller',
 		label: 'Dice roller',

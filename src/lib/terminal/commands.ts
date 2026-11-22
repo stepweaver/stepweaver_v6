@@ -7,6 +7,7 @@ import {
 	rollDie,
 	type DieSource
 } from '$lib/dice/engine';
+import { startContact } from './contact-wizard';
 import { codexOpening, type CodexLibrary } from './codex';
 import { destinationNames, resolveDestination } from './routes';
 import type { ShellEffect, TerminalLine } from './types';
@@ -19,8 +20,9 @@ export type { LineVariant, ShellEffect, ShellMode, TerminalLine } from './types'
 export type CommandResult = {
 	lines: TerminalLine[];
 	clear?: boolean;
-	enter?: 'codex';
+	enter?: 'codex' | 'contact';
 	effect?: ShellEffect;
+	contact?: ReturnType<typeof startContact>['draft'];
 };
 
 export type CommandGuideEntry = {
@@ -39,6 +41,7 @@ export type DispatchContext = {
 	library?: CodexLibrary;
 	rollDie?: DieSource;
 	now?: () => string;
+	clock?: () => number;
 };
 
 type CommandSpec = {
@@ -66,6 +69,24 @@ const MODULES: readonly CommandModule[] = [
 		tag: 'MOD-03',
 		body: 'Roll notation, advantage, and disadvantage. The same engine runs on /dice-roller.',
 		command: 'roll'
+	},
+	{
+		title: 'Weather',
+		tag: 'MOD-04',
+		body: 'City lookup, optional location, and a forecast labeled in city local time.',
+		command: 'weather'
+	},
+	{
+		title: 'Contact',
+		tag: 'MOD-05',
+		body: 'A message wizard that sends through the contact form checks.',
+		command: 'contact'
+	},
+	{
+		title: 'λlambda',
+		tag: 'MOD-06',
+		body: 'Ask the public-site assistant. The same backend answers the site chat.',
+		command: 'chat'
 	}
 ];
 
@@ -147,6 +168,33 @@ function cdLines(args: string[]): CommandResult {
 	};
 }
 
+function weatherLines(args: string[]): CommandResult {
+	const forecast = args.some((arg) => arg === '--forecast' || arg === '-f');
+	const query = args.filter((arg) => arg !== '--forecast' && arg !== '-f').join(' ').trim();
+	if (!query) {
+		return {
+			lines: [
+				line('No city given. Trying this device, then New York.', 'dimmed'),
+				line('A city still works if location is denied: weather South Bend', 'dimmed')
+			],
+			effect: { type: 'geo-weather', forecast }
+		};
+	}
+	return {
+		lines: [line(`Looking up ${query}...`, 'dimmed')],
+		effect: { type: 'weather', query, forecast }
+	};
+}
+
+function chatLines(args: string[]): CommandResult {
+	const message = args.join(' ').trim();
+	if (!message) return { lines: [line('Usage: chat <message>', 'warning')] };
+	return {
+		lines: [line('λlambda is thinking...', 'dimmed')],
+		effect: { type: 'chat', message }
+	};
+}
+
 function rollLines(args: string[], context: DispatchContext): CommandResult {
 	const raw = args.join(' ').trim();
 	if (!raw) {
@@ -217,6 +265,27 @@ const COMMANDS: readonly CommandSpec[] = [
 		usage: 'roll <notation>',
 		summary: 'Roll dice',
 		run: (args, context) => rollLines(args, context)
+	},
+	{
+		name: 'weather',
+		usage: 'weather [city]',
+		summary: 'Look up a forecast',
+		run: (args) => weatherLines(args)
+	},
+	{
+		name: 'contact',
+		usage: 'contact',
+		summary: 'Send a message',
+		run: (_args, context) => {
+			const started = startContact(context.clock?.() ?? Date.now());
+			return { enter: 'contact', lines: started.lines, contact: started.draft };
+		}
+	},
+	{
+		name: 'chat',
+		usage: 'chat <message>',
+		summary: 'Ask λlambda',
+		run: (args) => chatLines(args)
 	},
 	{
 		name: 'cancel',

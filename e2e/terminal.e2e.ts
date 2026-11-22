@@ -19,7 +19,10 @@ test('help, resume, history, and clear run in the console', async ({ page }) => 
 	await expect(page.locator('.sidebar')).toContainText('Clear screen');
 	await expect(page.locator('.sidebar')).toContainText('Browse published writing');
 	await expect(page.locator('.sidebar')).toContainText('Roll dice');
-	await expect(page.locator('.sidebar')).not.toContainText('weather');
+	await expect(page.locator('.sidebar')).toContainText('Look up a forecast');
+	await expect(page.locator('.sidebar')).toContainText('Send a message');
+	await expect(page.locator('.sidebar')).toContainText('Ask λlambda');
+	await expect(page.locator('.sidebar')).not.toContainText('blackjack');
 	await expect(page.locator('.mobile-guide')).toBeHidden();
 
 	const product = await renderedText(page.locator('.product-name'));
@@ -35,10 +38,11 @@ test('help, resume, history, and clear run in the console', async ({ page }) => 
 	await expect(transcript).toContainText('cd <place>: Open a listed page');
 	await expect(transcript).toContainText('codex: Browse published writing');
 	await expect(transcript).toContainText('roll <notation>: Roll dice');
-	await expect(transcript).not.toContainText('weather');
+	await expect(transcript).toContainText('weather [city]: Look up a forecast');
+	await expect(transcript).toContainText('contact: Send a message');
+	await expect(transcript).toContainText('chat <message>: Ask λlambda');
 	await expect(transcript).not.toContainText('blackjack');
 	await expect(transcript).not.toContainText('zork');
-	await expect(transcript).not.toContainText('chat');
 
 	await input.fill('nope');
 	await input.press('Enter');
@@ -110,7 +114,8 @@ test('narrow console keeps the command guide and the prompt on screen', async ({
 		await expect(guide).toContainText('Show commands');
 		await expect(guide).toContainText('View experience');
 		await expect(guide).toContainText('Clear screen');
-		await expect(guide).not.toContainText('weather');
+		await expect(guide).toContainText('Look up a forecast');
+		await expect(guide).not.toContainText('blackjack');
 
 		const input = page.getByRole('textbox', { name: 'Command' });
 		await expect(input).toBeVisible();

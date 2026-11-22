@@ -282,6 +282,7 @@
 						<input
 							type="number"
 							inputmode="numeric"
+							aria-label="Modifier"
 							min={MIN_MODIFIER}
 							max={MAX_MODIFIER}
 							value={modifier}

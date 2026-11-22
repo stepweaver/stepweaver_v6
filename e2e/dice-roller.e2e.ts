@@ -36,7 +36,9 @@ test('dice roller shares notation, explains bad input, and keeps history', async
 	}
 });
 
-test('pool, held dice, saved notes, and terminal roll follow one set of rules', async ({ page }) => {
+test('pool, held dice, saved notes, and terminal roll follow one set of rules', async ({
+	page
+}) => {
 	await page.setViewportSize({ width: 390, height: 844 });
 	await page.goto('/play');
 	await page.getByRole('link', { name: /Dice Roller/ }).click();
@@ -97,6 +99,7 @@ test('pool, held dice, saved notes, and terminal roll follow one set of rules', 
 	await page.goto('/terminal');
 	const input = page.getByRole('textbox', { name: 'Command' });
 	const transcript = page.getByRole('log', { name: 'Terminal transcript' });
+	await expect(input).toHaveAttribute('data-ready', 'true');
 	await input.fill('roll 2d6+1');
 	await input.press('Enter');
 	await expect(transcript).toContainText('Rolling 2d6+1:');

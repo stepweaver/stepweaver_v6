@@ -128,7 +128,15 @@ Codex reads the published catalog. With the fixture source, `ls` shows Workflow 
 
 `/dice-roller` uses that same engine. The d6 control is at least 44px tall at 1440 and 390. Invalid notation disables Roll and explains the problem. Advantage is saved under `diceRollerHistory` and is still there after reload. The page does not scroll sideways at either width.
 
-The existing terminal check still finds one circuit canvas, one λ canvas, and a lowercase λ in the terminal title. Weather, the contact wizard, λlambda, blackjack, and the adventure are not in this pass.
+The existing terminal check still finds one circuit canvas, one λ canvas, and a lowercase λ in the terminal title.
+
+### Weather, contact, and λlambda
+
+`weather South Bend --forecast` on the local Playwright server prints `Weather is not configured.` and the next `help` still lists commands. That server has no OpenWeather key. City-local time and unit labels are covered by the weather unit test: `1700000000` at offset `-18000` formats as `Tue Nov 14, 5:13 PM`, and the report includes `°F`, `°C`, and `mph`. An ambiguous city returns a numbered choice. When geolocation resolves to nothing, the effect says location was not shared and tells the reader to type `weather <city>`. A live forecast and a real location prompt still need `OPENWEATHER_API_KEY` and a phone or browser permission.
+
+`contact` walks the same field rules as the contact form. Those rules live in `src/lib/contact/fields.ts` so the terminal client does not import server code. In the browser, a bad email stays on the email step, and `cancel` prints `Contact form cancelled.` The full send, including the Turnstile widget and mock mail adapter, was not clicked through in this pass.
+
+`chat` and the site chat button both post to `/api/chat`. Playwright blanks `GROQ_API_KEY` and `OPENAI_API_KEY`, so the reply is the public brief: it includes the public title and does not include λledger, Silent Auction, or Parcel Sweep. A provider HTTP 500 is covered by the unit test and returns `could not reach the model` without clearing the session. The site chat panel opens on a 1440-wide page and a 390-wide page, and it sits on the bottom left so the command palette trigger does not cover it. A live model response and a physical phone keyboard were not checked. Blackjack and the adventure are not in this pass.
 
 ## Visual tokens
 

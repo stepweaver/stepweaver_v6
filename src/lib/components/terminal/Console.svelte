@@ -1,21 +1,28 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { env } from '$env/dynamic/public';
 	import { onMount, tick } from 'svelte';
 	import { PROMPT } from '$lib/terminal/commands';
 	import type { CodexLibrary } from '$lib/terminal/codex';
+	import { performEffect } from '$lib/terminal/effects';
 	import {
 		createSession,
 		moveNewer,
 		moveOlder,
+		pushLines,
 		replaceInput,
 		submitLine
 	} from '$lib/terminal/session';
+	import type { ShellEffect } from '$lib/terminal/types';
 
 	let { library }: { library: CodexLibrary } = $props();
 
 	let session = $state(createSession());
 	let inputEl = $state<HTMLInputElement>();
 	let screenEl = $state<HTMLDivElement>();
+	let turnstileEl = $state<HTMLDivElement>();
+	let turnstileToken = $state('');
+	const siteKey = env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 
 	async function settleScroll(follow: boolean, anchor: number) {
 		await tick();
@@ -65,6 +72,8 @@
 			if (effect?.type === 'navigate') {
 				if (effect.external) window.open(effect.href, '_blank', 'noopener,noreferrer');
 				else void goto(effect.href);
+			} else if (effect) {
+				void runEffect(effect);
 			}
 			return;
 		}
@@ -80,6 +89,55 @@
 			placeCaret();
 		}
 	}
+
+	async function runEffect(effect: ShellEffect) {
+		const screen = screenEl;
+		const follow = !screen || screen.scrollHeight - screen.clientHeight - screen.scrollTop <= 2;
+		const anchor = screen?.scrollTop ?? 0;
+		const outcome = await performEffect(effect, fetch, undefined, turnstileToken);
+		const patch: { mode?: typeof session.mode; weather?: typeof session.weather; contact?: typeof session.contact } =
+			{};
+		if (outcome.mode) patch.mode = outcome.mode;
+		if (outcome.weather !== undefined) patch.weather = outcome.weather;
+		if (outcome.contact !== undefined) patch.contact = outcome.contact;
+		session = pushLines(session, outcome.lines, patch);
+		void settleScroll(follow, anchor);
+	}
+
+	$effect(() => {
+		if (session.mode !== 'contact' || !turnstileEl || !siteKey) return;
+		let cancelled = false;
+		const host = turnstileEl;
+		const script = document.createElement('script');
+		script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+		script.async = true;
+		script.onload = () => {
+			if (cancelled) return;
+			const turnstile = (
+				window as Window & {
+					turnstile?: {
+						render: (
+							element: HTMLElement,
+							options: { sitekey: string; callback: (token: string) => void }
+						) => void;
+					};
+				}
+			).turnstile;
+			turnstile?.render(host, {
+				sitekey: siteKey,
+				callback(token: string) {
+					turnstileToken = token;
+					host.dataset.turnstile = 'ready';
+				}
+			});
+		};
+		document.head.appendChild(script);
+		return () => {
+			cancelled = true;
+			host.replaceChildren();
+			script.remove();
+		};
+	});
 
 	onMount(() => {
 		inputEl?.setAttribute('data-ready', 'true');
@@ -102,6 +160,9 @@
 
 	<div class="prompt-row">
 		<span class="prompt">{PROMPT}</span>
+		{#if session.mode === 'contact'}
+			<div class="bot-check" bind:this={turnstileEl}></div>
+		{/if}
 		<input
 			bind:this={inputEl}
 			value={session.input}
@@ -171,6 +232,11 @@
 	.line a {
 		text-decoration: underline;
 		text-underline-offset: 0.15em;
+	}
+
+	.bot-check {
+		flex: 1 0 100%;
+		min-block-size: 4.5rem;
 	}
 
 	.prompt-row {
