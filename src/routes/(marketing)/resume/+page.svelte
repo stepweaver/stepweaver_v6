@@ -32,12 +32,7 @@
 			</div>
 
 			<div class="resume-actions">
-				<ActionLink
-					href={identity.links.resumePdf}
-					label="Download current PDF"
-					variant="primary"
-				/>
-				<ActionLink href="/resume/draft.pdf" label="Download draft PDF" />
+				<ActionLink href={identity.links.resumePdf} label="Download résumé PDF" variant="primary" />
 				<ActionLink href={identity.links.about} label="About" />
 				<ActionLink href={identity.links.contactHire} label="Contact" />
 			</div>
@@ -125,14 +120,6 @@
 						</div>
 					{/each}
 				</div>
-			</section>
-
-			<section>
-				<p class="copy">
-					Current PDF is the production file already in this repository. It keeps its previous
-					wording. Draft PDF is generated from this page and is marked pending editorial review. It
-					does not replace the current file.
-				</p>
 			</section>
 
 			<section>
