@@ -44,6 +44,10 @@ describe('project publication', () => {
 	it('keeps project slugs out of the sitemap and structured data', () => {
 		const blob = publicMetadataBlob();
 		expect(publicSitemapPaths().some((path) => path.startsWith('/work/'))).toBe(false);
+		expect(publicSitemapPaths()).toContain('/dice-roller');
+		expect(publicSitemapPaths()).toContain('/terminal');
+		expect(publicSitemapPaths()).not.toContain('/lab');
+		expect(publicSitemapPaths()).not.toContain('/play');
 		expect(blob.includes('github.com/stepweaver')).toBe(true);
 		expect(blob.includes('github.com/stephen')).toBe(false);
 		for (const slug of privateProjectSlugs()) {

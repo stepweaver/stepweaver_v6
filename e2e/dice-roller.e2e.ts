@@ -41,7 +41,6 @@ test('pool, held dice, saved notes, and terminal roll follow one set of rules', 
 }) => {
 	await page.setViewportSize({ width: 390, height: 844 });
 	await page.goto('/play');
-	await page.getByRole('link', { name: /Dice Roller/ }).click();
 	await expect(page).toHaveURL('/dice-roller');
 	await page.evaluate(() => localStorage.removeItem('diceRollerHistory'));
 	await page.reload();

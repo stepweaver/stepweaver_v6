@@ -9,6 +9,16 @@ Build the next λstepweaver in the existing `stepweaver/stepweaver_v6` SvelteKit
 
 The new site should communicate **who I am, what I do, how I work, and what I'm thinking about**, rather than lead with an ever-expanding project catalog. Identity: **Business Systems Developer & Systems Integration Consultant**. Business analysis, software integration, automation, custom software, and applied AI are capabilities used to solve real business problems. AI-assisted engineering is part of the delivery process, not a claim that generated code needs no verification.
 
+## Direction update — 2026-11-21
+
+This section controls later parity work wherever it differs from the information architecture below.
+
+The public site centers on Stephen, the résumé, and the terminal. The homepage stays personal and brief. Keep the operator card, Matrix Link, and signature background. **Open Terminal** is the primary action. **Résumé** is the secondary action. Writing and About stay easy to find on the page. Contact stays available as a supporting link. Do not put Work or What I Do back into the homepage actions or the default command palette. Keep their direct URLs, and keep using project publication settings to decide which case studies exist.
+
+Lab is retired as a public v6 destination. Remove it from navigation, Ctrl+K, terminal `cd` and `help`, and the sitemap. Do not delete legacy lab tools or their data; this app simply does not host them. `/lab` and any path under it redirect to `/terminal`.
+
+`/dice-roller` stays a standalone feature, and terminal `roll` stays. Surface Dice Roller directly in Ctrl+K and from the terminal (`cd dice`, `cd dice-roller`). `/play` only repeated the terminal and the dice roller, plus tools this app does not serve, so `/play` redirects to `/dice-roller`.
+
 ## Sources inspected
 
 - `stepweaver_v5` repo, including route tree (644 tracked tree entries), project data registry and 23 project records, SITE_PLAN, identity, homepage, services, resume/contact architecture, terminal command/runtime modules, shared chat integration, Notion writing adapter, project knowledge assembly, themes, and sitemap.
@@ -58,32 +68,34 @@ Before republishing any item, run a documented review: live URL reachable; core 
 
 ## New website information architecture
 
-| Route             | Public role                                                                              |
-| ----------------- | ---------------------------------------------------------------------------------------- |
-| `/`               | Who I am; what I do; concise proof of approach; latest writing; contact                  |
-| `/services`       | “What I Do”: systems discovery, automation/integration, custom software, applied AI      |
-| `/about`          | Professional narrative, career timeline, how I solve problems, principles                |
-| `/writing`        | Primary ongoing publishing home; editorial index, category/tag filters, recent entries   |
-| `/writing/[slug]` | Stable permalink, metadata, rich Notion blocks, shareable article                        |
-| `/resume`         | Full professional history, accessible PDF, optional hiring contact path                  |
-| `/contact`        | Client inquiry first, hiring/general still possible; reliable form                       |
-| `/terminal`       | Signature terminal, fully functional and accessible from quiet persistent affordance     |
-| `/lab`            | Field Journal, utilities, experiments, demos; preserved but no longer dominating home    |
-| `/work`           | Hidden/curation landing until selective approvals; eventually approved case studies only |
-| `/work/[slug]`    | Public only for individually approved case studies                                       |
+| Route             | Public role                                                                                     |
+| ----------------- | ----------------------------------------------------------------------------------------------- |
+| `/`               | Brief personal introduction; operator card; Open Terminal, then Résumé; Writing, About, Contact |
+| `/services`       | “What I Do” remains at this URL. Not a homepage action and not in the default palette           |
+| `/about`          | Professional narrative, career timeline, how I solve problems, principles                       |
+| `/writing`        | Primary ongoing publishing home; editorial index, category/tag filters, recent entries          |
+| `/writing/[slug]` | Stable permalink, metadata, rich Notion blocks, shareable article                               |
+| `/resume`         | Full professional history, accessible PDF, optional hiring contact path                         |
+| `/contact`        | Client inquiry first, hiring/general still possible; reliable form                              |
+| `/terminal`       | Signature terminal. Primary invitation from home. Receives retired `/lab` links                 |
+| `/dice-roller`    | Standalone roller. Direct palette and terminal destination. Receives retired `/play` links      |
+| `/lab`            | Retired public destination. Redirect to `/terminal`. Tools and data are not deleted             |
+| `/play`           | Retired index. Redirect to `/dice-roller`                                                       |
+| `/work`           | Direct URL only until selective approvals; not a homepage action or default palette entry       |
+| `/work/[slug]`    | Public only for individually approved case studies                                              |
 
-Preserve historic routes, adding redirects only where appropriate; avoid casual URL churn. Keep legal/privacy pages and active utility routes even when not in the primary navigation. Keep Lab and terminal from becoming unintended public portals to unpublished projects.
+Preserve historic routes, adding redirects only where appropriate; avoid casual URL churn. Keep legal/privacy pages and active utility routes even when not in the primary navigation. The terminal must not become a public portal to unpublished projects. Lab is no longer a public page.
 
-### Homepage editorial structure
+### Homepage
 
-1. **Hero:** “Business Systems Developer & Systems Integration Consultant” with plain-language description and the original portrait/operator-card geometry. Primary CTA: “Let's talk about your system” or equivalent, secondary: Writing/About. Terminal as a distinctive invitation, not a competing hero.
-2. **What I Do:** business analysis and systems discovery; APIs and integration; automation; custom applications; applied AI.
-3. **How I Work:** understand the workflow → design practical architecture → build/integrate → validate/maintain. Explain human ownership of agent-generated code without hype.
-4. **My Background:** concise evidence from business analysis, operations, and shipped software. Professional chronology remains accurate; no invented outcomes.
-5. **Latest Writing:** three to five recent published posts, fetched robustly with graceful fallback.
-6. **Contact:** direct project conversation invitation. Quiet résumé/Lab/terminal paths remain available.
+The homepage is a short personal introduction. Keep the operator card, the Matrix Link inside it, and the signature background.
 
-Remove the homepage featured-project section at first. Reintroduce only if a specific case study has been reviewed and adds meaningful proof.
+1. Identity headline and one plain sentence.
+2. Primary action: Open Terminal. Secondary action: Résumé.
+3. Writing and About visible with those actions. Contact as a supporting link.
+4. No Work, What I Do, Lab, or Play actions on this page.
+
+The longer service narrative stays on `/services`. The career narrative stays on `/about` and `/resume`. Recent writing stays on `/writing`. Do not restore a featured-project section unless a specific case study has been reviewed and adds meaningful proof.
 
 ## Visual and interaction parity lock
 
@@ -132,7 +144,7 @@ Improve the reading experience: readable width, clear headline/excerpt/date, app
 - Consolidate v6 canonical identity, navigation, route hierarchy, homepage, About, What I Do/Services.
 - Hide all public project cards/archives and remove public knowledge references; keep underlying project records intact.
 - Rebuild the genuine v5 visual shell and operator card, including theme switching/animation affordances.
-- Preserve intentional links to Terminal and Lab but do not publicly expose missing routes as working.
+- Lead home with Open Terminal and Résumé. Keep Writing, About, and a supporting Contact link. Leave Work and What I Do off the homepage actions and the default palette.
 
 **Gate:** Site looks like λstepweaver, says what the user now does, and no retired project is accidentally exposed.
 
@@ -148,7 +160,7 @@ Improve the reading experience: readable width, clear headline/excerpt/date, app
 
 - Port headless terminal domain logic before presentation: parser, modes, history, navigation, résumé, Codex, weather, dice, blackjack, Zork and contact wizard.
 - Restore the inline prompt at the end of the desktop transcript. On phones, keep the same command input reachable above the software keyboard with a sticky prompt. Preserve the prompt draft, focus, and history across viewport changes. Follow new output while the reader is at the end of the transcript and preserve their scroll position when they read older output.
-- Restore the standalone `/dice-roller` and terminal `roll` command together. Share notation parsing, validation, and roll evaluation. Preserve v5 notation and advantage/disadvantage, then improve invalid-notation feedback, touch controls, and roll result breakdowns. Review v5's saved history format before changing persistence.
+- Keep the standalone `/dice-roller` and terminal `roll` command together. Share notation parsing, validation, and roll evaluation. Preserve v5 notation and advantage/disadvantage, then improve invalid-notation feedback, touch controls, and roll result breakdowns. Review v5's saved history format before changing persistence. Surface Dice Roller in Ctrl+K and as a terminal destination. Redirect `/play` to `/dice-roller`.
 - Preserve city lookup, optional geolocation, and forecast in `weather`. Keep city entry available after location denial, offer a choice for ambiguous results where supported, and label units and forecast times.
 - Reuse published content for Codex, an explicit route map for `cd`, and the existing validated contact delivery flow for the terminal contact wizard. Preserve blackjack and the existing text adventure flow, including save and restore where supported in v5.
 - Integrate client terminal with one shared chat backend. Preserve full website chat UX, project-context behavior only for approved public case studies.
@@ -158,7 +170,7 @@ Improve the reading experience: readable width, clear headline/excerpt/date, app
 
 ### Milestone 4: Lab preservation, deployment, and cutover
 
-- Maintain legacy apps at current URLs or add controlled redirects/proxy links rather than hastily reimplementing everything. Migrate complex Field Journal/private routes only after privacy/session/data flows are audited.
+- Lab is not a public v6 page. Redirect `/lab` to `/terminal`. Keep legacy lab tools and data; do not reimplement them in this pass and do not delete them. Migrate complex Field Journal/private routes only after privacy/session/data flows are audited.
 - Verify sitemap, internal links, metadata, structured data, indexability, analytics, performance, accessibility, secrets and production bindings.
 - Deploy to Cloudflare staging, run comparison tests, confirm domain/DNS cutover plan and rollback to v5.
 - Obtain explicit approval before changing production DNS or deployment.
@@ -180,7 +192,7 @@ REPOSITORIES:
 - Live reference: https://stepweaver.dev
 
 OBJECTIVE:
-Make the site primarily say "this is who I am and what I do," with writing as a central publishing surface. Professional identity is "Business Systems Developer & Systems Integration Consultant." Preserve v5's terminal-forward visual identity and all valuable functionality. Remove the sprawling project catalog from public exposure; do NOT delete its data or source code. Reintroduce projects only after deliberate approval and verification.
+Make the site Stephen, the résumé, and the terminal. Keep the homepage personal and brief: operator card, Matrix Link, signature background, Open Terminal first, Résumé second, Writing and About easy to find, Contact as a supporting link. Professional identity remains "Business Systems Developer & Systems Integration Consultant." Preserve the terminal and the standalone dice roller. Remove Lab and Play as public destinations; redirect `/lab` to `/terminal` and `/play` to `/dice-roller`. Keep Work and What I Do off the homepage actions and the default palette, while preserving their URLs and project publication settings. Do NOT delete project, lab, or dice data.
 
 NON-NEGOTIABLE:
 1. Preserve visual fidelity (theme system, IBM 3270/OCR A, HUD/operator card, portrait, effects, navigation experience), not just colors.
@@ -201,7 +213,7 @@ E. Rewrite SITE_PLAN.md for positioning, navigation, homepage information archit
 F. Implement only Milestone 1: canonical identity, primary nav, home, About and Services/What I Do, new project-publication gating, and as much visual shell parity as can be demonstrated. Do not invent placeholder backends for contact, terminal or chat; clearly record missing features.
 G. Run checks/lint/build/tests. State exactly what was run and which behaviors remain unverified. Provide files changed, screenshots, parity gaps and recommended next prompt.
 
-Homepage sections: preserved operator/HUD hero with revised identity, What I Do, How I Work, Background, Recent Writing preview or clearly tracked placeholder until Notion integration, conversation CTA, quiet terminal/lab link. No featured-project carousel until projects are reviewed and selected.
+Homepage: preserved operator card, Matrix Link, and signature background; Open Terminal, then Résumé; Writing and About easy to find; Contact as a supporting link. No What I Do, Work, Lab, or Play actions. No featured-project carousel until projects are reviewed and selected.
 
 The v6 repo currently has a temporary Tailwind bridge alongside native CSS. Do not perform an unrelated styling purge during parity work. Protect the actual appearance first, consolidate later.
 

@@ -87,10 +87,10 @@
 	</p>
 
 	<div class="actions">
-		<a href="/contact?intent=consult">Let's talk</a>
+		<a href="/terminal">Terminal</a>
+		<a href="/resume">Résumé</a>
 		<a href="/writing">Writing</a>
 		<a href="/about">About</a>
-		<a href="/resume">Resume</a>
 	</div>
 
 	<ul class="tags">

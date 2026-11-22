@@ -15,8 +15,6 @@ export const SHELL_DESTINATIONS: readonly ShellDestination[] = [
 	{ name: 'work', href: '/work', external: false },
 	{ name: 'resume', href: '/resume', external: false },
 	{ name: 'contact', href: '/contact', external: false },
-	{ name: 'lab', href: '/lab', external: false },
-	{ name: 'play', href: '/play', external: false },
 	{ name: 'privacy', href: '/privacy', external: false },
 	{ name: 'terminal', href: '/terminal', external: false },
 	{ name: 'dice-roller', href: '/dice-roller', external: false },

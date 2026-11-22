@@ -179,7 +179,10 @@ function cdLines(args: string[]): CommandResult {
 
 function weatherLines(args: string[]): CommandResult {
 	const forecast = args.some((arg) => arg === '--forecast' || arg === '-f');
-	const query = args.filter((arg) => arg !== '--forecast' && arg !== '-f').join(' ').trim();
+	const query = args
+		.filter((arg) => arg !== '--forecast' && arg !== '-f')
+		.join(' ')
+		.trim();
 	if (!query) {
 		return {
 			lines: [
@@ -308,10 +311,7 @@ const COMMANDS: readonly CommandSpec[] = [
 		summary: 'Play the terminal adventure',
 		run: () => ({
 			enter: 'adventure',
-			lines: [
-				line('Launching terminal adventure.', 'dimmed'),
-				line('')
-			]
+			lines: [line('Launching terminal adventure.', 'dimmed'), line('')]
 		})
 	},
 	{
@@ -343,6 +343,7 @@ export function helpLines(): TerminalLine[] {
 		line(''),
 		...commandGuide().map((entry) => line(`  ${entry.command}: ${entry.summary}`)),
 		line(''),
+		line('Dice roller: /dice-roller', 'dimmed', '/dice-roller'),
 		line('Type a command and press Enter.', 'dimmed')
 	];
 }

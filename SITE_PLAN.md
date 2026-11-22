@@ -6,7 +6,7 @@ This file replaces the hiring-first lobby in v5 `SITE_PLAN.md`. v5 is unchanged 
 
 ## Positioning
 
-The site says who Stephen Weaver is, what he does, how he works, and what he is writing. It does not lead with a project catalog.
+The public site centers on Stephen Weaver, the résumé, and the terminal. It does not lead with a project catalog. The 2026-11-21 direction in `REBUILD_PLAN.md` controls the homepage and retired routes.
 
 - **Name:** Stephen Weaver
 - **Mark:** λstepweaver
@@ -38,35 +38,34 @@ Primary nav, in order:
 | Resume    | `/resume`   |
 | Contact   | `/contact`  |
 
-The wordmark goes home. `/work` is omitted from the primary nav until the first approved case study. The route stays available as a curation page and from the footer.
+The wordmark goes home. `/work` is omitted from the primary nav until the first approved case study. The route stays available as a curation page and from the footer. What I Do stays in the nav and at `/services`, and stays out of the homepage actions and the default palette.
 
-Terminal and Lab are quiet status links. They are not in the primary nav, and the local routes must not look like working tools.
+Open Terminal is the homepage's primary action. Lab is not a public destination: `/lab` redirects to `/terminal`. `/play` redirects to `/dice-roller`.
 
 ## Routes
 
-| Route               | Public role in this milestone                                                    |
-| ------------------- | -------------------------------------------------------------------------------- |
-| `/`                 | Identity, what I do, how I work, background, latest published writing, conversation |
-| `/services`         | What I do                                                                           |
-| `/about`            | Narrative, chronology, stack. No case-study links                                   |
-| `/writing`          | Published Notion notes, tag filter, pagination, stable article URLs, RSS            |
-| `/resume`           | Canonical chronology, current production PDF, and a labeled draft PDF               |
-| `/contact`          | Consulting, hiring, and general. Server validation, Turnstile, rate limit, mail     |
-| `/work`             | Empty curation. `noindex`. Not a catalog                                         |
-| `/work/[slug]`      | Unavailable for every current slug. Same response for unknown and unpublished    |
-| `/terminal`, `/lab` | Status pages that point at production. `noindex`                                 |
-| `/privacy`          | Points at the production policy. Text not copied                                 |
+| Route          | Public role in this milestone                                                   |
+| -------------- | ------------------------------------------------------------------------------- |
+| `/`            | Brief personal introduction. Operator card, Matrix Link, Open Terminal, Résumé  |
+| `/services`    | What I do. Direct URL. Not a homepage action or a default palette entry         |
+| `/about`       | Narrative, chronology, stack. No case-study links                               |
+| `/writing`     | Published Notion notes, tag filter, pagination, stable article URLs, RSS        |
+| `/resume`      | Canonical chronology, current production PDF, and a labeled draft PDF           |
+| `/contact`     | Consulting, hiring, and general. Server validation, Turnstile, rate limit, mail |
+| `/work`        | Empty curation. Direct URL. Not a homepage action or a default palette entry    |
+| `/work/[slug]` | Unavailable unless that slug is approved for publication                        |
+| `/terminal`    | Working terminal. Receives `/lab` redirects                                     |
+| `/dice-roller` | Standalone roller. Direct palette and terminal destination. Receives `/play`    |
+| `/lab`         | Redirect to `/terminal`. Legacy tools and data are not deleted                  |
+| `/play`        | Redirect to `/dice-roller`                                                      |
+| `/privacy`     | Points at the production policy. Text not copied                                |
 
-Keep historic production URLs alive on v5. Do not add casual redirects in this app yet.
+Keep historic production URLs alive on v5. In this app, redirect only `/lab` to `/terminal` and `/play` to `/dice-roller`.
 
 ## Homepage
 
-1. **Hero.** Operator card (portrait, HMFIC-01, availability, chapter, matrix-link chrome) and the title. Primary action: talk about a system. Secondary: Writing and About.
-2. **What I do.** Discovery, integration, automation, custom software, applied AI.
-3. **How I work.** Understand the workflow, design the architecture, build and integrate, validate and maintain. Include the human-ownership note for agent-written code.
-4. **Background.** λstepweaver and Notre Dame dates from the résumé, plus the field-operations chapter as context.
-5. **Recent writing.** The latest three published notes, with dates and excerpts. If Notion is down or not configured, say so. Do not invent posts.
-6. **Conversation.** Contact path for a consulting conversation. Quiet terminal and lab status links.
+1. **Hero.** Operator card (portrait, HMFIC-01, availability, chapter, Matrix Link) and the title, with the signature background behind the page. Primary action: Open Terminal. Secondary: Résumé. Writing and About stay visible. Contact is a supporting link.
+2. No What I Do, How I Work, background essay, writing strip, Work, Lab, or Play actions on this page. Those narratives stay on their own URLs.
 
 No featured-project carousel.
 

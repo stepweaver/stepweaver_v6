@@ -53,8 +53,13 @@ const RETIRED_HREFS = new Set([
 	'/yankee-samurai',
 	'/for-agents',
 	'/footwear',
-	'/work/archive'
+	'/work/archive',
+	'/lab',
+	'/play'
 ]);
+
+/** Direct URLs that stay searchable, but are not offered on an empty palette. */
+const QUIET_HREFS = new Set(['/services', '/work']);
 
 const ROUTE_COPY: Record<string, { label: string; meta: string }> = {
 	home: { label: 'Home', meta: '' },
@@ -64,8 +69,6 @@ const ROUTE_COPY: Record<string, { label: string; meta: string }> = {
 	work: { label: 'Work', meta: 'Approved case studies' },
 	resume: { label: 'Resume', meta: '' },
 	contact: { label: 'Contact', meta: '' },
-	lab: { label: 'Lab', meta: 'Status' },
-	play: { label: 'Play', meta: 'Terminal and dice roller' },
 	privacy: { label: 'Privacy', meta: '' },
 	terminal: { label: 'Terminal', meta: 'Command console' },
 	'dice-roller': { label: 'Dice Roller', meta: 'Standalone roller' },
@@ -96,11 +99,14 @@ function aliasesFor(name: string, aliases: Readonly<Record<string, string>>): st
 
 function routeEntries(
 	destinations: readonly ShellDestination[],
-	aliases: Readonly<Record<string, string>>
+	aliases: Readonly<Record<string, string>>,
+	query: string
 ): PaletteEntry[] {
+	const quiet = query.replace(/\s+/g, ' ').trim() === '';
 	const items: PaletteEntry[] = [];
 	for (const destination of destinations) {
 		if (RETIRED_HREFS.has(destination.href)) continue;
+		if (quiet && QUIET_HREFS.has(destination.href)) continue;
 		const copy = ROUTE_COPY[destination.name] ?? {
 			label: destination.name,
 			meta: destination.external ? destination.href : ''
@@ -206,7 +212,7 @@ export function paletteGroups(input: {
 }): PaletteGroup[] {
 	const query = input.query;
 	const items = [
-		...routeEntries(input.destinations, input.aliases),
+		...routeEntries(input.destinations, input.aliases, query),
 		...writingEntries(input.writing),
 		...projectEntries(input.projects),
 		...appearanceEntries(input.themes)

@@ -174,7 +174,7 @@ test('the signature background stays mounted when opening the terminal', async (
 	await circuit.evaluate((el) => {
 		el.dataset.mounted = 'once';
 	});
-	await page.getByRole('link', { name: /open the terminal/i }).click();
+	await page.getByRole('link', { name: 'Open Terminal' }).click();
 	await expect(page).toHaveURL('/terminal');
 	await expect(circuit).toHaveCount(1);
 	await expect(circuit).toHaveAttribute('data-mounted', 'once');
@@ -195,6 +195,10 @@ test('cd, codex, and roll keep the transcript usable', async ({ page }) => {
 	await expect(transcript).toContainText('/writing');
 	await expect(transcript).toContainText('/dice-roller');
 	await expect(transcript).not.toContainText('field-journal');
+	await expect(transcript).not.toContainText('/lab');
+	await expect(transcript).not.toContainText('/play');
+	await expect(transcript).not.toContainText('lab:');
+	await expect(transcript).not.toContainText('play:');
 
 	await input.fill('cd nope');
 	await input.press('Enter');

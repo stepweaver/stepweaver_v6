@@ -42,7 +42,13 @@ describe('command palette index', () => {
 	it('groups public routes, published writing, and appearance actions', () => {
 		const groups = paletteGroups(base);
 		expect(groups.map((group) => group.label)).toEqual(['Navigate', 'Writing', 'Appearance']);
-		expect(hrefs(entries(''))).toContain('/dice-roller');
+		const quiet = hrefs(entries(''));
+		expect(quiet).toContain('/dice-roller');
+		expect(quiet).toContain('/terminal');
+		expect(quiet).not.toContain('/services');
+		expect(quiet).not.toContain('/work');
+		expect(quiet).not.toContain('/lab');
+		expect(quiet).not.toContain('/play');
 		expect(hrefs(entries(''))).toContain('/writing/workflow-handoffs');
 		expect(
 			entries('skynet').some(
@@ -55,6 +61,9 @@ describe('command palette index', () => {
 		expect(hrefs(entries('codex'))).toContain('/writing');
 		expect(hrefs(entries('dice'))).toContain('/dice-roller');
 		expect(hrefs(entries('what-i-do'))).toEqual(['/services']);
+		expect(hrefs(entries('work'))).toContain('/work');
+		expect(hrefs(entries('lab'))).not.toContain('/lab');
+		expect(hrefs(entries('play'))).not.toContain('/play');
 		expect(hrefs(entries('~'))).toContain('/');
 		expect(entries('handoff').map((item) => item.label)).toContain('Workflow handoffs');
 	});

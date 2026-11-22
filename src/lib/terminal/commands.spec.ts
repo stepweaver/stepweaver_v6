@@ -90,14 +90,26 @@ describe('terminal commands', () => {
 		expect(listed).toContain('/dice-roller');
 		expect(listed).toContain('https://github.com/stepweaver');
 		expect(listed).not.toContain('field-journal');
+		expect(listed).not.toContain('lab');
+		expect(listed).not.toContain('play');
 
 		const writing = dispatchCommand('cd codex');
 		expect(writing.effect).toEqual({ type: 'navigate', href: '/writing', external: false });
 		const dice = dispatchCommand('cd dice');
 		expect(dice.effect).toEqual({ type: 'navigate', href: '/dice-roller', external: false });
+		const roller = dispatchCommand('cd dice-roller');
+		expect(roller.effect).toEqual({ type: 'navigate', href: '/dice-roller', external: false });
 		const missing = dispatchCommand('cd field-journal');
 		expect(missing.effect).toBeUndefined();
 		expect(missing.lines[0]?.content).toBe('Unknown destination: field-journal');
+		expect(dispatchCommand('cd lab').effect).toBeUndefined();
+		expect(dispatchCommand('cd play').effect).toBeUndefined();
+		const help = helpLines()
+			.map((entry) => entry.content)
+			.join('\n');
+		expect(help).toContain('/dice-roller');
+		expect(help).not.toContain('/lab');
+		expect(help).not.toContain('/play');
 	});
 
 	it('rolls v5 notation and explains an invalid roll', () => {

@@ -6,10 +6,7 @@ test('mobile home leads with the offer and keeps one header row', async ({ page 
 		await page.goto('/');
 
 		const headline = await page.getByRole('heading', { level: 1 }).boundingBox();
-		const cta = await page
-			.getByRole('link', { name: "Let's talk about your system" })
-			.first()
-			.boundingBox();
+		const cta = await page.getByRole('link', { name: 'Open Terminal' }).first().boundingBox();
 		const card = await page.getByRole('region', { name: 'Operator profile' }).boundingBox();
 		const header = await page.locator('.site-header-inner').boundingBox();
 
@@ -94,7 +91,18 @@ test('home states the consulting identity and hides the project catalog', async 
 	await expect(page.getByRole('heading', { level: 1 })).toContainText(
 		'Systems Integration Consultant'
 	);
-	await expect(page.getByRole('link', { name: 'Workflow handoffs' })).toBeVisible();
+	const hero = page.locator('.hero-copy');
+	await expect(hero.getByRole('link', { name: 'Open Terminal' })).toHaveAttribute(
+		'href',
+		'/terminal'
+	);
+	await expect(hero.getByRole('link', { name: 'Résumé' })).toHaveAttribute('href', '/resume');
+	await expect(hero.getByRole('link', { name: 'Writing' })).toHaveAttribute('href', '/writing');
+	await expect(hero.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about');
+	await expect(hero.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', '/contact');
+	await expect(
+		hero.locator('a[href="/services"], a[href="/work"], a[href="/lab"], a[href="/play"]')
+	).toHaveCount(0);
 	await expect(page.getByText('Unpublished operations note')).toHaveCount(0);
 	await expect(page.getByText('HMFIC-01')).toBeVisible();
 	await expect(page.getByRole('link', { name: 'GitHub' })).toHaveAttribute(
@@ -206,6 +214,19 @@ test('home title keeps each phrase to two lines on a phone', async ({ page }) =>
 	expect(Math.round(type.body)).toBe(16);
 	expect(type.text).toContain('Business Systems Developer');
 	expect(type.text).toContain('Systems Integration Consultant');
+});
+
+test('old lab and play links resolve to the terminal and dice roller', async ({ page }) => {
+	await page.goto('/lab');
+	await expect(page).toHaveURL(/\/terminal$/);
+	await expect(page.getByRole('textbox', { name: 'Command' })).toBeVisible();
+
+	await page.goto('/lab/field-journal');
+	await expect(page).toHaveURL(/\/terminal$/);
+
+	await page.goto('/play');
+	await expect(page).toHaveURL(/\/dice-roller$/);
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Dice roller');
 });
 
 test('work explains that no case studies are public', async ({ page }) => {

@@ -21,8 +21,8 @@
 			href: identity.links.work
 		},
 		{
-			label: 'Play',
-			href: '/play'
+			label: 'Dice Roller',
+			href: '/dice-roller'
 		},
 		{
 			label: 'Privacy',
