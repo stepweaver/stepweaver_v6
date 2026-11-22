@@ -118,7 +118,7 @@
 	.case {
 		max-inline-size: var(--content-width-wide);
 		margin-inline: auto;
-		padding: var(--space-3xl) var(--space-md) var(--space-2xl);
+		padding: var(--page-top-space, var(--space-3xl)) var(--space-md) var(--space-2xl);
 	}
 
 	.back,

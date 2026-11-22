@@ -155,7 +155,7 @@
 <style>
 	.resume {
 		min-block-size: 100vh;
-		padding-top: 5rem;
+		padding-block-start: var(--page-top-space, 5rem);
 		padding-bottom: var(--space-2xl);
 	}
 

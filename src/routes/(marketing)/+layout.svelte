@@ -72,6 +72,12 @@
 		color: var(--text);
 	}
 
+	@media (width < 40rem) {
+		main {
+			--page-top-space: var(--space-md);
+		}
+	}
+
 	.skip-link {
 		position: absolute;
 		inset-inline-start: var(--space-md);

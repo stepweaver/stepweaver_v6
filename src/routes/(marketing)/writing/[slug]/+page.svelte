@@ -80,7 +80,7 @@
 	.article {
 		max-inline-size: 48rem;
 		margin-inline: auto;
-		padding: var(--space-lg) var(--space-md) var(--space-2xl);
+		padding: var(--page-top-space, var(--space-lg)) var(--space-md) var(--space-2xl);
 	}
 
 	.back {

@@ -11,7 +11,7 @@
 	.error-page {
 		max-inline-size: var(--content-width-narrow);
 		margin-inline: auto;
-		padding: var(--space-3xl) var(--space-lg);
+		padding: var(--page-top-space, var(--space-3xl)) var(--space-lg) var(--space-3xl);
 	}
 
 	.eyebrow {

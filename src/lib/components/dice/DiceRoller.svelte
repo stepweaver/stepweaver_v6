@@ -522,7 +522,7 @@
 	.roller {
 		max-inline-size: 72rem;
 		margin-inline: auto;
-		padding: var(--space-xl) var(--space-md) var(--space-2xl);
+		padding: var(--page-top-space, var(--space-xl)) var(--space-md) var(--space-2xl);
 	}
 
 	.intro {
