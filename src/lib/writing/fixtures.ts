@@ -81,7 +81,7 @@ const RAW_PAGES: RawWritingPage[] = [
 
 const FIXTURE_BLOCKS: Record<string, RenderBlock[]> = {
 	'fixture000-0000-4000-8000-000000000010': [
-		{ type: 'heading', level: 3, text: 'The handoff', id: 'the-handoff' },
+		{ type: 'heading', level: 2, text: 'The handoff', id: 'the-handoff' },
 		{
 			type: 'paragraph',
 			spans: [

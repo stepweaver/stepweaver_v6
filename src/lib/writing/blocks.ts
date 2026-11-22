@@ -58,6 +58,10 @@ function listItemSpans(block: NotionBlock): RichSpan[] {
 export function renderBlocks(blocks: NotionBlock[] | null | undefined): RenderBlock[] {
 	if (!blocks?.length) return [];
 	const rendered: RenderBlock[] = [];
+	// The article title supplies the h1. Start the body at h2 for either Notion convention.
+	const hasHeadingOne = blocks.some(
+		(block) => block?.type === 'heading_1' && plainText(payload(block)?.rich_text).trim()
+	);
 
 	for (const block of blocks) {
 		if (!block?.type) continue;
@@ -85,12 +89,12 @@ export function renderBlocks(blocks: NotionBlock[] | null | undefined): RenderBl
 			continue;
 		}
 		if (block.type === 'heading_2') {
-			const next = heading(block, 3);
+			const next = heading(block, hasHeadingOne ? 3 : 2);
 			if (next) rendered.push(next);
 			continue;
 		}
 		if (block.type === 'heading_3') {
-			const next = heading(block, 4);
+			const next = heading(block, hasHeadingOne ? 4 : 3);
 			if (next) rendered.push(next);
 			continue;
 		}

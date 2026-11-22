@@ -25,7 +25,7 @@ test('published writing is listed and drafts stay hidden', async ({ page }) => {
 test('article links, legacy slugs, and page ids stay valid', async ({ page }) => {
 	await page.goto('/writing/workflow-handoffs');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Workflow handoffs');
-	await expect(page.getByRole('heading', { name: 'The handoff' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'The handoff', level: 2 })).toBeVisible();
 	await expect(page.getByRole('link', { name: 'A public note' })).toHaveAttribute(
 		'href',
 		'https://stepweaver.dev/writing'
@@ -107,5 +107,29 @@ test('writing layout holds at the review widths', async ({ page }) => {
 		);
 		expect(overflow).toBe(true);
 		await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+	}
+});
+
+test('article section headings are distinct from body text on phone and desktop', async ({
+	page
+}) => {
+	for (const width of [390, 1440]) {
+		await page.setViewportSize({ width, height: 900 });
+		await page.goto('/writing/workflow-handoffs');
+		const heading = page.getByRole('heading', { level: 2, name: 'The handoff' });
+		const styles = await heading.evaluate((element) => {
+			const headingStyle = getComputedStyle(element);
+			const paragraphStyle = getComputedStyle(element.nextElementSibling!);
+			return {
+				headingSize: parseFloat(headingStyle.fontSize),
+				bodySize: parseFloat(paragraphStyle.fontSize),
+				headingWeight: Number(headingStyle.fontWeight),
+				bodyWeight: Number(paragraphStyle.fontWeight),
+				overflows: document.documentElement.scrollWidth > window.innerWidth
+			};
+		});
+		expect(styles.headingSize).toBeGreaterThan(styles.bodySize);
+		expect(styles.headingWeight).toBeGreaterThan(styles.bodyWeight);
+		expect(styles.overflows).toBe(false);
 	}
 });
