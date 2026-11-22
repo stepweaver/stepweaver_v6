@@ -35,10 +35,13 @@ type NotionPage = {
 };
 
 export class NotionRequestError extends Error {
+	operation: string;
 	status: number;
 
-	constructor(status: number) {
+	constructor(operation: string, status: number) {
 		super(`Notion request failed (${status})`);
+		this.name = 'NotionRequestError';
+		this.operation = operation;
 		this.status = status;
 	}
 }
@@ -110,9 +113,30 @@ export function pageToRaw(page: NotionPage): RawWritingPage | null {
 	};
 }
 
-async function readJson(response: Response): Promise<Record<string, unknown>> {
-	if (!response.ok) throw new NotionRequestError(response.status);
+async function readJson(response: Response, operation: string): Promise<Record<string, unknown>> {
+	if (!response.ok) throw new NotionRequestError(operation, response.status);
 	return (await response.json()) as Record<string, unknown>;
+}
+
+function isAuthOrAccess(error: unknown): error is NotionRequestError {
+	return error instanceof NotionRequestError && (error.status === 401 || error.status === 403);
+}
+
+function statusTypeOf(body: Record<string, unknown>): string | undefined {
+	const properties = body.properties;
+	if (!properties || typeof properties !== 'object') return undefined;
+	const status = (properties as Record<string, { type?: string }>).Status;
+	return status?.type;
+}
+
+function selectedDataSourceId(body: Record<string, unknown>): string {
+	if (!Array.isArray(body.data_sources)) return '';
+	for (const source of body.data_sources) {
+		if (!source || typeof source !== 'object') continue;
+		const id = (source as { id?: unknown }).id;
+		if (typeof id === 'string' && id) return id;
+	}
+	return '';
 }
 
 function publishedFilter(statusType: string | undefined) {
@@ -127,7 +151,8 @@ async function queryAll(
 	apiKey: string,
 	version: string,
 	url: string,
-	filter: unknown
+	filter: unknown,
+	operation: string
 ): Promise<NotionPage[]> {
 	const pages: NotionPage[] = [];
 	let cursor: string | undefined;
@@ -145,13 +170,29 @@ async function queryAll(
 				...(cursor ? { start_cursor: cursor } : {})
 			})
 		});
-		const body = await readJson(response);
+		const body = await readJson(response, operation);
 		const results = Array.isArray(body.results) ? (body.results as NotionPage[]) : [];
 		pages.push(...results);
 		if (!body.has_more || typeof body.next_cursor !== 'string') break;
 		cursor = body.next_cursor;
 	}
 	return pages;
+}
+
+function queryLegacyDatabase(
+	fetcher: NotionFetcher,
+	apiKey: string,
+	databaseId: string,
+	statusType: string | undefined
+): Promise<NotionPage[]> {
+	return queryAll(
+		fetcher,
+		apiKey,
+		DATABASE_VERSION,
+		`https://api.notion.com/v1/databases/${databaseId}/query`,
+		publishedFilter(statusType),
+		'query database'
+	);
 }
 
 export async function fetchPublishedPages(
@@ -169,17 +210,31 @@ export async function fetchPublishedPages(
 				'Notion-Version': DATA_SOURCE_VERSION
 			}
 		});
-		const body = await readJson(retrieved);
-		const sources = Array.isArray(body.data_sources) ? body.data_sources : [];
-		const first = sources[0] as { id?: string } | undefined;
-		if (first?.id) dataSourceId = first.id;
-		const properties = body.properties as Record<string, { type?: string }> | undefined;
-		statusType = properties?.Status?.type;
-	} catch {
+		const body = await readJson(retrieved, 'retrieve database');
+		dataSourceId = selectedDataSourceId(body);
+		statusType = statusTypeOf(body);
+	} catch (error) {
+		if (isAuthOrAccess(error)) throw error;
 		dataSourceId = '';
 	}
 
-	const filter = publishedFilter(statusType);
+	if (dataSourceId) {
+		try {
+			const retrieved = await fetcher(`https://api.notion.com/v1/data_sources/${dataSourceId}`, {
+				headers: {
+					Authorization: `Bearer ${apiKey}`,
+					'Notion-Version': DATA_SOURCE_VERSION
+				}
+			});
+			const body = await readJson(retrieved, 'retrieve data source');
+			const discovered = statusTypeOf(body);
+			if (discovered) statusType = discovered;
+		} catch (error) {
+			if (isAuthOrAccess(error)) throw error;
+			dataSourceId = '';
+		}
+	}
+
 	let pages: NotionPage[];
 	if (dataSourceId) {
 		try {
@@ -188,25 +243,15 @@ export async function fetchPublishedPages(
 				apiKey,
 				DATA_SOURCE_VERSION,
 				`https://api.notion.com/v1/data_sources/${dataSourceId}/query`,
-				filter
+				publishedFilter(statusType),
+				'query data source'
 			);
-		} catch {
-			pages = await queryAll(
-				fetcher,
-				apiKey,
-				DATABASE_VERSION,
-				`https://api.notion.com/v1/databases/${databaseId}/query`,
-				publishedFilter('select')
-			);
+		} catch (error) {
+			if (isAuthOrAccess(error)) throw error;
+			pages = await queryLegacyDatabase(fetcher, apiKey, databaseId, statusType);
 		}
 	} else {
-		pages = await queryAll(
-			fetcher,
-			apiKey,
-			DATABASE_VERSION,
-			`https://api.notion.com/v1/databases/${databaseId}/query`,
-			publishedFilter('select')
-		);
+		pages = await queryLegacyDatabase(fetcher, apiKey, databaseId, statusType);
 	}
 
 	return pages
@@ -238,7 +283,7 @@ async function listChildren(
 				'Notion-Version': DATABASE_VERSION
 			}
 		});
-		const body = await readJson(response);
+		const body = await readJson(response, 'list blocks');
 		const results = Array.isArray(body.results) ? (body.results as BlockRecord[]) : [];
 		blocks.push(...results);
 		if (!body.has_more || typeof body.next_cursor !== 'string') break;

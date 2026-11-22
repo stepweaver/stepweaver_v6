@@ -1,7 +1,12 @@
 import { fixtureArticleBlocks, fixtureEntries } from '$lib/writing/fixtures';
 import { toWritingEntries } from '$lib/writing/entries';
 import type { RenderBlock, WritingCatalog, WritingEntry } from '$lib/writing/types';
-import { fetchPageBlocks, fetchPublishedPages, type NotionFetcher } from './notion';
+import {
+	fetchPageBlocks,
+	fetchPublishedPages,
+	NotionRequestError,
+	type NotionFetcher
+} from './notion';
 
 const FRESH_MS = 300_000;
 
@@ -12,6 +17,14 @@ const blockCache = new Map<string, { at: number; blocks: RenderBlock[] }>();
 export function clearWritingCache(): void {
 	catalogCache.clear();
 	blockCache.clear();
+}
+
+function logWritingFailure(error: unknown, operation: string): void {
+	if (error instanceof NotionRequestError) {
+		console.error(error.operation, error.status);
+		return;
+	}
+	console.error(operation);
 }
 
 export type CatalogRequest = {
@@ -50,7 +63,8 @@ export async function getWritingCatalog(request: CatalogRequest = {}): Promise<W
 		const posts = toWritingEntries(pages);
 		catalogCache.set(cacheKey, { at: now, posts });
 		return { status: 'ok', stale: false, posts };
-	} catch {
+	} catch (error) {
+		logWritingFailure(error, 'fetch published pages');
 		if (cached) return { status: 'ok', stale: true, posts: cached.posts };
 		return { status: 'unavailable', stale: false, posts: [] };
 	}
@@ -76,7 +90,8 @@ export async function getArticleBlocks(
 		const blocks = await fetchPageBlocks(fetcher, apiKey, pageId);
 		blockCache.set(pageId, { at: now, blocks });
 		return { status: 'ok', blocks };
-	} catch {
+	} catch (error) {
+		logWritingFailure(error, 'fetch page blocks');
 		if (cached) return { status: 'ok', blocks: cached.blocks };
 		return { status: 'unavailable', blocks: [] };
 	}

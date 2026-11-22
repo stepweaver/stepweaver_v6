@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { clearWritingCache, getArticleBlocks, getWritingCatalog } from './catalog';
 import { fetchPublishedPages, pageToRaw } from './notion';
 import { FIXTURE_DRAFT_TITLE } from '$lib/writing/fixtures';
@@ -22,10 +22,9 @@ describe('writing catalog', () => {
 
 	it('keeps the last good copy when Notion fails after a success', async () => {
 		clearWritingCache();
-		let calls = 0;
-		const fetcher = async () => {
-			calls += 1;
-			if (calls === 1) {
+		let queries = 0;
+		const fetcher = async (url: string) => {
+			if (url.includes('/databases/') && !url.includes('/query')) {
 				return new Response(
 					JSON.stringify({
 						data_sources: [{ id: 'ds-1' }],
@@ -34,7 +33,13 @@ describe('writing catalog', () => {
 					{ status: 200 }
 				);
 			}
-			if (calls === 2) {
+			if (url.includes('/data_sources/') && !url.includes('/query')) {
+				return new Response(JSON.stringify({ properties: { Status: { type: 'select' } } }), {
+					status: 200
+				});
+			}
+			queries += 1;
+			if (queries === 1) {
 				return new Response(
 					JSON.stringify({
 						results: [
@@ -102,7 +107,7 @@ describe('writing catalog', () => {
 
 	it('queries the data source and still drops a non-published row', async () => {
 		const pages = await fetchPublishedPages(
-			async (url) => {
+			async (url, init) => {
 				if (url.includes('/databases/')) {
 					return new Response(
 						JSON.stringify({
@@ -112,11 +117,14 @@ describe('writing catalog', () => {
 						{ status: 200 }
 					);
 				}
-				const request = JSON.parse(
-					(await Promise.resolve(url), '{"filter":{"property":"Status"}}')
-				);
+				if (!url.includes('/query')) {
+					return new Response(JSON.stringify({ properties: { Status: { type: 'select' } } }), {
+						status: 200
+					});
+				}
+				const request = JSON.parse(String(init?.body));
 				expect(url).toContain('/data_sources/source-1/query');
-				expect(request).toBeTruthy();
+				expect(request.filter).toEqual({ property: 'Status', select: { equals: 'Published' } });
 				return new Response(
 					JSON.stringify({
 						results: [
@@ -141,6 +149,129 @@ describe('writing catalog', () => {
 			'db'
 		);
 		expect(pages.map((page) => page.title)).toEqual(['Visible']);
+	});
+
+	it('reads a status property from the data source when the database response has none', async () => {
+		const calls: string[] = [];
+		const pages = await fetchPublishedPages(
+			async (url, init) => {
+				calls.push(url);
+				const version = new Headers(init?.headers).get('Notion-Version');
+				if (url.endsWith('/databases/db')) {
+					expect(version).toBe('2025-09-03');
+					return new Response(
+						JSON.stringify({ data_sources: [{ id: 'source-status', name: 'codex' }] }),
+						{ status: 200 }
+					);
+				}
+				if (url.endsWith('/data_sources/source-status')) {
+					expect(version).toBe('2025-09-03');
+					return new Response(JSON.stringify({ properties: { Status: { type: 'status' } } }), {
+						status: 200
+					});
+				}
+				expect(url).toBe('https://api.notion.com/v1/data_sources/source-status/query');
+				expect(version).toBe('2025-09-03');
+				expect(JSON.parse(String(init?.body)).filter).toEqual({
+					property: 'Status',
+					status: { equals: 'Published' }
+				});
+				return new Response(
+					JSON.stringify({
+						results: [
+							{
+								id: 'published-status',
+								created_time: '2026-04-01T00:00:00.000Z',
+								last_edited_time: '2026-04-02T00:00:00.000Z',
+								properties: {
+									Title: { type: 'title', title: [{ plain_text: 'Status note' }] },
+									Status: { type: 'status', status: { name: 'Published' } }
+								}
+							}
+						],
+						has_more: false
+					}),
+					{ status: 200 }
+				);
+			},
+			'token',
+			'db'
+		);
+		expect(calls).toEqual([
+			'https://api.notion.com/v1/databases/db',
+			'https://api.notion.com/v1/data_sources/source-status',
+			'https://api.notion.com/v1/data_sources/source-status/query'
+		]);
+		expect(pages.map((page) => page.title)).toEqual(['Status note']);
+	});
+
+	it('keeps the legacy database query when data source discovery fails', async () => {
+		const pages = await fetchPublishedPages(
+			async (url, init) => {
+				if (!init?.method) return new Response('old api', { status: 400 });
+				expect(url).toBe('https://api.notion.com/v1/databases/db/query');
+				expect(new Headers(init.headers).get('Notion-Version')).toBe('2022-06-28');
+				expect(JSON.parse(String(init.body)).filter).toEqual({
+					property: 'Status',
+					select: { equals: 'Published' }
+				});
+				return new Response(
+					JSON.stringify({
+						results: [
+							{
+								id: 'legacy-1',
+								created_time: '2026-01-01T00:00:00.000Z',
+								properties: {
+									Title: { type: 'title', title: [{ plain_text: 'Legacy note' }] },
+									Status: { type: 'select', select: { name: 'Published' } }
+								}
+							}
+						],
+						has_more: false
+					}),
+					{ status: 200 }
+				);
+			},
+			'token',
+			'db'
+		);
+		expect(pages.map((page) => page.title)).toEqual(['Legacy note']);
+	});
+
+	it('surfaces an access failure and logs only the operation and status', async () => {
+		clearWritingCache();
+		const urls: string[] = [];
+		const logged: unknown[][] = [];
+		const spy = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
+			logged.push(args);
+		});
+		try {
+			const catalog = await getWritingCatalog({
+				apiKey: 'test-key',
+				databaseId: 'db-locked',
+				now: 8_000,
+				fetcher: async (url) => {
+					urls.push(url);
+					if (url.includes('/databases/') && !url.includes('/query')) {
+						return new Response(JSON.stringify({ data_sources: [{ id: 'ds-locked' }] }), {
+							status: 200
+						});
+					}
+					if (!url.includes('/query')) {
+						return new Response(JSON.stringify({ properties: { Status: { type: 'status' } } }), {
+							status: 200
+						});
+					}
+					return new Response('integration token rejected', { status: 403 });
+				}
+			});
+			expect(catalog.status).toBe('unavailable');
+			expect(catalog.posts).toEqual([]);
+			expect(urls.some((url) => url.includes('/databases/db-locked/query'))).toBe(false);
+			expect(logged).toEqual([['query data source', 403]]);
+		} finally {
+			spy.mockRestore();
+		}
 	});
 
 	it('reads optional editorial fields and still maps a note that lacks them', () => {
