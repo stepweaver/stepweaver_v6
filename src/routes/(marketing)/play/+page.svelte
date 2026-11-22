@@ -3,7 +3,7 @@
 		{
 			href: '/terminal',
 			label: 'Terminal',
-			description: 'Command console: résumé, writing, navigation, dice, weather, contact, and λlambda.'
+			description: 'Command console: résumé, writing, navigation, dice, weather, contact, λlambda, blackjack, and the adventure.'
 		},
 		{
 			href: '/field-journal',

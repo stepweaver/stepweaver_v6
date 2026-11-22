@@ -16,7 +16,7 @@ import {
 	parseCommand
 } from './commands';
 
-const ABSENT = ['blackjack', 'zork'];
+const ABSENT = ['carrier', 'fieldlog'];
 
 function sequence(values: number[]) {
 	const pending = [...values];
@@ -40,6 +40,8 @@ describe('terminal commands', () => {
 			'weather',
 			'contact',
 			'chat',
+			'blackjack',
+			'zork',
 			'cancel'
 		]);
 		const help = helpLines()
@@ -72,10 +74,10 @@ describe('terminal commands', () => {
 	it('clears via a flag and explains an unknown command', () => {
 		expect(dispatchCommand('clear')).toEqual({ lines: [], clear: true });
 		expect(dispatchCommand('   ')).toEqual({ lines: [] });
-		const unknown = dispatchCommand('zork --list');
+		const unknown = dispatchCommand('modem --list');
 		expect(unknown.clear).toBeUndefined();
 		expect(unknown.lines.map((entry) => entry.content)).toEqual([
-			'Command not found: zork',
+			'Command not found: modem',
 			"Type 'help' for available commands."
 		]);
 	});
@@ -170,7 +172,8 @@ describe('terminal commands', () => {
 			'roll',
 			'weather',
 			'contact',
-			'chat'
+			'chat',
+			'blackjack'
 		]);
 	});
 });

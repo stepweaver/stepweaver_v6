@@ -136,7 +136,17 @@ The existing terminal check still finds one circuit canvas, one λ canvas, and a
 
 `contact` walks the same field rules as the contact form. Those rules live in `src/lib/contact/fields.ts` so the terminal client does not import server code. In the browser, a bad email stays on the email step, and `cancel` prints `Contact form cancelled.` The full send, including the Turnstile widget and mock mail adapter, was not clicked through in this pass.
 
-`chat` and the site chat button both post to `/api/chat`. Playwright blanks `GROQ_API_KEY` and `OPENAI_API_KEY`, so the reply is the public brief: it includes the public title and does not include λledger, Silent Auction, or Parcel Sweep. A provider HTTP 500 is covered by the unit test and returns `could not reach the model` without clearing the session. The site chat panel opens on a 1440-wide page and a 390-wide page, and it sits on the bottom left so the command palette trigger does not cover it. A live model response and a physical phone keyboard were not checked. Blackjack and the adventure are not in this pass.
+`chat` and the site chat button both post to `/api/chat`. Playwright blanks `GROQ_API_KEY` and `OPENAI_API_KEY`, so the reply is the public brief: it includes the public title and does not include λledger, Silent Auction, or Parcel Sweep. A provider HTTP 500 is covered by the unit test and returns `could not reach the model` without clearing the session. The site chat panel opens on a 1440-wide page and a 390-wide page, and it sits on the bottom left so the command palette trigger does not cover it. A live model response and a physical phone keyboard were not checked.
+
+### Blackjack and the adventure
+
+`bj` and `blackjack` open the same game. The dealer stands on 17. `hit` / `h`, `stand` / `s`, `deal` / `new`, `help` / `?`, and `exit` / `quit` / `cancel` match the earlier table. Leaving and starting again keeps the score. `Left blackjack.` returns to the shell, and the prompt shows `[blackjack]` during the hand.
+
+`zork` prints `Launching terminal adventure.` and opens at West of House. `save` writes `stepweaver-adventure-save-v1` with schema version 1 and says `Game saved.` `restart` says `Game restarted.` `restore` and `load` say `Restored.` and describe the saved room. A missing save says `No saved game found.` `exit` and `cancel` say `Left the adventure.` and return to the shell. Escape says `Returned to normal shell.`
+
+The early path still opens the mailbox, takes the leaflet, and reaches the kitchen. Dropping or putting the prism in the living-room trophy case scores 100 and says the adventure is completed. Putting it underground does not. A second placement after victory does not add points. Opening a carried sack still yields the garlic. The world graph has no dangling exits.
+
+Checked in the unit tests and through `/terminal` at 1440×900 and 390×700. A physical phone keyboard was not used.
 
 ## Visual tokens
 

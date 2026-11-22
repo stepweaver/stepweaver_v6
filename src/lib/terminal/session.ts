@@ -1,6 +1,13 @@
 import { bannerLines, dispatchCommand, PROMPT, type DispatchContext } from './commands';
 import { advanceContact } from './contact-wizard';
 import { runCodexCommand } from './codex';
+import { openBlackjack, playBlackjack, type BlackjackState } from './games/blackjack';
+import {
+	openingAdventure,
+	playAdventure,
+	type AdventureState,
+	type AdventureStorage
+} from './games/adventure';
 import {
 	createHistory,
 	recallNewer,
@@ -21,6 +28,8 @@ export type Session = {
 	effect: ShellEffect | null;
 	contact: ContactDraft | null;
 	weather: { options: WeatherOption[]; forecast: boolean } | null;
+	blackjack: BlackjackState | null;
+	adventure: AdventureState | null;
 };
 
 function stamp(session: Session, lines: TerminalLine[]): SessionLine[] {
@@ -47,7 +56,9 @@ export function createSession(): Session {
 		mode: 'shell',
 		effect: null,
 		contact: null,
-		weather: null
+		weather: null,
+		blackjack: null,
+		adventure: null
 	};
 	session.lines = stamp(session, bannerLines());
 	return session;
@@ -66,7 +77,9 @@ export function submitLine(session: Session, context: DispatchContext = {}): Ses
 		mode: session.mode,
 		effect: null,
 		contact: session.contact,
-		weather: session.weather
+		weather: session.weather,
+		blackjack: session.blackjack,
+		adventure: session.adventure
 	};
 	const echo: TerminalLine = { content: `${PROMPT} ${session.input}`, variant: 'prompt' };
 
@@ -85,6 +98,22 @@ export function submitLine(session: Session, context: DispatchContext = {}): Ses
 		next.weather = choice.stay ? session.weather : null;
 		next.effect = choice.effect ?? null;
 		next.lines = [...session.lines, ...stamp(next, [echo, ...choice.lines])];
+		return next;
+	}
+
+	if (session.mode === 'blackjack' && session.blackjack) {
+		const result = playBlackjack(session.blackjack, session.input, context.random ?? Math.random);
+		next.blackjack = result.state;
+		next.mode = result.exit ? 'shell' : 'blackjack';
+		next.lines = [...session.lines, ...stamp(next, [echo, ...result.lines])];
+		return next;
+	}
+
+	if (session.mode === 'adventure' && session.adventure) {
+		const result = playAdventure(session.adventure, session.input, adventureStorage(context));
+		next.adventure = result.state;
+		next.mode = result.exit ? 'shell' : 'adventure';
+		next.lines = [...session.lines, ...stamp(next, [echo, ...result.lines])];
 		return next;
 	}
 
@@ -108,6 +137,20 @@ export function submitLine(session: Session, context: DispatchContext = {}): Ses
 		next.contact = null;
 		next.weather = null;
 		next.lines = stamp(next, bannerLines());
+		return next;
+	}
+	if (result.enter === 'blackjack') {
+		const opened = openBlackjack(session.blackjack, context.random ?? Math.random);
+		next.mode = 'blackjack';
+		next.blackjack = opened.state;
+		next.lines = [...session.lines, ...stamp(next, [echo, ...result.lines, ...opened.lines])];
+		return next;
+	}
+	if (result.enter === 'adventure') {
+		const opened = openingAdventure();
+		next.mode = 'adventure';
+		next.adventure = opened.state;
+		next.lines = [...session.lines, ...stamp(next, [echo, ...result.lines, ...opened.lines])];
 		return next;
 	}
 	next.mode = result.enter ?? 'shell';
@@ -160,6 +203,34 @@ function chooseWeather(
 		effect: { type: 'weather-at', lat: option.lat, lon: option.lon, forecast: selection.forecast },
 		stay: false
 	};
+}
+
+function adventureStorage(context: DispatchContext): AdventureStorage | null {
+	if (context.adventureStorage !== undefined) return context.adventureStorage;
+	if (typeof localStorage === 'undefined') return null;
+	return localStorage;
+}
+
+export function cancelMode(session: Session): Session {
+	if (session.mode === 'shell') return replaceInput(session, '');
+	const lines: TerminalLine[] =
+		session.mode === 'contact'
+			? [{ content: 'Contact form cancelled.', variant: 'dimmed' }]
+			: session.mode === 'weather'
+				? [{ content: 'Selection cancelled.', variant: 'dimmed' }]
+				: [{ content: 'Returned to normal shell.', variant: 'dimmed' }];
+	const next: Session = {
+		...session,
+		input: '',
+		mode: 'shell',
+		effect: null,
+		contact: session.mode === 'contact' ? null : session.contact,
+		weather: session.mode === 'weather' ? null : session.weather,
+		adventure: session.mode === 'adventure' ? null : session.adventure,
+		lines: []
+	};
+	next.lines = [...session.lines, ...stamp(next, lines)];
+	return next;
 }
 
 export function moveOlder(session: Session): Session {

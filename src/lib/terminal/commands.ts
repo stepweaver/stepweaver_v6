@@ -8,6 +8,7 @@ import {
 	type DieSource
 } from '$lib/dice/engine';
 import { startContact } from './contact-wizard';
+import type { AdventureStorage } from './games/adventure';
 import { codexOpening, type CodexLibrary } from './codex';
 import { destinationNames, resolveDestination } from './routes';
 import type { ShellEffect, TerminalLine } from './types';
@@ -20,7 +21,7 @@ export type { LineVariant, ShellEffect, ShellMode, TerminalLine } from './types'
 export type CommandResult = {
 	lines: TerminalLine[];
 	clear?: boolean;
-	enter?: 'codex' | 'contact';
+	enter?: 'codex' | 'contact' | 'blackjack' | 'adventure';
 	effect?: ShellEffect;
 	contact?: ReturnType<typeof startContact>['draft'];
 };
@@ -42,6 +43,8 @@ export type DispatchContext = {
 	rollDie?: DieSource;
 	now?: () => string;
 	clock?: () => number;
+	random?: () => number;
+	adventureStorage?: AdventureStorage | null;
 };
 
 type CommandSpec = {
@@ -87,6 +90,12 @@ const MODULES: readonly CommandModule[] = [
 		tag: 'MOD-06',
 		body: 'Ask the public-site assistant. The same backend answers the site chat.',
 		command: 'chat'
+	},
+	{
+		title: 'Games',
+		tag: 'MOD-07',
+		body: 'Blackjack, and a text adventure with save, restore, and restart.',
+		command: 'blackjack'
 	}
 ];
 
@@ -288,6 +297,24 @@ const COMMANDS: readonly CommandSpec[] = [
 		run: (args) => chatLines(args)
 	},
 	{
+		name: 'blackjack',
+		usage: 'blackjack | bj',
+		summary: 'Play blackjack',
+		run: () => ({ enter: 'blackjack', lines: [] })
+	},
+	{
+		name: 'zork',
+		usage: 'zork',
+		summary: 'Play the terminal adventure',
+		run: () => ({
+			enter: 'adventure',
+			lines: [
+				line('Launching terminal adventure.', 'dimmed'),
+				line('')
+			]
+		})
+	},
+	{
 		name: 'cancel',
 		usage: 'cancel',
 		summary: 'Leave the current mode',
@@ -338,7 +365,8 @@ export function parseCommand(input: string): { name: string; args: string[] } | 
 export function dispatchCommand(input: string, context: DispatchContext = {}): CommandResult {
 	const parsed = parseCommand(input);
 	if (!parsed) return { lines: [] };
-	const command = COMMANDS.find((entry) => entry.name === parsed.name);
+	const name = parsed.name === 'bj' ? 'blackjack' : parsed.name;
+	const command = COMMANDS.find((entry) => entry.name === name);
 	if (!command) {
 		return {
 			lines: [

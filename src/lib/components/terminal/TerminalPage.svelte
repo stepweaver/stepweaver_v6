@@ -93,8 +93,8 @@
 				<p class="panel-label">SYS.BRIEF</p>
 				<p class="brief-title">Interactive terminal.</p>
 				<p class="brief-copy">
-					Résumé, published writing, site navigation, and dice. The same pages the rest of the site
-					uses.
+					Résumé, published writing, navigation, dice, weather, contact, λlambda, blackjack, and the
+					adventure. The same pages the rest of the site uses.
 				</p>
 				<p class="brief-hint">Type <span>help</span> to get started.</p>
 			</section>

@@ -26,4 +26,4 @@ export type ShellEffect =
 	| { type: 'contact-send'; draft: ContactDraft }
 	| { type: 'chat'; message: string };
 
-export type ShellMode = 'shell' | 'codex' | 'contact' | 'weather';
+export type ShellMode = 'shell' | 'codex' | 'contact' | 'weather' | 'blackjack' | 'adventure';

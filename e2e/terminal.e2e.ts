@@ -22,7 +22,8 @@ test('help, resume, history, and clear run in the console', async ({ page }) => 
 	await expect(page.locator('.sidebar')).toContainText('Look up a forecast');
 	await expect(page.locator('.sidebar')).toContainText('Send a message');
 	await expect(page.locator('.sidebar')).toContainText('Ask λlambda');
-	await expect(page.locator('.sidebar')).not.toContainText('blackjack');
+	await expect(page.locator('.sidebar')).toContainText('Play blackjack');
+	await expect(page.locator('.sidebar')).toContainText('Play the terminal adventure');
 	await expect(page.locator('.mobile-guide')).toBeHidden();
 
 	const product = await renderedText(page.locator('.product-name'));
@@ -41,8 +42,8 @@ test('help, resume, history, and clear run in the console', async ({ page }) => 
 	await expect(transcript).toContainText('weather [city]: Look up a forecast');
 	await expect(transcript).toContainText('contact: Send a message');
 	await expect(transcript).toContainText('chat <message>: Ask λlambda');
-	await expect(transcript).not.toContainText('blackjack');
-	await expect(transcript).not.toContainText('zork');
+	await expect(transcript).toContainText('blackjack | bj: Play blackjack');
+	await expect(transcript).toContainText('zork: Play the terminal adventure');
 
 	await input.fill('nope');
 	await input.press('Enter');
@@ -115,7 +116,8 @@ test('narrow console keeps the command guide and the prompt on screen', async ({
 		await expect(guide).toContainText('View experience');
 		await expect(guide).toContainText('Clear screen');
 		await expect(guide).toContainText('Look up a forecast');
-		await expect(guide).not.toContainText('blackjack');
+		await expect(guide).toContainText('Play blackjack');
+		await expect(guide).toContainText('Play the terminal adventure');
 
 		const input = page.getByRole('textbox', { name: 'Command' });
 		await expect(input).toBeVisible();

@@ -134,8 +134,8 @@
 		<ActionLink href={identity.links.resume} label="Resume" />
 	</div>
 	<p class="quiet">
-		The terminal runs the résumé, published writing, navigation, dice, weather, contact, and
-		<LambdaText text="λlambda" />.
+		The terminal runs the résumé, published writing, navigation, dice, weather, contact,
+		<LambdaText text="λlambda" />, blackjack, and the adventure.
 		<a href="/terminal">Open the terminal</a>
 		·
 		<a href="/lab">Lab status</a>

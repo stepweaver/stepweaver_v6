@@ -6,6 +6,7 @@
 	import type { CodexLibrary } from '$lib/terminal/codex';
 	import { performEffect } from '$lib/terminal/effects';
 	import {
+		cancelMode,
 		createSession,
 		moveNewer,
 		moveOlder,
@@ -60,6 +61,11 @@
 	function onKeydown(event: KeyboardEvent) {
 		const typed = inputEl?.value ?? session.input;
 		if (event.isComposing) return;
+		if (event.key === 'Escape') {
+			event.preventDefault();
+			session = cancelMode(replaceInput(session, typed));
+			return;
+		}
 		if (event.key === 'Enter') {
 			event.preventDefault();
 			const screen = screenEl;
@@ -159,7 +165,7 @@
 	</div>
 
 	<div class="prompt-row">
-		<span class="prompt">{PROMPT}</span>
+		<span class="prompt">{session.mode === 'shell' ? PROMPT : `[${session.mode}]`}</span>
 		{#if session.mode === 'contact'}
 			<div class="bot-check" bind:this={turnstileEl}></div>
 		{/if}
