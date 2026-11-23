@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { allowMemoryRateLimit } from '$lib/server/contact/rate-limit';
+import { publicApiLimit } from '$lib/server/security/public-api';
 import { readServerEnv } from '$lib/server/env';
 import { lookupWeather } from '$lib/server/weather/lookup';
 import type { RequestHandler } from './$types';
@@ -7,14 +7,12 @@ import type { RequestHandler } from './$types';
 const HEADERS = { 'cache-control': 'no-store' };
 
 export const GET: RequestHandler = async (event) => {
-	let address: string;
-	try {
-		address = event.getClientAddress();
-	} catch {
-		address = 'unknown';
-	}
-	if (!allowMemoryRateLimit(`weather:${address}`, 30, 60_000, Date.now())) {
-		return json({ error: 'Rate limit exceeded' }, { status: 429, headers: HEADERS });
+	const limit = await publicApiLimit(event, 'weather');
+	if (limit !== 200) {
+		return json(
+			{ error: limit === 429 ? 'Rate limit exceeded' : 'Weather is temporarily unavailable.' },
+			{ status: limit, headers: limit === 429 ? { ...HEADERS, 'retry-after': '60' } : HEADERS }
+		);
 	}
 	const result = await lookupWeather({
 		apiKey: readServerEnv(event.platform, 'OPENWEATHER_API_KEY'),

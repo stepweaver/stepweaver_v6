@@ -35,7 +35,10 @@
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({
 					channel: 'widget',
-					messages: turns.map((turn) => ({ role: turn.role, content: turn.content }))
+					messages: turns
+						.filter((turn) => !turn.error)
+						.slice(-8)
+						.map((turn) => ({ role: turn.role, content: turn.content }))
 				})
 			});
 			const data = (await response.json()) as { message?: string; error?: string };

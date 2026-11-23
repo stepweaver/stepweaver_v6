@@ -19,6 +19,16 @@
 	"send_email": [{ "name": "CONTACT_EMAIL" }],
 	"ratelimits": [
 		{
+			"name": "CHAT_RATE_LIMITER",
+			"namespace_id": "1002",
+			"simple": { "limit": 20, "period": 60 }
+		},
+		{
+			"name": "WEATHER_RATE_LIMITER",
+			"namespace_id": "1003",
+			"simple": { "limit": 30, "period": 60 }
+		},
+		{
 			"name": "CONTACT_RATE_LIMITER",
 			"namespace_id": "1001",
 			"simple": {

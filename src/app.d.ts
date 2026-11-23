@@ -3,7 +3,10 @@
 declare global {
 	namespace App {
 		interface Platform {
-			env: Env;
+			env: Env & {
+				CHAT_RATE_LIMITER?: RateLimit;
+				WEATHER_RATE_LIMITER?: RateLimit;
+			};
 			cf: CfProperties;
 			ctx: ExecutionContext;
 		}

@@ -13,6 +13,7 @@ export async function verifyTurnstileToken(
 				response: token,
 				remoteip: ip
 			}),
+			redirect: 'error',
 			signal: AbortSignal.timeout(8000)
 		});
 		if (!response.ok) return false;

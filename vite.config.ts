@@ -14,7 +14,22 @@ export default defineConfig({
 			// adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
 			// If your environment is not supported, or you settled on a specific environment, switch out the adapter.
 			// See https://svelte.dev/docs/kit/adapters for more information about adapters.
-			adapter: adapter()
+			adapter: adapter(),
+			csp: {
+				mode: 'auto',
+				directives: {
+					'default-src': ['self'],
+					'script-src': ['self', 'https://challenges.cloudflare.com'],
+					'style-src': ['self', 'unsafe-inline'],
+					'img-src': ['self', 'https:', 'data:'],
+					'connect-src': ['self', 'https://challenges.cloudflare.com'],
+					'frame-src': ['https://challenges.cloudflare.com'],
+					'frame-ancestors': ['none'],
+					'object-src': ['none'],
+					'base-uri': ['none'],
+					'form-action': ['self']
+				}
+			}
 		})
 	],
 	test: {

@@ -47,4 +47,29 @@ describe('λlambda', () => {
 		if (result.ok) return;
 		expect(result.message).toContain('could not reach the model');
 	});
+	it('falls back on a network failure and treats visitor history as untrusted', async () => {
+		const providers: string[] = [];
+		const result = await completeLambda({
+			brief: 'Use the public brief.',
+			message: 'Can you elaborate?',
+			history: [{ role: 'assistant', content: 'Earlier answer' }],
+			groqKey: 'groq-test-key',
+			openaiKey: 'openai-test-key',
+			fetch: async (url, init) => {
+				const host = new URL(String(url)).hostname;
+				providers.push(host);
+				if (host === 'api.groq.com') throw new Error('Network failure');
+				const payload = JSON.parse(String(init?.body));
+				expect(payload.messages.map(({ role }: { role: string }) => role)).toEqual([
+					'system',
+					'user',
+					'user'
+				]);
+				expect(payload.messages[1].content).toContain('Earlier answer');
+				return Response.json({ choices: [{ message: { content: 'A public answer.' } }] });
+			}
+		});
+		expect(providers).toEqual(['api.groq.com', 'api.openai.com']);
+		expect(result).toEqual({ ok: true, message: 'A public answer.' });
+	});
 });

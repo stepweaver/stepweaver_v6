@@ -1,3 +1,4 @@
+import { readBoundedBody } from '$lib/server/security/bounded-body';
 import { identity } from '$lib/data/identity';
 import { createMockMailer, renderContactMail, type Mailer, type OutboundMail } from './mail';
 import { allowMemoryRateLimit, CONTACT_RATE_LIMIT, CONTACT_RATE_WINDOW_MS } from './rate-limit';
@@ -51,7 +52,7 @@ export function originAllowed(request: Request, dev: boolean): boolean {
 	try {
 		const originUrl = new URL(origin);
 		const requestUrl = new URL(request.url);
-		if (originUrl.host === requestUrl.host) return true;
+		if (originUrl.origin === requestUrl.origin) return true;
 		if (dev && (originUrl.hostname === 'localhost' || originUrl.hostname === '127.0.0.1')) {
 			return true;
 		}
@@ -82,8 +83,12 @@ export async function submitContact(input: {
 
 	let form: FormData;
 	try {
-		form = await input.request.formData();
-	} catch {
+		const bytes = await readBoundedBody(input.request, MAX_BODY);
+		form = await new Response(bytes, { headers: input.request.headers }).formData();
+	} catch (error) {
+		if (error instanceof RangeError) {
+			return failure(413, 'The message is too large.', emptyValues());
+		}
 		return failure(400, 'The message was not sent.', emptyValues());
 	}
 

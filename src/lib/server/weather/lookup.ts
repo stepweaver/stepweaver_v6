@@ -31,6 +31,7 @@ export async function lookupWeather(input: LookupInput): Promise<WeatherLookup> 
 		}
 		const query = input.query?.trim() ?? '';
 		if (!query) return { ok: false, status: 400, error: 'Missing a city or coordinates.' };
+		if (query.length > 120) return { ok: false, status: 400, error: 'City name is too long.' };
 		const found = await geocode(fetcher, apiKey, query);
 		if (!found.length) return { ok: false, status: 404, error: 'Location not found.' };
 		if (found.length > 1) return { ok: true, status: 200, choices: found };
@@ -39,7 +40,7 @@ export async function lookupWeather(input: LookupInput): Promise<WeatherLookup> 
 		const report = await reportAt(fetcher, apiKey, city.lat, city.lon, city.label, forecast);
 		return { ok: true, status: 200, report };
 	} catch {
-		return { ok: false, status: 500, error: 'Failed to fetch weather data.' };
+		return { ok: false, status: 502, error: 'Failed to fetch weather data.' };
 	}
 }
 
@@ -56,9 +57,13 @@ function validLatLon(lat: number | null, lon: number | null): boolean {
 	);
 }
 
-async function geocode(fetcher: typeof fetch, apiKey: string, query: string): Promise<WeatherChoice[]> {
+async function geocode(
+	fetcher: typeof fetch,
+	apiKey: string,
+	query: string
+): Promise<WeatherChoice[]> {
 	const url = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=5&appid=${encodeURIComponent(apiKey)}`;
-	const response = await fetcher(url);
+	const response = await fetcher(url, { signal: AbortSignal.timeout(5000), redirect: 'error' });
 	if (!response.ok) throw new Error('geocode failed');
 	const data = (await response.json()) as {
 		lat?: number;
@@ -86,7 +91,10 @@ async function reportAt(
 	forecast: boolean
 ): Promise<WeatherReport> {
 	const currentUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=imperial&appid=${encodeURIComponent(apiKey)}`;
-	const currentResponse = await fetcher(currentUrl);
+	const currentResponse = await fetcher(currentUrl, {
+		signal: AbortSignal.timeout(5000),
+		redirect: 'error'
+	});
 	if (!currentResponse.ok) throw new Error('weather failed');
 	const current = (await currentResponse.json()) as {
 		name?: string;
@@ -96,7 +104,11 @@ async function reportAt(
 		main?: { temp?: number; humidity?: number };
 		wind?: { speed?: number };
 	};
-	const tempF = Math.round(current.main?.temp ?? 0);
+	const rawTemp = current.main?.temp;
+	if (typeof rawTemp !== 'number' || !Number.isFinite(rawTemp)) {
+		throw new Error('Current temperature is missing');
+	}
+	const tempF = Math.round(rawTemp);
 	const place =
 		label ||
 		[current.name, current.sys?.country].filter(Boolean).join(', ') ||
@@ -111,7 +123,7 @@ async function reportAt(
 		timezoneOffsetSeconds: current.timezone ?? 0,
 		forecast: []
 	};
-	if (forecast) report.forecast = await forecastAt(fetcher, apiKey, lat, lon);
+	if (forecast) report.forecast = await forecastAt(fetcher, apiKey, lat, lon).catch(() => []);
 	return report;
 }
 
@@ -122,7 +134,7 @@ async function forecastAt(
 	lon: number
 ): Promise<ForecastSample[]> {
 	const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=imperial&appid=${encodeURIComponent(apiKey)}`;
-	const response = await fetcher(url);
+	const response = await fetcher(url, { signal: AbortSignal.timeout(5000), redirect: 'error' });
 	if (!response.ok) return [];
 	const data = (await response.json()) as {
 		list?: {
