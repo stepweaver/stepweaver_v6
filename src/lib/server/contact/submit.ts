@@ -153,7 +153,17 @@ export async function submitContact(input: {
 			replyTo: parsed.value.email,
 			...content
 		});
-	} catch {
+	} catch (error) {
+		const code =
+			error instanceof Error && 'code' in error && typeof error.code === 'string'
+				? error.code
+				: undefined;
+
+		console.error('Contact email send failed', {
+			code,
+			errorType: error instanceof Error ? error.name : 'UnknownError'
+		});
+
 		return failure(502, 'The message was not sent. Nothing was delivered.', values);
 	}
 
