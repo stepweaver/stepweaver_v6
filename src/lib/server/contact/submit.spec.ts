@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMockMailer } from './mail';
 import { clearMemoryRateLimit } from './rate-limit';
 import { submitContact, type ContactEnv } from './submit';
@@ -128,10 +128,10 @@ describe('contact submission', () => {
 		expect(mailer.sent).toHaveLength(0);
 	});
 
-	it('fails closed in production when the rate limiter and email provider are missing', async () => {
+	it('fails closed in production without the rate limiter or a production mailer', async () => {
 		const missingLimit = await submit({
 			dev: false,
-			env: { turnstileSecret: 'secret', resendKey: 're_test', from: 'stephen@stepweaver.dev' }
+			env: { turnstileSecret: 'secret' }
 		});
 		expect(missingLimit.status).toBe(503);
 		expect(missingLimit.body.success).toBe(false);
@@ -147,44 +147,39 @@ describe('contact submission', () => {
 		expect(mockInProduction.body.success).toBe(false);
 	});
 
-	it('sends through Resend only when the provider accepts the message', async () => {
-		const calls: string[] = [];
-		const original = globalThis.fetch;
-		globalThis.fetch = (async (url: RequestInfo | URL, init?: RequestInit) => {
-			calls.push(String(url));
-			expect(init?.headers).toMatchObject({ Authorization: 'Bearer re_test' });
-			return new Response('{}', { status: 200 });
-		}) as typeof fetch;
-		try {
-			const sent = await submit({
-				dev: false,
-				env: {
-					turnstileSecret: 'secret',
-					resendKey: 're_test',
-					from: 'Stephen Weaver <stephen@stepweaver.dev>',
-					to: 'stephen@stepweaver.dev'
-				},
-				rateLimiter: { limit: async () => ({ success: true }) }
-			});
-			expect(sent.body.success).toBe(true);
-			expect(calls[0]).toBe('https://api.resend.com/emails');
+	it('sends through Cloudflare with the configured destination and visitor reply address', async () => {
+		const send = vi.fn().mockResolvedValue({ messageId: 'test-message' });
+		const contactEnv = {
+			turnstileSecret: 'secret',
+			email: { send },
+			from: 'contact@stepweaver.dev',
+			to: 'inbox@example.com'
+		};
+		const rateLimiter = { limit: async () => ({ success: true }) };
+		const sent = await submit({ dev: false, env: contactEnv, rateLimiter });
+		expect(sent.body.success).toBe(true);
+		expect(send).toHaveBeenCalledExactlyOnceWith({
+			from: 'contact@stepweaver.dev',
+			to: 'inbox@example.com',
+			replyTo: 'ada@example.com',
+			subject: 'Consulting inquiry from Ada Lovelace',
+			text: expect.stringContaining('The handoff between intake and scheduling'),
+			html: expect.stringContaining('The handoff between intake and scheduling')
+		});
 
-			globalThis.fetch = (async () => new Response('no', { status: 422 })) as typeof fetch;
-			const failed = await submit({
-				dev: false,
-				env: {
-					turnstileSecret: 'secret',
-					resendKey: 're_test',
-					from: 'stephen@stepweaver.dev'
-				},
-				rateLimiter: { limit: async () => ({ success: true }) },
-				ip: '203.0.113.11'
-			});
-			expect(failed.body.success).toBe(false);
-			expect(failed.status).toBe(502);
-		} finally {
-			globalThis.fetch = original;
-		}
+		send.mockRejectedValueOnce(new Error('Cloudflare rejected the message'));
+		const failed = await submit({ dev: false, env: contactEnv, rateLimiter });
+		expect(failed.body.success).toBe(false);
+		expect(failed.status).toBe(502);
+
+		send.mockClear();
+		const missingDestination = await submit({
+			dev: false,
+			env: { ...contactEnv, to: undefined },
+			rateLimiter
+		});
+		expect(missingDestination.status).toBe(503);
+		expect(send).not.toHaveBeenCalled();
 	});
 
 	it('rate limits repeated dev submissions', async () => {

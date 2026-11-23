@@ -12,18 +12,14 @@ export const actions: Actions = {
 		} catch {
 			clientAddress = 'unknown';
 		}
-		const platformEnv = event.platform?.env as
-			| {
-					CONTACT_RATE_LIMITER?: { limit(options: { key: string }): Promise<{ success: boolean }> };
-			  }
-			| undefined;
+		const platformEnv = event.platform?.env;
 		const result = await submitContact({
 			request: event.request,
 			clientAddress,
 			dev,
 			env: {
 				turnstileSecret: readServerEnv(event.platform, 'TURNSTILE_SECRET_KEY'),
-				resendKey: readServerEnv(event.platform, 'RESEND_API_KEY'),
+				email: platformEnv?.CONTACT_EMAIL,
 				from: readServerEnv(event.platform, 'CONTACT_FROM_EMAIL'),
 				to: readServerEnv(event.platform, 'CONTACT_TO_EMAIL'),
 				adapter: readServerEnv(event.platform, 'CONTACT_EMAIL_ADAPTER')

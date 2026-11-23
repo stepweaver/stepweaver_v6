@@ -16,6 +16,7 @@
 		"enabled": true
 	},
 	"upload_source_maps": true,
+	"send_email": [{ "name": "CONTACT_EMAIL" }],
 	"ratelimits": [
 		{
 			"name": "CONTACT_RATE_LIMITER",

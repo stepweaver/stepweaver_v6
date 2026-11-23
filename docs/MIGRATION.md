@@ -47,10 +47,12 @@ Done on `feat/m2-writing-contact-resume`, with the configuration gaps below.
 
 - Writing reads published Notion pages only. Drafts stay off the index, article routes, RSS, and sitemap. Cache is 300 seconds. A failed refresh keeps the last good copy. A failure with no copy says the archive is unavailable instead of empty. Missing credentials render a not-configured state and do not crash.
 - The live database has no Slug property. Ten published URLs audited on 2026-11-09 are frozen by page id. `/writing/p/{pageId}` redirects to the canonical slug.
-- Contact accepts consulting, hiring, and general intents. It validates on the server, rejects honeypot and oversized submissions, verifies Turnstile, and rate-limits. Resend is the HTTP sender. Production fails closed without the secret, a from-address, Turnstile, or the Workers rate-limit binding. `CONTACT_EMAIL_ADAPTER=mock` works only in development. Tests do not send real mail.
+- Contact accepts consulting, hiring, and general intents. It validates on the server, rejects honeypot and oversized submissions, verifies Turnstile, and rate-limits. The Worker sends through the `CONTACT_EMAIL` binding. Production fails closed without the email binding, sender and recipient addresses, Turnstile, or the Workers rate-limit binding. `CONTACT_EMAIL_ADAPTER=mock` works only in development. Tests do not send real mail.
 - The résumé page keeps every existing role, date, and education line. The visible title is Business Systems Developer & Systems Integration Consultant. `static/weaver_resume.pdf` is unchanged. `/resume/draft.pdf` is generated from `resume-data.ts` and labeled as a draft.
 
-Still required from Stephen before production mail or a live writing deploy: Notion token and database id as Worker secrets, a Turnstile site key and secret for the new hostname, a Resend API key with `stepweaver.dev` verified, `CONTACT_FROM_EMAIL` and `CONTACT_TO_EMAIL`, and approval of the draft PDF before it replaces the production file. Do not add DNS records for Resend in this pass.
+Still required from Stephen before production mail or a live writing deploy: Notion token and database id as Worker secrets, a Turnstile site key and secret for the new hostname, and approval of the draft PDF before it replaces the production file.
+
+For contact email, onboard the sender domain to [Cloudflare Email Service](https://developers.cloudflare.com/email-service/) and verify the destination inbox in the same Cloudflare account. Set `CONTACT_FROM_EMAIL` to a plain sender address such as `contact@stepweaver.dev` and `CONTACT_TO_EMAIL` to the verified destination. Add that destination as `destination_address` on the `CONTACT_EMAIL` entry in `wrangler.jsonc` to enforce it at the binding level. On staging, submit the form with Turnstile enabled, confirm the message arrives, and check that Reply addresses the test visitor.
 
 ## Milestone 1 status
 

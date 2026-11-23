@@ -49,26 +49,3 @@ export function createMockMailer(): Mailer & { sent: OutboundMail[] } {
 		}
 	};
 }
-
-export async function sendWithResend(
-	apiKey: string,
-	mail: OutboundMail,
-	fetchImpl: typeof fetch = fetch
-): Promise<void> {
-	const response = await fetchImpl('https://api.resend.com/emails', {
-		method: 'POST',
-		headers: {
-			Authorization: `Bearer ${apiKey}`,
-			'Content-Type': 'application/json'
-		},
-		body: JSON.stringify({
-			from: mail.from,
-			to: [mail.to],
-			reply_to: mail.replyTo,
-			subject: mail.subject,
-			html: mail.html,
-			text: mail.text
-		})
-	});
-	if (!response.ok) throw new Error('Email provider rejected the message');
-}

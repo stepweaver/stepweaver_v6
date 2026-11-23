@@ -97,7 +97,7 @@ Production route tree includes marketing, terminal, embed, and log groups. Publi
 
 Names only. Values are not stored in this repo.
 
-`NOTION_API_KEY`, `NOTION_BLOG_DB_ID`, `PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`, `CONTACT_FROM_EMAIL`, `CONTACT_TO_EMAIL`. `CONTACT_EMAIL_ADAPTER=mock` is development-only. The Worker rate limiter is `CONTACT_RATE_LIMITER` in `wrangler.jsonc` (5 requests per 60 seconds). Gmail SMTP from v5 is not used.
+`NOTION_API_KEY`, `NOTION_BLOG_DB_ID`, `PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `CONTACT_FROM_EMAIL`, `CONTACT_TO_EMAIL`. `CONTACT_EMAIL_ADAPTER=mock` is development-only. The Worker sends through the `CONTACT_EMAIL` binding. The Worker rate limiter is `CONTACT_RATE_LIMITER` in `wrangler.jsonc` (5 requests per 60 seconds). Gmail SMTP from v5 is not used.
 
 ## Project visibility
 

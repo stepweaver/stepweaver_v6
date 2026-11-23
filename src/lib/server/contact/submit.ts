@@ -1,5 +1,5 @@
 import { identity } from '$lib/data/identity';
-import { createMockMailer, renderContactMail, sendWithResend, type Mailer } from './mail';
+import { createMockMailer, renderContactMail, type Mailer, type OutboundMail } from './mail';
 import { allowMemoryRateLimit, CONTACT_RATE_LIMIT, CONTACT_RATE_WINDOW_MS } from './rate-limit';
 import { validateContactFields } from './schema';
 import { verifyTurnstileToken } from './turnstile';
@@ -9,7 +9,7 @@ const MIN_AGE_MS = 400;
 
 export type ContactEnv = {
 	turnstileSecret?: string;
-	resendKey?: string;
+	email?: { send(mail: OutboundMail): Promise<EmailSendResult> };
 	from?: string;
 	to?: string;
 	adapter?: string;
@@ -195,12 +195,11 @@ function resolveMailer(dev: boolean, env: ContactEnv): Mailer | null {
 		if (!dev) return null;
 		return sharedMock;
 	}
-	const key = env.resendKey?.trim();
-	const from = env.from?.trim();
-	if (!key || !from) return null;
+	const email = env.email;
+	if (!email || !env.from?.trim() || !env.to?.trim()) return null;
 	return {
 		async send(mail) {
-			await sendWithResend(key, { ...mail, from });
+			await email.send(mail);
 		}
 	};
 }
