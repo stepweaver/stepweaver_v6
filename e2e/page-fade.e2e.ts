@@ -79,7 +79,7 @@ async function settleLambda(page: Page) {
 function expectPhosphor(trace: FadeTrace | undefined) {
 	expect(trace).toMatchObject({
 		id: 'main',
-		duration: 160,
+		duration: 220,
 		easing: 'ease-out',
 		from: '0.6',
 		to: '1'
@@ -89,7 +89,7 @@ function expectPhosphor(trace: FadeTrace | undefined) {
 	expect(Number(samples[0]?.main)).toBeGreaterThan(0.55);
 	expect(Number(samples[0]?.main)).toBeLessThan(0.75);
 	expect(Number(samples[samples.length - 1]?.main)).toBe(1);
-	expect(samples[samples.length - 1]?.t).toBeGreaterThanOrEqual(160);
+	expect(samples[samples.length - 1]?.t).toBeGreaterThanOrEqual(220);
 	const header = samples[0]?.header;
 	const lambda = samples[0]?.lambda;
 	expect(header).toBe('1');
@@ -150,7 +150,7 @@ test('an internal page settles from 60% while the shell stays steady', async ({ 
 	await expect(page.getByRole('heading', { level: 1, name: 'Stephen Weaver' })).toBeVisible();
 	await page.waitForFunction(() => {
 		const latest = (window as unknown as { __fadeTraces?: FadeTrace[] }).__fadeTraces?.at(-1);
-		return (latest?.samples.at(-1)?.t ?? 0) >= 160;
+		return (latest?.samples.at(-1)?.t ?? 0) >= 220;
 	});
 	expectPhosphor((await traces(page)).at(-1));
 

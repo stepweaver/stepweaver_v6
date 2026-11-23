@@ -39,7 +39,10 @@ export async function lookupWeather(input: LookupInput): Promise<WeatherLookup> 
 		if (!city) return { ok: false, status: 404, error: 'Location not found.' };
 		const report = await reportAt(fetcher, apiKey, city.lat, city.lon, city.label, forecast);
 		return { ok: true, status: 200, report };
-	} catch {
+	} catch (error) {
+		console.error('Weather lookup failed', {
+			errorType: error instanceof Error ? error.name : 'UnknownError'
+		});
 		return { ok: false, status: 502, error: 'Failed to fetch weather data.' };
 	}
 }
@@ -63,8 +66,11 @@ async function geocode(
 	query: string
 ): Promise<WeatherChoice[]> {
 	const url = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=5&appid=${encodeURIComponent(apiKey)}`;
-	const response = await fetcher(url, { signal: AbortSignal.timeout(5000), redirect: 'error' });
-	if (!response.ok) throw new Error('geocode failed');
+	const response = await fetcher(url, { signal: AbortSignal.timeout(5000), redirect: 'manual' });
+	if (!response.ok) {
+		console.error('Weather lookup failed', { status: response.status });
+		throw new Error('geocode failed');
+	}
 	const data = (await response.json()) as {
 		lat?: number;
 		lon?: number;
@@ -93,7 +99,7 @@ async function reportAt(
 	const currentUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=imperial&appid=${encodeURIComponent(apiKey)}`;
 	const currentResponse = await fetcher(currentUrl, {
 		signal: AbortSignal.timeout(5000),
-		redirect: 'error'
+		redirect: 'manual'
 	});
 	if (!currentResponse.ok) throw new Error('weather failed');
 	const current = (await currentResponse.json()) as {
@@ -134,7 +140,7 @@ async function forecastAt(
 	lon: number
 ): Promise<ForecastSample[]> {
 	const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=imperial&appid=${encodeURIComponent(apiKey)}`;
-	const response = await fetcher(url, { signal: AbortSignal.timeout(5000), redirect: 'error' });
+	const response = await fetcher(url, { signal: AbortSignal.timeout(5000), redirect: 'manual' });
 	if (!response.ok) return [];
 	const data = (await response.json()) as {
 		list?: {

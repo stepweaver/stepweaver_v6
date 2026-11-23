@@ -64,8 +64,10 @@ export async function completeLambda(input: {
 				AbortSignal.any([signal, AbortSignal.timeout(9000)])
 			);
 			if (result.ok) return result;
-		} catch {
-			// Continue to the configured fallback on timeout, network, or response parsing errors.
+		} catch (error) {
+			console.error('Lambda provider failed', {
+				errorType: error instanceof Error ? error.name : 'UnknownError'
+			});
 		}
 	}
 	return { ok: false, message: OFFLINE };
@@ -88,10 +90,13 @@ async function completeChat(
 			max_tokens: 300,
 			messages: input.messages
 		}),
-		redirect: 'error',
+		redirect: 'manual',
 		signal
 	});
-	if (!response.ok) return { ok: false, message: OFFLINE };
+	if (!response.ok) {
+		console.error('Lambda provider failed', { status: response.status });
+		return { ok: false, message: OFFLINE };
+	}
 	const data = (await response.json()) as {
 		choices?: { message?: { content?: string } }[];
 	};

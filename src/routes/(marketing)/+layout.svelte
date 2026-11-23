@@ -32,7 +32,7 @@
 		}
 
 		pageFade = main.animate([{ opacity: 0.6 }, { opacity: 1 }], {
-			duration: 160,
+			duration: 220,
 			easing: 'ease-out'
 		});
 	});
