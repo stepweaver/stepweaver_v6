@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import SignatureBackground from '$lib/components/effects/SignatureBackground.svelte';
 	import CommandPalette from '$lib/components/site/CommandPalette.svelte';
+	import LambdaChat from '$lib/components/site/LambdaChat.svelte';
 	import Footer from '$lib/components/site/Footer.svelte';
 	import Navbar from '$lib/components/site/Navbar.svelte';
 	import { jsonLdScript } from '$lib/seo/json-ld';
@@ -55,6 +56,7 @@
 
 	{#if !consoleRoute}
 		<Footer />
+		<LambdaChat />
 	{/if}
 	<CommandPalette />
 </div>

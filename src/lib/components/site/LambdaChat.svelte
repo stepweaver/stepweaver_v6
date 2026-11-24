@@ -83,7 +83,7 @@
 	aria-expanded={open}
 	title={open ? 'Minimize chat' : 'Open chat'}
 	data-ready={ready ? 'true' : 'false'}
-	onclick={() => (open ? minimize() : showDraft(draft))}><span aria-hidden="true">λ</span></button
+	onclick={() => (open ? minimize() : showDraft(draft))}>Chat</button
 >
 
 {#if open}
@@ -118,10 +118,11 @@
 {/if}
 
 <style>
+	.open,
 	.chat {
 		position: fixed;
-		inset-inline-start: 0.75rem;
-		inset-block-end: 0.75rem;
+		inset-inline-start: max(0.75rem, env(safe-area-inset-left));
+		inset-block-end: max(0.75rem, env(safe-area-inset-bottom));
 		z-index: 25;
 		border: 1px solid var(--border-muted);
 		border-radius: 0;
@@ -143,12 +144,13 @@
 	}
 
 	.open {
-		inline-size: 2.75rem;
-		padding: 0;
+		padding-inline: 0.75rem;
+		background: var(--canvas);
 		color: var(--neon);
 	}
 
 	.chat {
+		inset-block-end: calc(max(0.75rem, env(safe-area-inset-bottom)) + 3.25rem);
 		display: flex;
 		flex-direction: column;
 		inline-size: min(24rem, calc(100vw - 1.5rem));
