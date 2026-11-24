@@ -108,7 +108,6 @@
 {/if}
 
 <style>
-	.open,
 	.chat {
 		position: fixed;
 		inset-inline-start: 0.75rem;
@@ -116,7 +115,7 @@
 		z-index: 25;
 		border: 1px solid var(--border-muted);
 		border-radius: 0;
-		background: color-mix(in oklab, var(--panel) 92%, black);
+		background: var(--canvas);
 		color: var(--text);
 		font-family: var(--font-family-ibm);
 	}
