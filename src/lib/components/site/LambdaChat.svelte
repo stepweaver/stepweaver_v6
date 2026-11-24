@@ -121,7 +121,7 @@
 	.open,
 	.chat {
 		position: fixed;
-		inset-inline-start: max(0.75rem, env(safe-area-inset-left));
+		inset-inline-end: max(0.75rem, env(safe-area-inset-right));
 		inset-block-end: max(0.75rem, env(safe-area-inset-bottom));
 		z-index: 25;
 		border: 1px solid var(--border-muted);

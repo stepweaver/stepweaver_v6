@@ -310,7 +310,7 @@
 	.palette-trigger {
 		position: fixed;
 		inset-block-end: var(--space-md);
-		inset-inline-end: var(--space-md);
+		inset-inline-start: var(--space-md);
 		z-index: 30;
 		border: 1px solid var(--border-muted);
 		background: var(--surface);
