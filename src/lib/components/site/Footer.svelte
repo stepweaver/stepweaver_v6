@@ -1,5 +1,4 @@
 <script lang="ts">
-	import LambdaChat from '$lib/components/site/LambdaChat.svelte';
 	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import { identity } from '$lib/data/identity';
 
@@ -58,7 +57,6 @@
 				{/each}
 			</ul>
 		</nav>
-		<LambdaChat />
 	</div>
 </footer>
 

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import LambdaChat from '$lib/components/site/LambdaChat.svelte';
 	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import { requestPaletteToggle } from '$lib/components/site/palette-bus';
 	import ThemeControls from '$lib/components/site/ThemeControls.svelte';
@@ -42,6 +43,9 @@
 
 		<div class="header-tools">
 			<button type="button" class="palette-link" onclick={requestPaletteToggle}>Search</button>
+			{#if path !== '/terminal'}
+				<LambdaChat />
+			{/if}
 			<ThemeControls />
 
 			<button

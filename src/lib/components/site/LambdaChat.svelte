@@ -10,12 +10,18 @@
 	let turns = $state<Turn[]>([]);
 	let sending = $state(false);
 	let ready = $state(false);
+	let launcher: HTMLButtonElement | undefined = $state();
 	let field = $state<HTMLInputElement | null>(null);
 
 	function showDraft(next: string) {
 		open = true;
 		draft = next;
 		void tick().then(() => field?.focus());
+	}
+
+	function minimize() {
+		open = false;
+		void tick().then(() => launcher?.focus());
 	}
 
 	onMount(() => {
@@ -69,11 +75,22 @@
 	}
 </script>
 
+<button
+	type="button"
+	class="open"
+	bind:this={launcher}
+	aria-label={open ? 'Minimize chat' : 'Open chat'}
+	aria-expanded={open}
+	title={open ? 'Minimize chat' : 'Open chat'}
+	data-ready={ready ? 'true' : 'false'}
+	onclick={() => (open ? minimize() : showDraft(draft))}><span aria-hidden="true">λ</span></button
+>
+
 {#if open}
 	<section class="chat" aria-label="λlambda chat">
 		<header>
 			<p><LambdaText text="λlambda" /></p>
-			<button type="button" onclick={() => (open = false)}>Minimize</button>
+			<button type="button" onclick={minimize}>Minimize</button>
 		</header>
 		<div class="thread" role="log" aria-label="Chat">
 			{#if turns.length === 0}
@@ -98,13 +115,6 @@
 			>
 		</form>
 	</section>
-{:else}
-	<button
-		type="button"
-		class="open"
-		data-ready={ready ? 'true' : 'false'}
-		onclick={() => (open = true)}>Open chat</button
-	>
 {/if}
 
 <style>
@@ -133,7 +143,8 @@
 	}
 
 	.open {
-		padding: 0.4rem 0.75rem;
+		inline-size: 2.75rem;
+		padding: 0;
 		color: var(--neon);
 	}
 
