@@ -12,6 +12,8 @@
 	let ready = $state(false);
 	let launcher: HTMLButtonElement | undefined = $state();
 	let field = $state<HTMLInputElement | null>(null);
+	let request: AbortController | undefined;
+	let alive = true;
 
 	function showDraft(next: string) {
 		open = true;
@@ -26,7 +28,12 @@
 
 	onMount(() => {
 		ready = true;
-		return registerSharedChatDraft(showDraft);
+		const stop = registerSharedChatDraft(showDraft);
+		return () => {
+			alive = false;
+			request?.abort();
+			stop();
+		};
 	});
 
 	async function send() {
@@ -35,10 +42,15 @@
 		draft = '';
 		turns = [...turns, { role: 'user', content: message }];
 		sending = true;
+		request?.abort();
+		const controller = new AbortController();
+		request = controller;
+		const timer = setTimeout(() => controller.abort(), 25_000);
 		try {
 			const response = await fetch('/api/chat', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
+				signal: controller.signal,
 				body: JSON.stringify({
 					channel: 'widget',
 					messages: turns
@@ -47,7 +59,9 @@
 						.map((turn) => ({ role: turn.role, content: turn.content }))
 				})
 			});
+			if (!alive) return;
 			const data = (await response.json()) as { message?: string; error?: string };
+			if (!alive) return;
 			if (!response.ok || !data.message) {
 				turns = [
 					...turns,
@@ -61,6 +75,7 @@
 			}
 			turns = [...turns, { role: 'assistant', content: data.message }];
 		} catch {
+			if (!alive) return;
 			turns = [
 				...turns,
 				{
@@ -70,7 +85,8 @@
 				}
 			];
 		} finally {
-			sending = false;
+			clearTimeout(timer);
+			if (alive) sending = false;
 		}
 	}
 </script>

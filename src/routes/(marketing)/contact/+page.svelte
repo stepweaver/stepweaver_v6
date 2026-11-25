@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { env } from '$env/dynamic/public';
 	import { page } from '$app/state';
+	import { mountTurnstile, type TurnstileHandle } from '$lib/contact/turnstile-widget';
 	import { identity } from '$lib/data/identity';
 	import { onMount } from 'svelte';
 
@@ -53,6 +54,7 @@
 	let turnstileToken = $state('');
 	let submitting = $state(false);
 	let widget: HTMLDivElement | undefined = $state();
+	let challenge: TurnstileHandle | undefined;
 
 	$effect(() => {
 		if (!form?.success) return;
@@ -65,29 +67,14 @@
 	onMount(() => {
 		openedAt = String(Date.now());
 		if (!siteKey || !widget) return;
-		const script = document.createElement('script');
-		script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
-		script.async = true;
-		script.onload = () => {
-			const turnstile = (
-				window as Window & {
-					turnstile?: {
-						render: (
-							element: HTMLElement,
-							options: { sitekey: string; callback: (token: string) => void }
-						) => void;
-					};
-				}
-			).turnstile;
-			if (!widget) return;
-			turnstile?.render(widget, {
-				sitekey: siteKey,
-				callback(token: string) {
-					turnstileToken = token;
-				}
-			});
+		const handle = mountTurnstile(widget, siteKey, (token) => {
+			turnstileToken = token;
+		});
+		challenge = handle;
+		return () => {
+			handle.destroy();
+			challenge = undefined;
 		};
-		document.head.appendChild(script);
 	});
 </script>
 
@@ -134,8 +121,10 @@
 		use:enhance={() => {
 			submitting = true;
 			return async ({ update }) => {
-				submitting = false;
 				await update();
+				submitting = false;
+				turnstileToken = '';
+				challenge?.reset();
 			};
 		}}
 	>

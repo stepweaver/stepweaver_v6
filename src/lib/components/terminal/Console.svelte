@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { env } from '$env/dynamic/public';
 	import { onMount, tick } from 'svelte';
+	import { mountTurnstile, type TurnstileHandle } from '$lib/contact/turnstile-widget';
 	import { PROMPT } from '$lib/terminal/commands';
 	import type { CodexLibrary } from '$lib/terminal/codex';
 	import { performEffect } from '$lib/terminal/effects';
@@ -23,6 +24,7 @@
 	let screenEl = $state<HTMLDivElement>();
 	let turnstileEl = $state<HTMLDivElement>();
 	let turnstileToken = $state('');
+	let challenge: TurnstileHandle | undefined;
 	const siteKey = env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 
 	async function settleScroll(follow: boolean, anchor: number) {
@@ -101,8 +103,15 @@
 		const follow = !screen || screen.scrollHeight - screen.clientHeight - screen.scrollTop <= 2;
 		const anchor = screen?.scrollTop ?? 0;
 		const outcome = await performEffect(effect, fetch, undefined, turnstileToken);
-		const patch: { mode?: typeof session.mode; weather?: typeof session.weather; contact?: typeof session.contact } =
-			{};
+		if (effect.type === 'contact-send') {
+			turnstileToken = '';
+			challenge?.reset();
+		}
+		const patch: {
+			mode?: typeof session.mode;
+			weather?: typeof session.weather;
+			contact?: typeof session.contact;
+		} = {};
 		if (outcome.mode) patch.mode = outcome.mode;
 		if (outcome.weather !== undefined) patch.weather = outcome.weather;
 		if (outcome.contact !== undefined) patch.contact = outcome.contact;
@@ -112,36 +121,17 @@
 
 	$effect(() => {
 		if (session.mode !== 'contact' || !turnstileEl || !siteKey) return;
-		let cancelled = false;
 		const host = turnstileEl;
-		const script = document.createElement('script');
-		script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
-		script.async = true;
-		script.onload = () => {
-			if (cancelled) return;
-			const turnstile = (
-				window as Window & {
-					turnstile?: {
-						render: (
-							element: HTMLElement,
-							options: { sitekey: string; callback: (token: string) => void }
-						) => void;
-					};
-				}
-			).turnstile;
-			turnstile?.render(host, {
-				sitekey: siteKey,
-				callback(token: string) {
-					turnstileToken = token;
-					host.dataset.turnstile = 'ready';
-				}
-			});
-		};
-		document.head.appendChild(script);
+		const handle = mountTurnstile(host, siteKey, (token) => {
+			turnstileToken = token;
+			host.dataset.turnstile = token ? 'ready' : '';
+		});
+		challenge = handle;
 		return () => {
-			cancelled = true;
-			host.replaceChildren();
-			script.remove();
+			handle.destroy();
+			if (challenge === handle) challenge = undefined;
+			turnstileToken = '';
+			delete host.dataset.turnstile;
 		};
 	});
 

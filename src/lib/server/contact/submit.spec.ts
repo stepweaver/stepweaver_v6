@@ -182,6 +182,16 @@ describe('contact submission', () => {
 		expect(send).not.toHaveBeenCalled();
 	});
 
+	it('rejects a limited client before validating the message', async () => {
+		const result = await submit({
+			dev: false,
+			fields: fields({ email: 'not-an-email' }),
+			rateLimiter: { limit: async () => ({ success: false }) }
+		});
+		expect(result.status).toBe(429);
+		expect(result.body.fieldErrors.email).toBeUndefined();
+	});
+
 	it('rate limits repeated dev submissions', async () => {
 		const mailer = createMockMailer();
 		let last = await submit({ mailer, ip: '198.51.100.8', now: 10_000 });

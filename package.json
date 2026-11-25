@@ -15,6 +15,7 @@
 		"deploy": "pnpm run build && wrangler deploy",
 		"cf-typegen": "wrangler types ./src/worker-configuration.d.ts",
 		"test:unit": "vitest run",
+		"ci": "pnpm check && pnpm test:unit && pnpm build",
 		"test": "pnpm run test:unit && pnpm run test:e2e",
 		"test:e2e": "playwright test",
 		"check:client-publication": "node scripts/check-client-publication.mjs"
@@ -23,8 +24,8 @@
 		"@eslint/js": "^10.0.1",
 		"@playwright/test": "^1.60.0",
 		"@sveltejs/adapter-auto": "^7.0.1",
-		"@sveltejs/adapter-cloudflare": "^7.2.9",
-		"@sveltejs/kit": "^2.63.0",
+		"@sveltejs/adapter-cloudflare": "^7.2.10",
+		"@sveltejs/kit": "^2.70.4",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
 		"@types/node": "^24",
 		"eslint": "^10.4.1",
@@ -37,8 +38,13 @@
 		"svelte-check": "^4.6.0",
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.60.1",
-		"vite": "^8.0.16",
+		"vite": "^8.2.6",
 		"vitest": "^4.1.8",
 		"wrangler": "^4.123.0"
+	},
+	"pnpm": {
+		"overrides": {
+			"devalue": ">=5.9.4 <6"
+		}
 	}
 }

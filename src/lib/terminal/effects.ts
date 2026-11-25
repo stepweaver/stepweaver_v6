@@ -17,7 +17,8 @@ export async function performEffect(
 	geo: GeoReader = readGeoPosition,
 	turnstileToken = ''
 ): Promise<EffectOutcome> {
-	if (effect.type === 'geo-weather') return geoWeather(effect.forecast, fetchImpl, geo ?? readGeoPosition);
+	if (effect.type === 'geo-weather')
+		return geoWeather(effect.forecast, fetchImpl, geo ?? readGeoPosition);
 	if (effect.type === 'weather') return cityWeather(effect.query, effect.forecast, fetchImpl);
 	if (effect.type === 'weather-at') {
 		const outcome = await coordinateWeather(effect.lat, effect.lon, effect.forecast, fetchImpl);
@@ -40,7 +41,11 @@ export function readGeoPosition(): Promise<{ lat: number; lon: number } | null> 
 	});
 }
 
-async function geoWeather(forecast: boolean, fetchImpl: FetchLike, geo: GeoReader): Promise<EffectOutcome> {
+async function geoWeather(
+	forecast: boolean,
+	fetchImpl: FetchLike,
+	geo: GeoReader
+): Promise<EffectOutcome> {
 	const position = await geo();
 	if (!position) {
 		const fallback = await cityWeather('New York', forecast, fetchImpl);
@@ -48,7 +53,8 @@ async function geoWeather(forecast: boolean, fetchImpl: FetchLike, geo: GeoReade
 			...fallback,
 			lines: [
 				{
-					content: 'Location was not shared. Showing New York. Type weather <city> for another city.',
+					content:
+						'Location was not shared. Showing New York. Type weather <city> for another city.',
 					variant: 'warning'
 				},
 				...fallback.lines
@@ -58,7 +64,11 @@ async function geoWeather(forecast: boolean, fetchImpl: FetchLike, geo: GeoReade
 	return coordinateWeather(position.lat, position.lon, forecast, fetchImpl);
 }
 
-async function cityWeather(query: string, forecast: boolean, fetchImpl: FetchLike): Promise<EffectOutcome> {
+async function cityWeather(
+	query: string,
+	forecast: boolean,
+	fetchImpl: FetchLike
+): Promise<EffectOutcome> {
 	const params = new URLSearchParams({ q: query });
 	if (forecast) params.set('forecast', 'true');
 	return readWeather(params, forecast, fetchImpl);
@@ -75,19 +85,25 @@ async function coordinateWeather(
 	return readWeather(params, forecast, fetchImpl);
 }
 
+const CLIENT_DEADLINE_MS = 20_000;
+
 async function readWeather(
 	params: URLSearchParams,
 	forecast: boolean,
 	fetchImpl: FetchLike
 ): Promise<EffectOutcome> {
 	try {
-		const response = await fetchImpl(`/api/weather?${params.toString()}`);
+		const response = await fetchImpl(`/api/weather?${params.toString()}`, {
+			signal: AbortSignal.timeout(CLIENT_DEADLINE_MS)
+		});
 		const data = (await response.json()) as
-			| WeatherReport
-			| { needSelection?: boolean; options?: WeatherOption[] }
-			| { error?: string };
+			WeatherReport | { needSelection?: boolean; options?: WeatherOption[] } | { error?: string };
 		if (!data || typeof data !== 'object') {
-			return { lines: [{ content: 'Weather data was not usable.', variant: 'error' }], mode: 'shell', weather: null };
+			return {
+				lines: [{ content: 'Weather data was not usable.', variant: 'error' }],
+				mode: 'shell',
+				weather: null
+			};
 		}
 		if (!response.ok) {
 			return {
@@ -114,10 +130,17 @@ async function readWeather(
 			};
 		}
 		if (!isReport(data)) {
-			return { lines: [{ content: 'Weather data was not usable.', variant: 'error' }], mode: 'shell', weather: null };
+			return {
+				lines: [{ content: 'Weather data was not usable.', variant: 'error' }],
+				mode: 'shell',
+				weather: null
+			};
 		}
 		return {
-			lines: formatWeatherLines(data).map((entry) => ({ content: entry.text, variant: entry.tone })),
+			lines: formatWeatherLines(data).map((entry) => ({
+				content: entry.text,
+				variant: entry.tone
+			})),
 			mode: 'shell',
 			weather: null
 		};
@@ -138,19 +161,42 @@ async function askLambda(message: string, fetchImpl: FetchLike): Promise<EffectO
 		const response = await fetchImpl('/api/chat', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ channel: 'terminal', messages: [{ role: 'user', content: message }] })
+			body: JSON.stringify({ channel: 'terminal', messages: [{ role: 'user', content: message }] }),
+			signal: AbortSignal.timeout(CLIENT_DEADLINE_MS)
 		});
 		const data = (await response.json()) as { message?: string; error?: string };
 		if (!response.ok || !data.message) {
-			return { lines: [{ content: data.error || 'λlambda could not reach the model. The terminal is still here.', variant: 'error' }] };
+			return {
+				lines: [
+					{
+						content: data.error || 'λlambda could not reach the model. The terminal is still here.',
+						variant: 'error'
+					}
+				]
+			};
 		}
-		return { lines: data.message.split('\n').map((content) => ({ content: `λlambda: ${content}`, variant: 'lambda' as const })) };
+		return {
+			lines: data.message
+				.split('\n')
+				.map((content) => ({ content: `λlambda: ${content}`, variant: 'lambda' as const }))
+		};
 	} catch {
-		return { lines: [{ content: 'λlambda could not reach the model. The terminal is still here.', variant: 'error' }] };
+		return {
+			lines: [
+				{
+					content: 'λlambda could not reach the model. The terminal is still here.',
+					variant: 'error'
+				}
+			]
+		};
 	}
 }
 
-async function sendContact(draft: ContactDraft, token: string, fetchImpl: FetchLike): Promise<EffectOutcome> {
+async function sendContact(
+	draft: ContactDraft,
+	token: string,
+	fetchImpl: FetchLike
+): Promise<EffectOutcome> {
 	const form = new FormData();
 	form.set('name', draft.name);
 	form.set('email', draft.email);
@@ -163,7 +209,8 @@ async function sendContact(draft: ContactDraft, token: string, fetchImpl: FetchL
 		const response = await fetchImpl('/contact', {
 			method: 'POST',
 			body: form,
-			headers: { accept: 'application/json', 'x-sveltekit-action': 'true' }
+			headers: { accept: 'application/json', 'x-sveltekit-action': 'true' },
+			signal: AbortSignal.timeout(CLIENT_DEADLINE_MS)
 		});
 		const payload = (await response.json()) as {
 			type?: string;

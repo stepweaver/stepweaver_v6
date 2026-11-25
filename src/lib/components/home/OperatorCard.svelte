@@ -58,11 +58,12 @@
 	<div class="portrait-row">
 		<div class="portrait-bay" class:glitch>
 			<img
-				src="/images/pixarMe-256.png"
-				alt={skynet ? '' : 'Stephen Weaver'}
-				style:opacity={skynet ? 0 : 1}
+				src={skynet ? '/images/pixarMe_terminator.png' : '/images/pixarMe-256.png'}
+				alt="Stephen Weaver"
+				width="256"
+				height="256"
+				decoding="async"
 			/>
-			<img src="/images/pixarMe_terminator.png" alt="" style:opacity={skynet ? 1 : 0} />
 		</div>
 		<div class="role">
 			<p class="label">Role</p>

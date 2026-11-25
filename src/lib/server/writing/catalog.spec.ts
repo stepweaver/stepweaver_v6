@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { clearWritingCache, getArticleBlocks, getWritingCatalog } from './catalog';
-import { fetchPublishedPages, pageToRaw } from './notion';
+import { fetchPublishedPages, NotionIncompleteError, pageToRaw } from './notion';
 import { FIXTURE_DRAFT_TITLE } from '$lib/writing/fixtures';
 
 describe('writing catalog', () => {
@@ -335,6 +335,22 @@ describe('writing catalog', () => {
 			featured: true,
 			cover: 'https://cdn.example.com/page.jpg'
 		});
+	});
+
+	it('rejects an incomplete Notion catalog instead of caching it as empty', async () => {
+		const fetcher = async (url: string) => {
+			if (url.includes('/query')) return Response.json({ has_more: true });
+			if (url.includes('/data_sources/') && !url.includes('/query')) {
+				return Response.json({ properties: { Status: { type: 'select' } } });
+			}
+			return Response.json({
+				data_sources: [{ id: 'ds-1' }],
+				properties: { Status: { type: 'select' } }
+			});
+		};
+		await expect(fetchPublishedPages(fetcher, 'key', 'db-1')).rejects.toBeInstanceOf(
+			NotionIncompleteError
+		);
 	});
 
 	it('does not invent article blocks when the block fetch fails', async () => {

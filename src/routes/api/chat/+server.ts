@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { dev } from '$app/environment';
 import { originAllowed } from '$lib/server/contact/submit';
-import { readBoundedJson } from '$lib/server/security/bounded-body';
+import { BodyTimeoutError, readBoundedJson } from '$lib/server/security/bounded-body';
 import { publicApiLimit } from '$lib/server/security/public-api';
 import { readServerEnv } from '$lib/server/env';
 import { publicLambdaBrief } from '$lib/server/lambda/brief';
@@ -45,12 +45,17 @@ export const POST: RequestHandler = async (event) => {
 	try {
 		body = await readBoundedJson(event.request, MAX_BODY);
 	} catch (error) {
+		const tooLarge = error instanceof RangeError;
+		const timedOut = error instanceof BodyTimeoutError;
 		return json(
 			{
-				error:
-					error instanceof RangeError ? 'That message is too large.' : 'Expected application/json'
+				error: tooLarge
+					? 'That message is too large.'
+					: timedOut
+						? 'The request timed out.'
+						: 'Expected application/json'
 			},
-			{ status: error instanceof RangeError ? 413 : 400, headers: HEADERS }
+			{ status: tooLarge ? 413 : timedOut ? 408 : 400, headers: HEADERS }
 		);
 	}
 	const request = normalizeConversation(body);
@@ -82,6 +87,17 @@ export const POST: RequestHandler = async (event) => {
 	return json({ message: result.message }, { headers: HEADERS });
 };
 
+function visibleText(content: string): string {
+	let text = '';
+	for (const char of content) {
+		const code = char.codePointAt(0) ?? 0;
+		if (code <= 8 || code === 11 || code === 12 || (code >= 14 && code <= 31) || code === 127)
+			continue;
+		text += char;
+	}
+	return text.trim();
+}
+
 function normalizeConversation(body: unknown) {
 	if (!body || typeof body !== 'object') return null;
 	const { messages, channel } = body as { messages?: unknown; channel?: unknown };
@@ -91,10 +107,7 @@ function normalizeConversation(body: unknown) {
 		if (!entry || typeof entry !== 'object') continue;
 		const { role, content } = entry as { role?: unknown; content?: unknown };
 		if ((role !== 'user' && role !== 'assistant') || typeof content !== 'string') continue;
-		const clean = content
-			.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
-			.trim()
-			.slice(0, 1000);
+		const clean = visibleText(content).slice(0, 1000);
 		if (clean) turns.push({ role, content: clean });
 	}
 	const latest = turns.pop();

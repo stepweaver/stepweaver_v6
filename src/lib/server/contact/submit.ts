@@ -1,9 +1,9 @@
-import { readBoundedBody } from '$lib/server/security/bounded-body';
+import { BodyTimeoutError, readBoundedBody } from '$lib/server/security/bounded-body';
 import { identity } from '$lib/data/identity';
 import { createMockMailer, renderContactMail, type Mailer, type OutboundMail } from './mail';
 import { allowMemoryRateLimit, CONTACT_RATE_LIMIT, CONTACT_RATE_WINDOW_MS } from './rate-limit';
 import { validateContactFields } from './schema';
-import { verifyTurnstileToken } from './turnstile';
+import { turnstileHostnames, verifyTurnstileToken } from './turnstile';
 
 const MAX_BODY = 20_000;
 const MIN_AGE_MS = 400;
@@ -73,12 +73,27 @@ export async function submitContact(input: {
 	verifyTurnstile?: (token: string, ip: string, secret: string) => Promise<boolean>;
 }): Promise<ContactSubmission> {
 	const now = input.now ?? Date.now();
+	if (!originAllowed(input.request, input.dev)) {
+		return failure(403, 'The message was not sent.', emptyValues());
+	}
 	const length = Number(input.request.headers.get('content-length') ?? '0');
 	if (Number.isFinite(length) && length > MAX_BODY) {
 		return failure(413, 'The message is too large.', emptyValues());
 	}
-	if (!originAllowed(input.request, input.dev)) {
-		return failure(403, 'The message was not sent.', emptyValues());
+	const limitStatus = await rateLimited(input, now);
+	if (limitStatus === 429) {
+		return failure(
+			429,
+			'Too many messages from this network. Try again in a minute.',
+			emptyValues()
+		);
+	}
+	if (limitStatus === 503) {
+		return failure(
+			503,
+			'The contact form is not available because rate limiting is not configured.',
+			emptyValues()
+		);
 	}
 
 	let form: FormData;
@@ -88,6 +103,9 @@ export async function submitContact(input: {
 	} catch (error) {
 		if (error instanceof RangeError) {
 			return failure(413, 'The message is too large.', emptyValues());
+		}
+		if (error instanceof BodyTimeoutError) {
+			return failure(408, 'The message was not sent.', emptyValues());
 		}
 		return failure(400, 'The message was not sent.', emptyValues());
 	}
@@ -100,18 +118,6 @@ export async function submitContact(input: {
 	};
 	const size = Object.values(values).reduce((total, value) => total + value.length, 0);
 	if (size > MAX_BODY) return failure(413, 'The message is too large.', values);
-
-	const limitStatus = await rateLimited(input, now);
-	if (limitStatus === 429) {
-		return failure(429, 'Too many messages from this network. Try again in a minute.', values);
-	}
-	if (limitStatus === 503) {
-		return failure(
-			503,
-			'The contact form is not available because rate limiting is not configured.',
-			values
-		);
-	}
 
 	const parsed = validateContactFields(values);
 	if (!parsed.value) {
@@ -137,8 +143,12 @@ export async function submitContact(input: {
 	}
 	const token = read(form, 'cf_turnstile_response').trim();
 	if (!token) return failure(403, 'The bot check did not pass. Try again.', values);
-	const verify = input.verifyTurnstile ?? verifyTurnstileToken;
-	const passed = await verify(token, input.clientAddress || 'unknown', secret);
+	const passed = input.verifyTurnstile
+		? await input.verifyTurnstile(token, input.clientAddress || 'unknown', secret)
+		: await verifyTurnstileToken(token, input.clientAddress || 'unknown', secret, {
+				hostnames: turnstileHostnames(new URL(input.request.url).hostname, input.dev),
+				action: 'contact'
+			});
 	if (!passed) return failure(403, 'The bot check did not pass. Try again.', values);
 
 	const mailer = input.mailer ?? resolveMailer(input.dev, input.env);

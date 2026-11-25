@@ -14,31 +14,75 @@ type LookupInput = {
 	lon?: string | null;
 	forecast?: boolean;
 	fetch?: typeof fetch;
+	now?: number;
 };
+
+const WEATHER_TTL_MS = 10 * 60 * 1000;
+const MAX_WEATHER_CACHE = 64;
+const weatherCache = new Map<string, { at: number; value: WeatherLookup }>();
+
+export function clearWeatherCache(): void {
+	weatherCache.clear();
+}
+
+function recall(key: string, now: number): WeatherLookup | undefined {
+	const entry = weatherCache.get(key);
+	if (!entry) return undefined;
+	if (now - entry.at > WEATHER_TTL_MS) {
+		weatherCache.delete(key);
+		return undefined;
+	}
+	return entry.value;
+}
+
+function remember(key: string, value: WeatherLookup, now: number) {
+	if (!weatherCache.has(key) && weatherCache.size >= MAX_WEATHER_CACHE) {
+		const oldest = weatherCache.keys().next().value;
+		if (oldest) weatherCache.delete(oldest);
+	}
+	weatherCache.set(key, { at: now, value });
+}
 
 export async function lookupWeather(input: LookupInput): Promise<WeatherLookup> {
 	const apiKey = input.apiKey?.trim();
 	if (!apiKey) return { ok: false, status: 503, error: 'Weather is not configured.' };
 	const forecast = input.forecast === true;
 	const fetcher = input.fetch ?? fetch;
+	const now = input.now ?? Date.now();
 	const lat = input.lat?.trim() ? Number(input.lat) : null;
 	const lon = input.lon?.trim() ? Number(input.lon) : null;
+	const cacheKey =
+		lat !== null || lon !== null
+			? validLatLon(lat, lon)
+				? `ll:${(lat as number).toFixed(3)}:${(lon as number).toFixed(3)}:${forecast ? 'f' : 'n'}`
+				: ''
+			: `q:${(input.query?.trim() ?? '').toLowerCase()}:${forecast ? 'f' : 'n'}`;
+	if (cacheKey) {
+		const cached = recall(cacheKey, now);
+		if (cached) return cached;
+	}
 	try {
+		let result: WeatherLookup;
 		if (lat !== null || lon !== null) {
 			if (!validLatLon(lat, lon)) return { ok: false, status: 400, error: 'Invalid coordinates.' };
 			const report = await reportAt(fetcher, apiKey, lat as number, lon as number, '', forecast);
-			return { ok: true, status: 200, report };
+			result = { ok: true, status: 200, report };
+		} else {
+			const query = input.query?.trim() ?? '';
+			if (!query) return { ok: false, status: 400, error: 'Missing a city or coordinates.' };
+			if (query.length > 120) return { ok: false, status: 400, error: 'City name is too long.' };
+			const found = await geocode(fetcher, apiKey, query);
+			if (!found.length) return { ok: false, status: 404, error: 'Location not found.' };
+			if (found.length > 1) result = { ok: true, status: 200, choices: found };
+			else {
+				const city = found[0];
+				if (!city) return { ok: false, status: 404, error: 'Location not found.' };
+				const report = await reportAt(fetcher, apiKey, city.lat, city.lon, city.label, forecast);
+				result = { ok: true, status: 200, report };
+			}
 		}
-		const query = input.query?.trim() ?? '';
-		if (!query) return { ok: false, status: 400, error: 'Missing a city or coordinates.' };
-		if (query.length > 120) return { ok: false, status: 400, error: 'City name is too long.' };
-		const found = await geocode(fetcher, apiKey, query);
-		if (!found.length) return { ok: false, status: 404, error: 'Location not found.' };
-		if (found.length > 1) return { ok: true, status: 200, choices: found };
-		const city = found[0];
-		if (!city) return { ok: false, status: 404, error: 'Location not found.' };
-		const report = await reportAt(fetcher, apiKey, city.lat, city.lon, city.label, forecast);
-		return { ok: true, status: 200, report };
+		if (cacheKey) remember(cacheKey, result, now);
+		return result;
 	} catch (error) {
 		console.error('Weather lookup failed', {
 			errorType: error instanceof Error ? error.name : 'UnknownError'
@@ -97,10 +141,14 @@ async function reportAt(
 	forecast: boolean
 ): Promise<WeatherReport> {
 	const currentUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=imperial&appid=${encodeURIComponent(apiKey)}`;
-	const currentResponse = await fetcher(currentUrl, {
+	const currentPromise = fetcher(currentUrl, {
 		signal: AbortSignal.timeout(5000),
 		redirect: 'manual'
 	});
+	const forecastPromise = forecast
+		? forecastAt(fetcher, apiKey, lat, lon).catch(() => [])
+		: Promise.resolve([]);
+	const [currentResponse, samples] = await Promise.all([currentPromise, forecastPromise]);
 	if (!currentResponse.ok) throw new Error('weather failed');
 	const current = (await currentResponse.json()) as {
 		name?: string;
@@ -127,9 +175,8 @@ async function reportAt(
 		humidity: Math.round(current.main?.humidity ?? 0),
 		windMph: Math.round(current.wind?.speed ?? 0),
 		timezoneOffsetSeconds: current.timezone ?? 0,
-		forecast: []
+		forecast: samples
 	};
-	if (forecast) report.forecast = await forecastAt(fetcher, apiKey, lat, lon).catch(() => []);
 	return report;
 }
 

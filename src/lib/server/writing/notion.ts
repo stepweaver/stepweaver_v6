@@ -46,6 +46,17 @@ export class NotionRequestError extends Error {
 	}
 }
 
+/** A 200 that is truncated or missing its result list must not replace a good catalog. */
+export class NotionIncompleteError extends Error {
+	operation: string;
+
+	constructor(operation: string) {
+		super(`Notion ${operation} ended before the full result`);
+		this.name = 'NotionIncompleteError';
+		this.operation = operation;
+	}
+}
+
 function plain(parts: { plain_text?: string }[] | undefined): string {
 	return (parts ?? []).map((part) => part.plain_text ?? '').join('');
 }
@@ -146,6 +157,18 @@ function publishedFilter(statusType: string | undefined) {
 	return { property: 'Status', select: { equals: 'Published' } };
 }
 
+function pageResults(
+	body: Record<string, unknown>,
+	operation: string
+): { results: unknown[]; next?: string } {
+	if (!Array.isArray(body.results)) throw new NotionIncompleteError(operation);
+	if (body.has_more !== true) return { results: body.results };
+	if (typeof body.next_cursor !== 'string' || body.next_cursor.length === 0) {
+		throw new NotionIncompleteError(operation);
+	}
+	return { results: body.results, next: body.next_cursor };
+}
+
 async function queryAll(
 	fetcher: NotionFetcher,
 	apiKey: string,
@@ -171,12 +194,12 @@ async function queryAll(
 			})
 		});
 		const body = await readJson(response, operation);
-		const results = Array.isArray(body.results) ? (body.results as NotionPage[]) : [];
-		pages.push(...results);
-		if (!body.has_more || typeof body.next_cursor !== 'string') break;
-		cursor = body.next_cursor;
+		const page = pageResults(body, operation);
+		pages.push(...(page.results as NotionPage[]));
+		if (!page.next) return pages;
+		cursor = page.next;
 	}
-	return pages;
+	throw new NotionIncompleteError(operation);
 }
 
 function queryLegacyDatabase(
@@ -247,7 +270,7 @@ export async function fetchPublishedPages(
 				'query data source'
 			);
 		} catch (error) {
-			if (isAuthOrAccess(error)) throw error;
+			if (isAuthOrAccess(error) || error instanceof NotionIncompleteError) throw error;
 			pages = await queryLegacyDatabase(fetcher, apiKey, databaseId, statusType);
 		}
 	} else {
@@ -284,12 +307,12 @@ async function listChildren(
 			}
 		});
 		const body = await readJson(response, 'list blocks');
-		const results = Array.isArray(body.results) ? (body.results as BlockRecord[]) : [];
-		blocks.push(...results);
-		if (!body.has_more || typeof body.next_cursor !== 'string') break;
-		cursor = body.next_cursor;
+		const page = pageResults(body, 'list blocks');
+		blocks.push(...(page.results as BlockRecord[]));
+		if (!page.next) return blocks;
+		cursor = page.next;
 	}
-	return blocks;
+	throw new NotionIncompleteError('list blocks');
 }
 
 export async function fetchPageBlocks(
