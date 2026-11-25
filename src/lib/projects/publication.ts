@@ -40,8 +40,8 @@ type RawRecord = {
 const REGISTRY_STATUSES = new Set<RegistryStatus>(['live', 'demo', 'coming-soon', 'archived']);
 
 /**
- * Explicit publication allow-list. Empty until a row in docs/PROJECT_REVIEW.md
- * is reviewed and the owner approves it. Registry status is not consulted.
+ * Explicit publication allow-list. Empty until the owner approves a record
+ * under the review in docs/ARCHITECTURE.md. Registry status is not consulted.
  */
 export const APPROVED_PUBLIC_SLUGS: readonly string[] = [];
 

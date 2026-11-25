@@ -9,11 +9,6 @@
 	let { kicker, title, body, points }: Props = $props();
 </script>
 
-<svelte:head>
-	<title>{title} | λstepweaver</title>
-	<meta name="robots" content="noindex" />
-</svelte:head>
-
 <div class="status">
 	<p class="eyebrow">{kicker}</p>
 	<h1>{title}</h1>

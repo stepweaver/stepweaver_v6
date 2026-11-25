@@ -6,10 +6,8 @@
 	import LambdaChat from '$lib/components/site/LambdaChat.svelte';
 	import Footer from '$lib/components/site/Footer.svelte';
 	import Navbar from '$lib/components/site/Navbar.svelte';
-	import { jsonLdScript } from '$lib/seo/json-ld';
 
 	let { children } = $props();
-	const structured = $derived(page.data.structuredData);
 	const consoleRoute = $derived(page.url.pathname === '/terminal');
 
 	let main: HTMLElement | undefined;
@@ -37,13 +35,6 @@
 		});
 	});
 </script>
-
-<svelte:head>
-	{#if structured}
-		<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-		{@html jsonLdScript(structured)}
-	{/if}
-</svelte:head>
 
 <div class="site-shell" class:console-route={consoleRoute}>
 	<SignatureBackground />

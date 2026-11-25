@@ -7,12 +7,6 @@
 	const copy = $derived(workPageCopy(data.projects.length));
 </script>
 
-<svelte:head>
-	<title>Work | λstepweaver</title>
-	<meta name="description" content={copy.description} />
-	<meta name="robots" content="noindex" />
-</svelte:head>
-
 <div class="work">
 	<header class="intro">
 		<p class="kicker">// WORK</p>

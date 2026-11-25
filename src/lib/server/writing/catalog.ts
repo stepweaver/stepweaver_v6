@@ -150,19 +150,36 @@ export async function getWritingCatalog(request: CatalogRequest = {}): Promise<W
 		: { status: 'unavailable', stale: false, posts: [] };
 }
 
+/**
+ * Publication decision for a direct article URL.
+ *
+ * Trustworthy only when `status` is `ok`. That means a successful Notion
+ * published-set read younger than five minutes (`FRESH_MS`), or the fixture source.
+ * A stale catalog, including one kept because Notion failed, is not
+ * authorization. Callers must not deliver the article otherwise.
+ * Unpublication is visible after that fresh window once Notion answers.
+ * It is not instantaneous inside the window.
+ */
+export async function getPublicationCatalog(request: CatalogRequest = {}): Promise<WritingCatalog> {
+	return getWritingCatalog({ ...request, acceptStale: false, nonBlocking: false });
+}
+
 export async function getArticleBlocks(
 	request: CatalogRequest,
 	pageId: string
 ): Promise<{ status: 'ok' | 'unavailable'; blocks: RenderBlock[]; stale?: boolean }> {
 	const source = request.source?.trim().toLowerCase();
 	if (source === 'fixture') {
-		return { status: 'ok', blocks: fixtureArticleBlocks(pageId) };
+		const published = fixtureEntries().some((post) => post.id === pageId);
+		return published
+			? { status: 'ok', blocks: fixtureArticleBlocks(pageId) }
+			: { status: 'unavailable', blocks: [] };
 	}
 	const apiKey = request.apiKey?.trim();
 	if (!apiKey || source === 'unavailable') return { status: 'unavailable', blocks: [] };
 
-	// Never serve a cached body unless the public catalog still includes its page.
-	const catalog = await getWritingCatalog(request);
+	// A body cache is not permission to publish. Require a fresh published-set read.
+	const catalog = await getPublicationCatalog(request);
 	if (catalog.status !== 'ok' || !catalog.posts.some((post) => post.id === pageId)) {
 		return { status: 'unavailable', blocks: [] };
 	}

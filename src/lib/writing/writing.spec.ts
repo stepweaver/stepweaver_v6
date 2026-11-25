@@ -12,7 +12,7 @@ import {
 } from './entries';
 import { PUBLISHED_PAGE_SLUGS } from './slug-registry';
 import { slugifyTitle } from './slug';
-import { coverImageSrc, safeHref, safeImageSrc } from './rich-text';
+import { coverImageSrc, isSiteHref, safeHref, safeImageSrc } from './rich-text';
 import { renderWritingRss } from './rss';
 
 describe('published url registry', () => {
@@ -327,6 +327,10 @@ describe('notion block rendering', () => {
 		expect(coverImageSrc('/images/lambda_stepweaver.png')).toBe('/images/lambda_stepweaver.png');
 		expect(coverImageSrc('/images/../secret.png')).toBeUndefined();
 		expect(coverImageSrc('http://example.com/a.png')).toBeUndefined();
+		expect(safeHref('/writing')).toBe('https://www.stepweaver.dev/writing');
+		expect(isSiteHref('https://stepweaver.dev/writing')).toBe(true);
+		expect(isSiteHref('https://www.stepweaver.dev/writing')).toBe(true);
+		expect(isSiteHref('https://example.com/writing')).toBe(false);
 	});
 });
 
@@ -348,8 +352,31 @@ describe('writing rss', () => {
 			}
 		]);
 		expect(xml).toContain('<title>Notes &amp; &lt;systems&gt;</title>');
-		expect(xml).toContain('https://stepweaver.dev/writing/notes');
+		expect(xml).toContain('https://www.stepweaver.dev/writing/notes');
 		expect(xml).toContain('page-1');
 		expect(xml).not.toContain('<systems>');
+		expect(xml).toContain('<pubDate>Tue, 01 Sep 2026 00:00:00 GMT</pubDate>');
+	});
+
+	it('omits a publication date that is not a real calendar day', () => {
+		const xml = renderWritingRss([
+			{
+				id: 'page-2',
+				title: 'Undated',
+				slug: 'undated',
+				legacySlugs: [],
+				date: '2026-02-31',
+				updated: '',
+				excerpt: '',
+				summary: '',
+				featured: false,
+				cover: '',
+				tags: []
+			}
+		]);
+		expect(xml).not.toContain('<pubDate>');
+		expect(xml).not.toContain('1970');
+		expect(xml).toContain('A published note by Stephen Weaver on λstepweaver.');
+		expect(xml).not.toContain('<description>Undated</description>');
 	});
 });

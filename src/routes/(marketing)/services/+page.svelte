@@ -3,14 +3,6 @@
 	import { AGENT_OWNERSHIP_NOTE, WHAT_I_DO } from '$lib/data/identity';
 </script>
 
-<svelte:head>
-	<title>Services | λstepweaver</title>
-	<meta
-		name="description"
-		content="Business analysis, systems integration, automation, custom software, and applied AI for real operations."
-	/>
-</svelte:head>
-
 <div class="services">
 	<header>
 		<p class="kicker">// WHAT I DO</p>

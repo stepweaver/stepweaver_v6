@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { isSiteHref } from '$lib/writing/rich-text';
 	import type { RichSpan } from '$lib/writing/types';
 
 	let { spans }: { spans: RichSpan[] } = $props();
@@ -8,8 +9,8 @@
 	{#if span.href}
 		<a
 			href={span.href}
-			rel={span.href.startsWith('https://stepweaver.dev') ? undefined : 'noopener noreferrer'}
-			target={span.href.startsWith('https://stepweaver.dev') ? undefined : '_blank'}
+			rel={isSiteHref(span.href) ? undefined : 'noopener noreferrer'}
+			target={isSiteHref(span.href) ? undefined : '_blank'}
 		>
 			{#if span.code}<code>{span.text}</code>{:else if span.bold}<strong>{span.text}</strong
 				>{:else if span.italic}<em>{span.text}</em>{:else}{span.text}{/if}

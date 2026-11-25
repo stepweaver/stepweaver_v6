@@ -1,42 +1,94 @@
-# sv
+# λstepweaver
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Personal site for Stephen Weaver: identity, résumé, writing, contact, and the signature terminal. The public site is a SvelteKit application deployed as a Cloudflare Worker.
 
-## Creating a project
+The product centers on the person, the résumé, and the terminal. Case studies stay unpublished until each one is reviewed and explicitly approved. Lab and Play are retired public destinations. Legacy applications and their data remain in `stepweaver_v5`.
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Current scope
+
+- Home, with the operator card, Matrix Link, and signature background
+- About, What I Do (`/services`), résumé, privacy, and contact
+- Notion-backed writing, article pages, and `/writing/rss.xml`
+- Interactive terminal: résumé, navigation, Codex, dice, weather, contact, λlambda, blackjack, and the text adventure
+- Standalone dice roller at `/dice-roller`
+- Shared λlambda chat on the site and in the terminal
+- Quiet `/work` index. Public case studies require an allow-list entry
+
+`/lab` redirects to `/terminal`. `/play` redirects to `/dice-roller`.
+
+## Stack
+
+- SvelteKit and Svelte 5, TypeScript, Vite
+- Native CSS (custom properties, cascade layers, theme palettes)
+- Cloudflare Workers via `@sveltejs/adapter-cloudflare` and Wrangler
+- Cloudflare KV for the public writing cache
+- Cloudflare Email Service and Turnstile for contact
+- Notion for published writing
+- OpenWeather for terminal weather
+- Groq, with OpenAI as fallback, for λlambda
+- Vitest and Playwright
+
+## Prerequisites
+
+- Node.js 22
+- pnpm 10
+- A Cloudflare account before a real Worker deploy
+
+## Installation
 
 ```sh
-# create a new project
-npx sv create my-app
+pnpm install
+cp .env.example .env
 ```
 
-To recreate this project with the same configuration:
+Leave secret values blank for a local UI pass. Writing then reports that it is not configured, weather says it is not configured, and λlambda answers from the public site brief. Contact mail needs the variables described in [docs/OPERATIONS.md](docs/OPERATIONS.md).
+
+## Local development
 
 ```sh
-# recreate this project
-pnpm dlx sv@0.17.0 create --template minimal --types ts --add prettier eslint tailwindcss="plugins:none" --install pnpm stepweaver
+pnpm dev
 ```
 
-## Developing
+The Vite server reads `.env`. `pnpm preview` builds the Worker and starts `wrangler dev`, which reads `.dev.vars` for secrets. Copy `.dev.vars.example` to `.dev.vars` before using that path.
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Scripts
+
+| Script                                        | Command           |
+| --------------------------------------------- | ----------------- |
+| Dev server                                    | `pnpm dev`        |
+| Type check                                    | `pnpm check`      |
+| Lint                                          | `pnpm lint`       |
+| Format                                        | `pnpm format`     |
+| Unit tests                                    | `pnpm test:unit`  |
+| Browser tests                                 | `pnpm test:e2e`   |
+| Unit and browser tests                        | `pnpm test`       |
+| Production build and client publication check | `pnpm build`      |
+| Check, unit tests, and build                  | `pnpm verify`     |
+| Preview the Worker locally                    | `pnpm preview`    |
+| Deploy                                        | `pnpm deploy`     |
+| Regenerate Worker types                       | `pnpm cf-typegen` |
+
+`pnpm build` runs `vite build` and then `node scripts/check-client-publication.mjs`. That check fails if project-registry filenames appear in the client bundle.
+
+## Environment
+
+Variable names and purposes are in `.env.example` and [docs/OPERATIONS.md](docs/OPERATIONS.md). Production secrets belong in Wrangler secrets. Do not commit `.env` or `.dev.vars`.
+
+## Testing and verification
 
 ```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+pnpm verify
+pnpm lint
+pnpm test:e2e
 ```
 
-## Building
+CI runs `pnpm verify` on every push and pull request. Playwright is local. It uses fixture writing, a mock mail adapter, Turnstile test keys, and no weather or model keys. A physical phone and the production Worker are outside that suite.
 
-To create a production version of your app:
+## Deployment
 
-```sh
-npm run build
-```
+`pnpm deploy` builds the app and runs `wrangler deploy` for the Worker named `stepweaver-v6`. Bindings, cache behavior, smoke checks, and rollback are in [docs/OPERATIONS.md](docs/OPERATIONS.md).
 
-You can preview the production build with `npm run preview`.
+## Documentation
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+- [Architecture](docs/ARCHITECTURE.md) — routes, data, publication rules, and service boundaries
+- [Operations](docs/OPERATIONS.md) — configuration, deployment, and troubleshooting

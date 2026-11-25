@@ -2,11 +2,6 @@
 	const lastUpdated = new Intl.DateTimeFormat('en-US').format(new Date());
 </script>
 
-<svelte:head>
-	<title>Privacy | λstepweaver</title>
-	<meta name="description" content="Privacy policy." />
-</svelte:head>
-
 <div class="privacy">
 	<header class="intro">
 		<p class="kicker">// PRIVACY</p>

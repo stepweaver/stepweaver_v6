@@ -14,25 +14,15 @@
 	}
 
 	const activeTag = $derived(data.tag ? tagKey(data.tag) : '');
-	const canonical = $derived(`${SITE_ORIGIN}${pageHref(data.page, data.tag)}`);
 </script>
 
 <svelte:head>
-	<title>Writing | λstepweaver</title>
-	<meta
-		name="description"
-		content="Notes on systems, integration, automation, and the decisions around the work."
-	/>
-	<link rel="canonical" href={canonical} />
 	<link
 		rel="alternate"
 		type="application/rss+xml"
 		title="λstepweaver writing"
 		href={`${SITE_ORIGIN}/writing/rss.xml`}
 	/>
-	{#if data.status !== 'ok'}
-		<meta name="robots" content="noindex" />
-	{/if}
 </svelte:head>
 
 <div class="writing">

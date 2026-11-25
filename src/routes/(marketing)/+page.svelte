@@ -18,11 +18,6 @@
 	});
 </script>
 
-<svelte:head>
-	<title>{identity.name} | {identity.title}</title>
-	<meta name="description" content={identity.positioning.short} />
-</svelte:head>
-
 <section class="hero">
 	<div class="hero-copy">
 		<p class="eyebrow"><LambdaText text={identity.positioning.eyebrow} /></p>

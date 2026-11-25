@@ -1,4 +1,16 @@
+import { SITE_ORIGIN } from '$lib/seo/origin';
 import type { RichSpan } from './types';
+
+const SITE_HOSTS = new Set(['stepweaver.dev', 'www.stepweaver.dev']);
+
+export function isSiteHref(value: string): boolean {
+	try {
+		const url = new URL(value);
+		return url.protocol === 'https:' && SITE_HOSTS.has(url.hostname);
+	} catch {
+		return false;
+	}
+}
 
 type NotionRichText = {
 	plain_text?: string;
@@ -15,7 +27,7 @@ export function safeHref(value: string | null | undefined): string | undefined {
 	const trimmed = value.trim();
 	if (!trimmed) return undefined;
 	try {
-		const url = new URL(trimmed, 'https://stepweaver.dev');
+		const url = new URL(trimmed, SITE_ORIGIN);
 		if (url.protocol === 'http:' || url.protocol === 'https:' || url.protocol === 'mailto:') {
 			return url.href;
 		}

@@ -1,46 +1,10 @@
 <script lang="ts">
 	import BlockBody from '$lib/components/writing/BlockBody.svelte';
 	import LambdaText from '$lib/components/site/LambdaText.svelte';
-	import { jsonLdScript } from '$lib/seo/json-ld';
-	import { SITE_ORIGIN } from '$lib/seo/origin';
 	import { formatWritingDate } from '$lib/writing/entries';
 
 	let { data } = $props();
-
-	const canonical = $derived(`${SITE_ORIGIN}/writing/${data.post.slug}`);
-	const description = $derived(data.post.excerpt || data.post.title);
-	const shareImage = `${SITE_ORIGIN}/images/lambda_stepweaver.png`;
-	const structured = $derived(
-		jsonLdScript({
-			'@context': 'https://schema.org',
-			'@type': 'BlogPosting',
-			headline: data.post.title,
-			datePublished: data.post.date,
-			dateModified: data.post.updated || data.post.date,
-			description,
-			url: canonical,
-			author: { '@type': 'Person', name: 'Stephen Weaver' },
-			mainEntityOfPage: canonical
-		})
-	);
 </script>
-
-<svelte:head>
-	<title>{data.post.title} | λstepweaver</title>
-	<meta name="description" content={description} />
-	<link rel="canonical" href={canonical} />
-	<meta property="og:type" content="article" />
-	<meta property="og:title" content={data.post.title} />
-	<meta property="og:description" content={description} />
-	<meta property="og:url" content={canonical} />
-	<meta property="og:image" content={shareImage} />
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content={data.post.title} />
-	<meta name="twitter:description" content={description} />
-	<meta name="twitter:image" content={shareImage} />
-	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-	{@html structured}
-</svelte:head>
 
 <article class="article">
 	<p class="back">

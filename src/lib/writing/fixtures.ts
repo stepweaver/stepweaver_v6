@@ -76,6 +76,16 @@ const RAW_PAGES: RawWritingPage[] = [
 		slugProperty: '',
 		created: '2025-11-02T12:00:00.000Z',
 		edited: '2025-11-02T12:00:00.000Z'
+	},
+	{
+		id: 'fixture000-0000-4000-8000-000000000060',
+		title: 'λ & "quotes"',
+		status: 'Published',
+		excerpt: 'Systems & <handoffs> — "notes".',
+		tags: [],
+		slugProperty: '',
+		created: '2024-06-01T12:00:00.000Z',
+		edited: '2024-06-04T12:00:00.000Z'
 	}
 ];
 

@@ -46,14 +46,6 @@
 	});
 </script>
 
-<svelte:head>
-	<title>Terminal | λstepweaver</title>
-	<meta
-		name="description"
-		content="A command console for this site: résumé, published writing, page navigation, and dice."
-	/>
-</svelte:head>
-
 <div class="console">
 	<h1 class="page-title">Terminal</h1>
 

@@ -9,6 +9,12 @@ export type CacheOptions = {
 	waitUntil?: (promise: Promise<unknown>) => void;
 	/** Homepage: a cold cache must not block the rest of the page. */
 	nonBlocking?: boolean;
+	/**
+	 * When false, a value older than the fresh window is not returned.
+	 * Direct article publication checks use this. Listing pages still accept
+	 * a stale catalog as a performance cache.
+	 */
+	acceptStale?: boolean;
 	now?: number;
 };
 
@@ -81,6 +87,7 @@ export async function cachedWriting<T>(
 	const cached = usable(saved) ? saved : undefined;
 	if (cached && now() - cached.at < FRESH_MS) return { value: cached.value, stale: false };
 	if ((retryAfter.get(key) ?? 0) > now()) {
+		if (options.acceptStale === false) return undefined;
 		return cached ? { value: cached.value, stale: true } : undefined;
 	}
 
@@ -119,10 +126,14 @@ export async function cachedWriting<T>(
 	}
 	// waitUntil keeps the task alive after Cloudflare sends the HTTP response.
 	if (options.waitUntil) options.waitUntil(refresh);
-	if (options.nonBlocking || (cached && options.waitUntil)) {
+	// A stale catalog may fill a listing. It must not authorize article delivery.
+	const defer =
+		options.acceptStale !== false && (options.nonBlocking || (cached && options.waitUntil));
+	if (defer) {
 		return cached ? { value: cached.value, stale: true } : undefined;
 	}
 	const updated = await refresh;
 	if (updated) return { value: updated.value, stale: false };
+	if (options.acceptStale === false) return undefined;
 	return cached && usable(cached) ? { value: cached.value, stale: true } : undefined;
 }

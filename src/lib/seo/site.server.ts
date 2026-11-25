@@ -1,8 +1,11 @@
 import { identity, PRIMARY_TITLE, SUPPORTING_LINE } from '$lib/data/identity';
 import { getPublicWorkCards, privateProjectSlugs } from '$lib/projects/publication';
 
-import { SITE_ORIGIN } from './origin';
+import { absoluteSiteUrl, SITE_ORIGIN } from './origin';
+import { SHARE_CARD } from './share-image';
 export { SITE_ORIGIN } from './origin';
+
+const SHARE_IMAGE = absoluteSiteUrl(SHARE_CARD.path);
 
 /** Indexable routes. Holding pages and unimplemented tools stay out. */
 export function publicSitemapPaths(): string[] {
@@ -30,7 +33,8 @@ export function buildStructuredData() {
 			'@type': 'WebSite',
 			name: 'λstepweaver',
 			url: SITE_ORIGIN,
-			description: `${PRIMARY_TITLE}. ${SUPPORTING_LINE}.`
+			description: `${PRIMARY_TITLE}. ${SUPPORTING_LINE}.`,
+			image: SHARE_IMAGE
 		},
 		person: {
 			'@context': 'https://schema.org',
@@ -38,6 +42,7 @@ export function buildStructuredData() {
 			name: identity.name,
 			jobTitle: PRIMARY_TITLE,
 			url: SITE_ORIGIN,
+			image: SHARE_IMAGE,
 			email: identity.email,
 			address: {
 				'@type': 'PostalAddress',

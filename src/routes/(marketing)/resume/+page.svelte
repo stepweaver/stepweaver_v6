@@ -6,14 +6,6 @@
 	import { upperLabel } from '$lib/text/lambda';
 </script>
 
-<svelte:head>
-	<title>Resume | λstepweaver</title>
-	<meta
-		name="description"
-		content="Professional background: systems, automation, and business-facing software."
-	/>
-</svelte:head>
-
 <div class="resume">
 	<div class="resume-inner">
 		<header class="resume-header">

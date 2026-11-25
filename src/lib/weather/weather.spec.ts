@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { formatCityTime, formatWeatherLines } from '$lib/weather/format';
+import { formatCityTime, formatWeatherLines, type WeatherReport } from '$lib/weather/format';
 import { clearWeatherCache, lookupWeather } from '$lib/server/weather/lookup';
 import { performEffect } from '$lib/terminal/effects';
 
@@ -144,5 +144,199 @@ describe('weather', () => {
 		expect(text).toContain('Location was not shared');
 		expect(text).toContain('weather <city>');
 		expect(outcome.mode).toBe('shell');
+	});
+
+	it('keeps real zeros and leaves missing measurements unknown', async () => {
+		clearWeatherCache();
+		const result = await lookupWeather({
+			apiKey: 'key',
+			lat: '41.68',
+			lon: '-86.25',
+			forecast: true,
+			now: 10_000,
+			fetch: async (url) => {
+				const href = String(url);
+				if (href.includes('/forecast')) {
+					return Response.json({
+						list: [
+							{
+								dt: 1_700_000_000,
+								weather: [{ description: 'clear' }],
+								main: { temp_max: 0, temp_min: 0 }
+							},
+							{ dt: 1_700_003_600, weather: [{ description: 'gap' }], main: {} },
+							{
+								dt: 1_700_007_200,
+								weather: [{ description: 'bad' }],
+								main: { temp_max: Number.NaN, temp_min: Number.POSITIVE_INFINITY }
+							},
+							{ dt: Number.NaN, main: { temp_max: 90, temp_min: 80 } }
+						]
+					});
+				}
+				return Response.json({
+					name: 'South Bend',
+					timezone: 0,
+					sys: { country: 'US' },
+					weather: [{ description: 'clear sky' }],
+					main: { temp: 0, humidity: 0 },
+					wind: { speed: 0 }
+				});
+			}
+		});
+		if (!result.ok || !('report' in result)) throw new Error('expected a report');
+		expect(result.report.tempF).toBe(0);
+		expect(result.report.tempC).toBe(-18);
+		expect(result.report.humidity).toBe(0);
+		expect(result.report.windMph).toBe(0);
+		expect(result.report.timezoneOffsetSeconds).toBe(0);
+		expect(result.report.forecast).toEqual([
+			{ at: 1_700_000_000, condition: 'clear', highF: 0, lowF: 0 },
+			{ at: 1_700_003_600, condition: 'gap', highF: null, lowF: null },
+			{ at: 1_700_007_200, condition: 'bad', highF: null, lowF: null }
+		]);
+		const text = formatWeatherLines(result.report)
+			.map((line) => line.text)
+			.join('\n');
+		expect(text).toContain('0°F (-18°C)');
+		expect(text).toContain('Humidity: 0%');
+		expect(text).toContain('Wind: 0 mph');
+		expect(text).toContain('0°F / 0°F');
+		expect(text).not.toContain('90°F');
+	});
+
+	it('does not turn a missing temperature, humidity, or wind into zero', async () => {
+		clearWeatherCache();
+		const missingTemp = await lookupWeather({
+			apiKey: 'key',
+			lat: '10',
+			lon: '20',
+			now: 20_000,
+			fetch: async () =>
+				Response.json({
+					name: 'Nowhere',
+					timezone: 0,
+					main: { humidity: 40 },
+					wind: { speed: 5 }
+				})
+		});
+		expect(missingTemp.ok).toBe(false);
+		expect(missingTemp).not.toMatchObject({ report: { tempF: 0 } });
+
+		clearWeatherCache();
+		const partial = await lookupWeather({
+			apiKey: 'key',
+			lat: '11',
+			lon: '21',
+			forecast: true,
+			now: 30_000,
+			fetch: async (url) => {
+				if (String(url).includes('/forecast')) return new Response('down', { status: 503 });
+				return Response.json({
+					name: 'Nowhere',
+					weather: [{ description: 'clear sky' }],
+					main: { temp: -40.2, humidity: -1 },
+					wind: { speed: -3 }
+				});
+			}
+		});
+		if (!partial.ok || !('report' in partial)) throw new Error('expected a report');
+		expect(partial.report.tempF).toBe(-40);
+		expect(partial.report.humidity).toBeNull();
+		expect(partial.report.windMph).toBeNull();
+		expect(partial.report.timezoneOffsetSeconds).toBeNull();
+		expect(partial.report.forecast).toEqual([]);
+		expect(partial.report.forecastUnavailable).toBe(true);
+		const text = formatWeatherLines(partial.report)
+			.map((line) => line.text)
+			.join('\n');
+		expect(text).toContain('-40°F');
+		expect(text).toContain('Humidity: unavailable');
+		expect(text).toContain('Wind: unavailable');
+		expect(text).toContain('Forecast: unavailable');
+		expect(text).not.toContain('Forecast, city local time');
+	});
+});
+
+describe('forecast days', () => {
+	function lines(offsetSeconds: number, forecast: WeatherReport['forecast']) {
+		return formatWeatherLines({
+			location: 'Test',
+			condition: 'clear',
+			tempF: 10,
+			tempC: -12,
+			humidity: 0,
+			windMph: 0,
+			timezoneOffsetSeconds: offsetSeconds,
+			forecast
+		})
+			.map((line) => line.text)
+			.join('\n');
+	}
+
+	it('splits local midnight and ignores missing temperatures in the daily high and low', () => {
+		const tokyo = 9 * 60 * 60;
+		const text = lines(tokyo, [
+			{
+				at: Date.UTC(2024, 0, 15, 14, 0, 0) / 1000,
+				condition: 'night',
+				highF: 30,
+				lowF: 20
+			},
+			{
+				at: Date.UTC(2024, 0, 15, 15, 0, 0) / 1000,
+				condition: 'overnight',
+				highF: 8,
+				lowF: 4
+			},
+			{
+				at: Date.UTC(2024, 0, 15, 16, 0, 0) / 1000,
+				condition: 'gap',
+				highF: null,
+				lowF: null
+			},
+			{
+				at: Date.UTC(2024, 0, 16, 3, 0, 0) / 1000,
+				condition: 'afternoon',
+				highF: 15,
+				lowF: null
+			},
+			{
+				at: Date.UTC(2024, 0, 17, 3, 0, 0) / 1000,
+				condition: 'only low',
+				highF: null,
+				lowF: 4
+			}
+		]);
+		expect(text).toContain('Mon Jan 15: night, 30°F / 20°F');
+		expect(text).toContain('Tue Jan 16: afternoon, 15°F / 4°F');
+		expect(text).toContain('Wed Jan 17: only low, unavailable / 4°F');
+		expect(text).not.toContain('15°F / 0°F');
+		expect(text).not.toContain('0°F / 4°F');
+	});
+
+	it('follows the provided offset across a daylight-saving boundary', () => {
+		const at = Date.UTC(2024, 10, 3, 4, 30, 0) / 1000;
+		const sample = [{ at, condition: 'clear', highF: 50, lowF: 40 }];
+		expect(lines(-4 * 60 * 60, sample)).toContain('Sun Nov 3: clear, 50°F / 40°F');
+		expect(lines(-5 * 60 * 60, sample)).toContain('Sat Nov 2: clear, 50°F / 40°F');
+	});
+
+	it('does not present a local forecast when the city offset is missing', () => {
+		const text = formatWeatherLines({
+			location: 'Test',
+			condition: 'clear',
+			tempF: 10,
+			tempC: -12,
+			humidity: null,
+			windMph: null,
+			timezoneOffsetSeconds: null,
+			forecast: [{ at: 1_700_000_000, condition: 'clouds', highF: 12, lowF: 0 }]
+		})
+			.map((line) => line.text)
+			.join('\n');
+		expect(text).toContain('Forecast: local time unavailable');
+		expect(text).not.toContain('Tue Nov 14');
+		expect(text).not.toContain('city local time');
 	});
 });

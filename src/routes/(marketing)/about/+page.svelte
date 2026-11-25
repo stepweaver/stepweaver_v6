@@ -4,14 +4,6 @@
 	import { briefData } from '$lib/data/brief-data';
 </script>
 
-<svelte:head>
-	<title>About | λstepweaver</title>
-	<meta
-		name="description"
-		content="Stephen Weaver is a Business Systems Developer and Systems Integration Consultant. The work is the system: analysis, integration, automation, custom software, and applied AI."
-	/>
-</svelte:head>
-
 <div class="about">
 	<header class="intro">
 		<p class="kicker">// ABOUT</p>

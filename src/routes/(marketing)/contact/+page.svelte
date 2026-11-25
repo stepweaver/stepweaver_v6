@@ -78,14 +78,6 @@
 	});
 </script>
 
-<svelte:head>
-	<title>Contact | λstepweaver</title>
-	<meta
-		name="description"
-		content="Consulting inquiries, hiring conversations, and general notes for Stephen Weaver."
-	/>
-</svelte:head>
-
 <div class="contact">
 	<header class="intro">
 		<p class="kicker">// CONTACT</p>

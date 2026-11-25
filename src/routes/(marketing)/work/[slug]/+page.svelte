@@ -9,11 +9,6 @@
 	const record = $derived(data.kind === 'record' ? data : null);
 </script>
 
-<svelte:head>
-	<title>{project?.title ?? record?.card.title} | λstepweaver</title>
-	<meta name="description" content={project?.description ?? record?.card.description ?? ''} />
-</svelte:head>
-
 <div class="case">
 	<a class="back" href="/work">← BACK TO WORK</a>
 

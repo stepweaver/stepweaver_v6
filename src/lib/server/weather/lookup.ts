@@ -146,8 +146,8 @@ async function reportAt(
 		redirect: 'manual'
 	});
 	const forecastPromise = forecast
-		? forecastAt(fetcher, apiKey, lat, lon).catch(() => [])
-		: Promise.resolve([]);
+		? forecastAt(fetcher, apiKey, lat, lon).catch(() => null)
+		: Promise.resolve([] as ForecastSample[]);
 	const [currentResponse, samples] = await Promise.all([currentPromise, forecastPromise]);
 	if (!currentResponse.ok) throw new Error('weather failed');
 	const current = (await currentResponse.json()) as {
@@ -158,10 +158,8 @@ async function reportAt(
 		main?: { temp?: number; humidity?: number };
 		wind?: { speed?: number };
 	};
-	const rawTemp = current.main?.temp;
-	if (typeof rawTemp !== 'number' || !Number.isFinite(rawTemp)) {
-		throw new Error('Current temperature is missing');
-	}
+	const rawTemp = finiteNumber(current.main?.temp);
+	if (rawTemp === null) throw new Error('Current temperature is missing');
 	const tempF = Math.round(rawTemp);
 	const place =
 		label ||
@@ -172,12 +170,28 @@ async function reportAt(
 		condition: current.weather?.[0]?.description || 'Unknown',
 		tempF,
 		tempC: Math.round(((tempF - 32) * 5) / 9),
-		humidity: Math.round(current.main?.humidity ?? 0),
-		windMph: Math.round(current.wind?.speed ?? 0),
-		timezoneOffsetSeconds: current.timezone ?? 0,
-		forecast: samples
+		humidity: roundedMeasurement(current.main?.humidity, 0, 100),
+		windMph: roundedMeasurement(current.wind?.speed, 0),
+		timezoneOffsetSeconds: finiteNumber(current.timezone),
+		forecast: samples ?? [],
+		forecastUnavailable: samples === null
 	};
 	return report;
+}
+
+function finiteNumber(value: unknown): number | null {
+	return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+/** Missing, non-finite, and out-of-range values stay unknown. Zero stays zero. */
+function roundedMeasurement(
+	value: unknown,
+	min: number,
+	max = Number.POSITIVE_INFINITY
+): number | null {
+	const number = finiteNumber(value);
+	if (number === null || number < min || number > max) return null;
+	return Math.round(number);
 }
 
 async function forecastAt(
@@ -185,10 +199,10 @@ async function forecastAt(
 	apiKey: string,
 	lat: number,
 	lon: number
-): Promise<ForecastSample[]> {
+): Promise<ForecastSample[] | null> {
 	const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=imperial&appid=${encodeURIComponent(apiKey)}`;
 	const response = await fetcher(url, { signal: AbortSignal.timeout(5000), redirect: 'manual' });
-	if (!response.ok) return [];
+	if (!response.ok) return null;
 	const data = (await response.json()) as {
 		list?: {
 			dt?: number;
@@ -197,11 +211,11 @@ async function forecastAt(
 		}[];
 	};
 	return (data.list ?? [])
-		.filter((item) => typeof item.dt === 'number')
+		.filter((item) => finiteNumber(item.dt) !== null)
 		.map((item) => ({
 			at: item.dt as number,
 			condition: item.weather?.[0]?.description || 'Unknown',
-			highF: Math.round(item.main?.temp_max ?? 0),
-			lowF: Math.round(item.main?.temp_min ?? 0)
+			highF: roundedMeasurement(item.main?.temp_max, Number.NEGATIVE_INFINITY),
+			lowF: roundedMeasurement(item.main?.temp_min, Number.NEGATIVE_INFINITY)
 		}));
 }
