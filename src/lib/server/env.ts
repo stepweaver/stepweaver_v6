@@ -11,6 +11,10 @@ export function writingRequestFromPlatform(platform: App.Platform | undefined) {
 	return {
 		source: readServerEnv(platform, 'WRITING_SOURCE'),
 		apiKey: readServerEnv(platform, 'NOTION_API_KEY'),
-		databaseId: readServerEnv(platform, 'NOTION_BLOG_DB_ID')
+		databaseId: readServerEnv(platform, 'NOTION_BLOG_DB_ID'),
+		cache: platform?.env?.WRITING_CACHE,
+		waitUntil: platform?.ctx
+			? (promise: Promise<unknown>) => platform.ctx.waitUntil(promise)
+			: undefined
 	};
 }

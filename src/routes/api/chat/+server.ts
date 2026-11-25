@@ -55,7 +55,10 @@ export const POST: RequestHandler = async (event) => {
 	}
 	const request = normalizeConversation(body);
 	if (!request) return json({ error: 'Usage: chat <message>' }, { status: 400, headers: HEADERS });
-	const catalog = await getWritingCatalog(writingRequestFromPlatform(event.platform));
+	const catalog = await getWritingCatalog({
+		...writingRequestFromPlatform(event.platform),
+		nonBlocking: true
+	});
 	const brief = publicLambdaBrief({
 		posts: catalog.posts.map((post) => ({
 			title: post.title,

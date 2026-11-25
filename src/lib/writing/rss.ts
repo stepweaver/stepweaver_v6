@@ -1,4 +1,4 @@
-import { SITE_ORIGIN } from '$lib/seo/site';
+import { SITE_ORIGIN } from '$lib/seo/site.server';
 import type { WritingEntry } from '$lib/writing/types';
 
 function escapeXml(value: string): string {

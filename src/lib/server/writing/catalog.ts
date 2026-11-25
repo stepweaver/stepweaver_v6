@@ -8,15 +8,105 @@ import {
 	type NotionFetcher
 } from './notion';
 
-const FRESH_MS = 300_000;
-
-type CacheEntry = { at: number; posts: WritingEntry[] };
-const catalogCache = new Map<string, CacheEntry>();
-const blockCache = new Map<string, { at: number; blocks: RenderBlock[] }>();
+import { cachedWriting, clearCache, within, type CacheOptions } from './cache';
 
 export function clearWritingCache(): void {
-	catalogCache.clear();
-	blockCache.clear();
+	clearCache();
+}
+
+function isPosts(value: unknown): value is WritingEntry[] {
+	return (
+		Array.isArray(value) &&
+		value.every(
+			(post) =>
+				post &&
+				typeof post === 'object' &&
+				['id', 'title', 'slug', 'date', 'updated', 'excerpt', 'summary', 'cover'].every(
+					(key) => typeof post[key] === 'string'
+				) &&
+				typeof post.featured === 'boolean' &&
+				Array.isArray(post.tags) &&
+				post.tags.every((tag: unknown) => typeof tag === 'string') &&
+				Array.isArray(post.legacySlugs) &&
+				post.legacySlugs.every((slug: unknown) => typeof slug === 'string')
+		)
+	);
+}
+
+function isSpans(value: unknown): boolean {
+	return (
+		Array.isArray(value) &&
+		value.every(
+			(span) =>
+				span &&
+				typeof span.text === 'string' &&
+				(span.href === undefined || typeof span.href === 'string') &&
+				['bold', 'italic', 'code'].every(
+					(key) => span[key] === undefined || typeof span[key] === 'boolean'
+				)
+		)
+	);
+}
+
+function isBlocks(value: unknown): value is RenderBlock[] {
+	return (
+		Array.isArray(value) &&
+		value.every((block) => {
+			if (!block || typeof block !== 'object') return false;
+			switch (block.type) {
+				case 'paragraph':
+				case 'quote':
+					return isSpans(block.spans);
+				case 'heading':
+					return (
+						[2, 3, 4].includes(block.level) &&
+						typeof block.text === 'string' &&
+						typeof block.id === 'string'
+					);
+				case 'code':
+					return typeof block.text === 'string' && typeof block.language === 'string';
+				case 'divider':
+					return true;
+				case 'list':
+					return (
+						typeof block.ordered === 'boolean' &&
+						Array.isArray(block.items) &&
+						block.items.every(isSpans)
+					);
+				case 'image':
+					return typeof block.src === 'string' && typeof block.alt === 'string';
+				case 'unsupported':
+					return typeof block.name === 'string';
+				default:
+					return false;
+			}
+		})
+	);
+}
+
+/** One budget for the entire paginated operation, including JSON body reads. */
+async function notionOperation<T>(
+	request: CatalogRequest,
+	operation: string,
+	load: (fetcher: NotionFetcher) => Promise<T>
+): Promise<T> {
+	const controller = new AbortController();
+	const fetcher: NotionFetcher = (url, init) => {
+		controller.signal.throwIfAborted();
+		return (request.fetcher ?? fetch)(url, {
+			...init,
+			signal: controller.signal,
+			redirect: 'manual'
+		});
+	};
+	try {
+		return await within(load(fetcher), 8_000);
+	} catch (error) {
+		logWritingFailure(error, operation);
+		throw error;
+	} finally {
+		controller.abort();
+	}
 }
 
 function logWritingFailure(error: unknown, operation: string): void {
@@ -27,7 +117,7 @@ function logWritingFailure(error: unknown, operation: string): void {
 	console.error(operation);
 }
 
-export type CatalogRequest = {
+export type CatalogRequest = CacheOptions & {
 	source?: string;
 	apiKey?: string;
 	databaseId?: string;
@@ -50,30 +140,20 @@ export async function getWritingCatalog(request: CatalogRequest = {}): Promise<W
 		return { status: 'unconfigured', stale: false, posts: [] };
 	}
 
-	const now = request.now ?? Date.now();
-	const cacheKey = databaseId;
-	const cached = catalogCache.get(cacheKey);
-	if (cached && now - cached.at < FRESH_MS) {
-		return { status: 'ok', stale: false, posts: cached.posts };
-	}
-
-	try {
-		const fetcher = request.fetcher ?? fetch;
-		const pages = await fetchPublishedPages(fetcher, apiKey, databaseId);
-		const posts = toWritingEntries(pages);
-		catalogCache.set(cacheKey, { at: now, posts });
-		return { status: 'ok', stale: false, posts };
-	} catch (error) {
-		logWritingFailure(error, 'fetch published pages');
-		if (cached) return { status: 'ok', stale: true, posts: cached.posts };
-		return { status: 'unavailable', stale: false, posts: [] };
-	}
+	const result = await cachedWriting(`writing:v1:${databaseId}:catalog`, request, isPosts, () =>
+		notionOperation(request, 'fetch published pages', async (fetcher) =>
+			toWritingEntries(await fetchPublishedPages(fetcher, apiKey, databaseId))
+		)
+	);
+	return result
+		? { status: 'ok', stale: result.stale, posts: result.value }
+		: { status: 'unavailable', stale: false, posts: [] };
 }
 
 export async function getArticleBlocks(
 	request: CatalogRequest,
 	pageId: string
-): Promise<{ status: 'ok' | 'unavailable'; blocks: RenderBlock[] }> {
+): Promise<{ status: 'ok' | 'unavailable'; blocks: RenderBlock[]; stale?: boolean }> {
 	const source = request.source?.trim().toLowerCase();
 	if (source === 'fixture') {
 		return { status: 'ok', blocks: fixtureArticleBlocks(pageId) };
@@ -81,18 +161,22 @@ export async function getArticleBlocks(
 	const apiKey = request.apiKey?.trim();
 	if (!apiKey || source === 'unavailable') return { status: 'unavailable', blocks: [] };
 
-	const now = request.now ?? Date.now();
-	const cached = blockCache.get(pageId);
-	if (cached && now - cached.at < FRESH_MS) return { status: 'ok', blocks: cached.blocks };
-
-	try {
-		const fetcher = request.fetcher ?? fetch;
-		const blocks = await fetchPageBlocks(fetcher, apiKey, pageId);
-		blockCache.set(pageId, { at: now, blocks });
-		return { status: 'ok', blocks };
-	} catch (error) {
-		logWritingFailure(error, 'fetch page blocks');
-		if (cached) return { status: 'ok', blocks: cached.blocks };
+	// Never serve a cached body unless the public catalog still includes its page.
+	const catalog = await getWritingCatalog(request);
+	if (catalog.status !== 'ok' || !catalog.posts.some((post) => post.id === pageId)) {
 		return { status: 'unavailable', blocks: [] };
 	}
+	const post = catalog.posts.find((post) => post.id === pageId)!;
+	const result = await cachedWriting(
+		`writing:v1:${request.databaseId?.trim()}:blocks:${pageId}:${post.updated}`,
+		request,
+		isBlocks,
+		() =>
+			notionOperation(request, 'fetch page blocks', (fetcher) =>
+				fetchPageBlocks(fetcher, apiKey, pageId)
+			)
+	);
+	return result
+		? { status: 'ok', blocks: result.value, stale: result.stale }
+		: { status: 'unavailable', blocks: [] };
 }

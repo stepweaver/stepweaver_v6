@@ -3,7 +3,7 @@
 	import { coverImageSrc } from '$lib/writing/rich-text';
 	import type { HomeWritingCard, HomeWritingView } from '$lib/writing/entries';
 
-	let { writing }: { writing: HomeWritingView } = $props();
+	let { writing, pending = false }: { writing: HomeWritingView; pending?: boolean } = $props();
 
 	const leadCover = $derived(coverImageSrc(writing.lead?.cover));
 
@@ -19,7 +19,9 @@
 			<a class="more" href="/writing">View all writing</a>
 		</header>
 		<p class="notice" role="status">
-			Writing is temporarily unavailable. This is not an empty archive.
+			{pending
+				? 'Loading recent writing…'
+				: 'Writing is temporarily unavailable. This is not an empty archive.'}
 		</p>
 	</section>
 {:else if writing.lead}

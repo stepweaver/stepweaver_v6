@@ -7,7 +7,9 @@
 	"name": "stepweaver-v6",
 	"main": ".svelte-kit/cloudflare/_worker.js",
 	"compatibility_date": "2026-08-16",
-	"compatibility_flags": ["nodejs_als"],
+	"compatibility_flags": [
+		"nodejs_als"
+	],
 	"assets": {
 		"binding": "ASSETS",
 		"directory": ".svelte-kit/cloudflare"
@@ -16,17 +18,27 @@
 		"enabled": true
 	},
 	"upload_source_maps": true,
-	"send_email": [{ "name": "CONTACT_EMAIL" }],
+	"send_email": [
+		{
+			"name": "CONTACT_EMAIL"
+		}
+	],
 	"ratelimits": [
 		{
 			"name": "CHAT_RATE_LIMITER",
 			"namespace_id": "1002",
-			"simple": { "limit": 20, "period": 60 }
+			"simple": {
+				"limit": 20,
+				"period": 60
+			}
 		},
 		{
 			"name": "WEATHER_RATE_LIMITER",
 			"namespace_id": "1003",
-			"simple": { "limit": 30, "period": 60 }
+			"simple": {
+				"limit": 30,
+				"period": 60
+			}
 		},
 		{
 			"name": "CONTACT_RATE_LIMITER",
@@ -40,7 +52,13 @@
 	"vars": {
 		"CONTACT_FROM_EMAIL": "contact@stepweaver.dev",
 		"CONTACT_TO_EMAIL": "stephen@stepweaver.dev"
-	}
+	},
+	"kv_namespaces": [
+		{
+			"binding": "WRITING_CACHE",
+			"id": "59b4dc4b764e4d89823444791c6043d3"
+		}
+	]
 	/**
 	 * Smart Placement
 	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

@@ -1,7 +1,8 @@
 import { identity, PRIMARY_TITLE, SUPPORTING_LINE } from '$lib/data/identity';
 import { getPublicWorkCards, privateProjectSlugs } from '$lib/projects/publication';
 
-export const SITE_ORIGIN = 'https://stepweaver.dev';
+import { SITE_ORIGIN } from './origin';
+export { SITE_ORIGIN } from './origin';
 
 /** Indexable routes. Holding pages and unimplemented tools stay out. */
 export function publicSitemapPaths(): string[] {

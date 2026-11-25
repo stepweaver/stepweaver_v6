@@ -20,7 +20,8 @@ export const load: PageServerLoad = async ({ params, platform, setHeaders }) => 
 
 	const article = await getArticleBlocks(request, match.post.id);
 	setHeaders({
-		'cache-control': catalog.stale ? 'no-store' : 'public, max-age=60'
+		'cache-control':
+			catalog.stale || article.stale || article.status !== 'ok' ? 'no-store' : 'public, max-age=60'
 	});
 	return {
 		post: match.post,

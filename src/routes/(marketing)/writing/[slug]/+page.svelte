@@ -2,7 +2,7 @@
 	import BlockBody from '$lib/components/writing/BlockBody.svelte';
 	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import { jsonLdScript } from '$lib/seo/json-ld';
-	import { SITE_ORIGIN } from '$lib/seo/site';
+	import { SITE_ORIGIN } from '$lib/seo/origin';
 	import { formatWritingDate } from '$lib/writing/entries';
 
 	let { data } = $props();

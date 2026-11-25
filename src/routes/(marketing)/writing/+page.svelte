@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SITE_ORIGIN } from '$lib/seo/site';
+	import { SITE_ORIGIN } from '$lib/seo/origin';
 	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import { formatWritingDate } from '$lib/writing/entries';
 	import { normalizeTag as tagKey } from '$lib/writing/slug';

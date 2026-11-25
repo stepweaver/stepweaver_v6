@@ -4,6 +4,7 @@ declare global {
 	namespace App {
 		interface Platform {
 			env: Env & {
+				WRITING_CACHE?: KVNamespace;
 				CHAT_RATE_LIMITER?: RateLimit;
 				WEATHER_RATE_LIMITER?: RateLimit;
 			};

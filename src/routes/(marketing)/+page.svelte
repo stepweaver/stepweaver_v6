@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { invalidate } from '$app/navigation';
 	import OperatorCard from '$lib/components/home/OperatorCard.svelte';
 	import WritingSection from '$lib/components/home/WritingSection.svelte';
 	import LambdaText from '$lib/components/site/LambdaText.svelte';
@@ -6,6 +7,15 @@
 	import { identity } from '$lib/data/identity';
 
 	let { data } = $props();
+	let refreshAttempts = $state(0);
+	$effect(() => {
+		if (!data.writingPending || refreshAttempts >= 3) return;
+		const timer = setTimeout(() => {
+			refreshAttempts += 1;
+			void invalidate('app:home-writing');
+		}, 4_000);
+		return () => clearTimeout(timer);
+	});
 </script>
 
 <svelte:head>
@@ -38,7 +48,7 @@
 	</div>
 </section>
 
-<WritingSection writing={data.writing} />
+<WritingSection writing={data.writing} pending={data.writingPending && refreshAttempts < 3} />
 
 <style>
 	.hero {

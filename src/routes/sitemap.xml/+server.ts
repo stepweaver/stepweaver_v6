@@ -1,6 +1,6 @@
 import { writingRequestFromPlatform } from '$lib/server/env';
 import { getWritingCatalog } from '$lib/server/writing/catalog';
-import { SITE_ORIGIN, publicSitemapPaths } from '$lib/seo/site';
+import { SITE_ORIGIN, publicSitemapPaths } from '$lib/seo/site.server';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ platform }) => {

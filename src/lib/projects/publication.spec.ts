@@ -8,7 +8,7 @@ import {
 	getPublicWorkPage,
 	publicationFor
 } from './publication';
-import { privateProjectSlugs, publicMetadataBlob, publicSitemapPaths } from '$lib/seo/site';
+import { privateProjectSlugs, publicMetadataBlob, publicSitemapPaths } from '$lib/seo/site.server';
 
 describe('project publication', () => {
 	it('keeps all 23 registry records and publishes none of them', () => {

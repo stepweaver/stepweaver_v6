@@ -1,11 +1,15 @@
 import { getPublicWorkCards } from '$lib/projects/publication';
-import { buildStructuredData } from '$lib/seo/site';
+import { buildStructuredData } from '$lib/seo/site.server';
 import { writingRequestFromPlatform } from '$lib/server/env';
 import { getWritingCatalog } from '$lib/server/writing/catalog';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ platform }) => {
-	const catalog = await getWritingCatalog(writingRequestFromPlatform(platform));
+export const load: LayoutServerLoad = async ({ platform, depends }) => {
+	depends('app:home-writing');
+	const catalog = await getWritingCatalog({
+		...writingRequestFromPlatform(platform),
+		nonBlocking: true
+	});
 	return {
 		structuredData: buildStructuredData(),
 		commandPalette: {
