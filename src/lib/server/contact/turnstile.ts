@@ -1,6 +1,23 @@
 const SITEVERIFY = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 const PRODUCTION_HOSTS = ['stepweaver.dev', 'www.stepweaver.dev'];
 
+/** Cloudflare's published always-pass test pair. These are not production credentials. */
+export const TURNSTILE_TEST_PASS_SECRET = '1x0000000000000000000000000000000AA';
+export const TURNSTILE_TEST_PASS_TOKEN = 'XXXX.DUMMY.TOKEN.XXXX';
+
+/**
+ * Siteverify accepts this pair but returns hostname "example.com" and omits action.
+ * Those checks stay mandatory for every live response. Development may accept the
+ * exact pair locally so tests do not depend on that external payload.
+ */
+export function turnstileTestFixtureAccepts(
+	devMode: boolean,
+	token: string,
+	secret: string
+): boolean {
+	return devMode && secret === TURNSTILE_TEST_PASS_SECRET && token === TURNSTILE_TEST_PASS_TOKEN;
+}
+
 export type TurnstileExpectation = {
 	hostnames: string[];
 	action: string;

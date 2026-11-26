@@ -59,5 +59,14 @@ describe('turnstile verification', () => {
 			siteverify({ success: true, hostname: 'stepweaver.dev' })
 		);
 		expect(missingAction).toBe(false);
+
+		const documentedTestPayload = await verifyTurnstileToken(
+			'XXXX.DUMMY.TOKEN.XXXX',
+			'127.0.0.1',
+			'1x0000000000000000000000000000000AA',
+			{ hostnames: ['localhost', '127.0.0.1'], action: 'contact' },
+			siteverify({ success: true, hostname: 'example.com', 'error-codes': [] })
+		);
+		expect(documentedTestPayload).toBe(false);
 	});
 });

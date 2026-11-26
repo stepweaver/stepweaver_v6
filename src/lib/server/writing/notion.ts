@@ -224,7 +224,7 @@ export async function fetchPublishedPages(
 	databaseId: string
 ): Promise<RawWritingPage[]> {
 	const databaseUrl = `https://api.notion.com/v1/databases/${databaseId}`;
-	let dataSourceId = '';
+	let dataSourceId: string;
 	let statusType: string | undefined;
 	try {
 		const retrieved = await fetcher(databaseUrl, {

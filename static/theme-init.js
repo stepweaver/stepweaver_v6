@@ -21,7 +21,7 @@
 		};
 		if (!theme || !allowed[theme]) theme = 'dark';
 		document.documentElement.setAttribute('data-theme', theme);
-	} catch (e) {
+	} catch {
 		document.documentElement.setAttribute('data-theme', 'dark');
 	}
 })();

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMockMailer } from './mail';
 import { clearMemoryRateLimit } from './rate-limit';
 import { submitContact, type ContactEnv } from './submit';
+import { TURNSTILE_TEST_PASS_SECRET, TURNSTILE_TEST_PASS_TOKEN } from './turnstile';
 
 const env: ContactEnv = {
 	turnstileSecret: 'secret',
@@ -44,6 +45,7 @@ async function submit(overrides: {
 	verify?: (token: string, ip: string, secret: string) => Promise<boolean>;
 	rateLimiter?: { limit: () => Promise<{ success: boolean }> } | null;
 	headers?: Record<string, string>;
+	realVerifier?: boolean;
 }) {
 	return submitContact({
 		request: request(overrides.fields ?? fields(), overrides.headers),
@@ -53,7 +55,7 @@ async function submit(overrides: {
 		now: overrides.now ?? 10_000,
 		rateLimiter: overrides.rateLimiter,
 		mailer: overrides.mailer,
-		verifyTurnstile: overrides.verify ?? (async () => true)
+		...(overrides.realVerifier ? {} : { verifyTurnstile: overrides.verify ?? (async () => true) })
 	});
 }
 
@@ -95,6 +97,89 @@ describe('contact submission', () => {
 		expect(result.body.success).toBe(false);
 		expect(result.body.message).toContain('bot check');
 		expect(mailer.sent).toHaveLength(0);
+	});
+
+	it('accepts the documented dummy token in development without calling siteverify', async () => {
+		const fetchMock = vi.fn();
+		vi.stubGlobal('fetch', fetchMock);
+		try {
+			const mailer = createMockMailer();
+			const result = await submit({
+				realVerifier: true,
+				dev: true,
+				env: { turnstileSecret: TURNSTILE_TEST_PASS_SECRET, adapter: 'mock' },
+				mailer,
+				fields: fields({ cf_turnstile_response: TURNSTILE_TEST_PASS_TOKEN })
+			});
+			expect(result.ok).toBe(true);
+			expect(result.body.message).toBe('Your message was sent. I will read it and reply.');
+			expect(mailer.sent).toHaveLength(1);
+			expect(fetchMock).not.toHaveBeenCalled();
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+
+	it('rejects the documented test siteverify payload outside development', async () => {
+		const fetchMock = vi.fn(
+			async () =>
+				new Response(
+					JSON.stringify({ success: true, hostname: 'example.com', 'error-codes': [] }),
+					{ status: 200, headers: { 'content-type': 'application/json' } }
+				)
+		);
+		vi.stubGlobal('fetch', fetchMock);
+		try {
+			const send = vi.fn();
+			const result = await submit({
+				realVerifier: true,
+				dev: false,
+				env: {
+					turnstileSecret: TURNSTILE_TEST_PASS_SECRET,
+					email: { send },
+					from: 'contact@stepweaver.dev',
+					to: 'inbox@example.com'
+				},
+				rateLimiter: { limit: async () => ({ success: true }) },
+				fields: fields({ cf_turnstile_response: TURNSTILE_TEST_PASS_TOKEN })
+			});
+			expect(result.ok).toBe(false);
+			expect(result.status).toBe(403);
+			expect(result.body.message).toBe('The bot check did not pass. Try again.');
+			expect(send).not.toHaveBeenCalled();
+			expect(fetchMock).toHaveBeenCalledOnce();
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+
+	it('does not treat an arbitrary token as the development fixture', async () => {
+		const fetchMock = vi.fn(
+			async () =>
+				new Response(
+					JSON.stringify({ success: false, 'error-codes': ['invalid-input-response'] }),
+					{
+						status: 200,
+						headers: { 'content-type': 'application/json' }
+					}
+				)
+		);
+		vi.stubGlobal('fetch', fetchMock);
+		try {
+			const mailer = createMockMailer();
+			const result = await submit({
+				realVerifier: true,
+				dev: true,
+				env: { turnstileSecret: TURNSTILE_TEST_PASS_SECRET, adapter: 'mock' },
+				mailer,
+				fields: fields({ cf_turnstile_response: 'not-the-dummy-token' })
+			});
+			expect(result.status).toBe(403);
+			expect(mailer.sent).toHaveLength(0);
+			expect(fetchMock).toHaveBeenCalledOnce();
+		} finally {
+			vi.unstubAllGlobals();
+		}
 	});
 
 	it('does not send when the bot check fails', async () => {

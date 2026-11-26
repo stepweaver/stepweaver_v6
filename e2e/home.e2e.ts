@@ -55,7 +55,17 @@ test('mobile home leads with the offer and keeps one header row', async ({ page 
 	await expect(page.locator('html')).toHaveAttribute('data-theme', 'skynet');
 	await page.reload();
 	await expect(page.locator('html')).toHaveAttribute('data-theme', 'skynet');
-	await expect(page.locator('.portrait-bay img').nth(1)).toHaveCSS('opacity', '1');
+	const portrait = page.locator('.portrait-bay img');
+	await expect(portrait).toHaveCount(1);
+	await expect(portrait).toHaveAttribute('src', '/images/pixarMe_terminator.png');
+	await expect(portrait).toHaveAttribute('alt', 'Stephen Weaver');
+	await expect
+		.poll(() =>
+			portrait.evaluate(
+				(img) => img instanceof HTMLImageElement && img.complete && img.naturalWidth > 0
+			)
+		)
+		.toBe(true);
 
 	await page.getByRole('button', { name: 'Search' }).click();
 	await expect(page.getByRole('dialog', { name: 'Command palette' })).toBeVisible();

@@ -3,7 +3,7 @@ import { identity } from '$lib/data/identity';
 import { createMockMailer, renderContactMail, type Mailer, type OutboundMail } from './mail';
 import { allowMemoryRateLimit, CONTACT_RATE_LIMIT, CONTACT_RATE_WINDOW_MS } from './rate-limit';
 import { validateContactFields } from './schema';
-import { turnstileHostnames, verifyTurnstileToken } from './turnstile';
+import { turnstileHostnames, turnstileTestFixtureAccepts, verifyTurnstileToken } from './turnstile';
 
 const MAX_BODY = 20_000;
 const MIN_AGE_MS = 400;
@@ -143,12 +143,7 @@ export async function submitContact(input: {
 	}
 	const token = read(form, 'cf_turnstile_response').trim();
 	if (!token) return failure(403, 'The bot check did not pass. Try again.', values);
-	const passed = input.verifyTurnstile
-		? await input.verifyTurnstile(token, input.clientAddress || 'unknown', secret)
-		: await verifyTurnstileToken(token, input.clientAddress || 'unknown', secret, {
-				hostnames: turnstileHostnames(new URL(input.request.url).hostname, input.dev),
-				action: 'contact'
-			});
+	const passed = await botCheckPassed(input, token, secret);
 	if (!passed) return failure(403, 'The bot check did not pass. Try again.', values);
 
 	const mailer = input.mailer ?? resolveMailer(input.dev, input.env);
@@ -192,6 +187,25 @@ export async function submitContact(input: {
 			values: { name: '', email: '', message: '', intent: parsed.value.intent }
 		}
 	};
+}
+
+async function botCheckPassed(
+	input: {
+		request: Request;
+		clientAddress: string;
+		dev: boolean;
+		verifyTurnstile?: (token: string, ip: string, secret: string) => Promise<boolean>;
+	},
+	token: string,
+	secret: string
+): Promise<boolean> {
+	const ip = input.clientAddress || 'unknown';
+	if (input.verifyTurnstile) return input.verifyTurnstile(token, ip, secret);
+	if (turnstileTestFixtureAccepts(input.dev, token, secret)) return true;
+	return verifyTurnstileToken(token, ip, secret, {
+		hostnames: turnstileHostnames(new URL(input.request.url).hostname, input.dev),
+		action: 'contact'
+	});
 }
 
 function emptyValues(): ContactBody['values'] {
