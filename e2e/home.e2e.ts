@@ -193,6 +193,10 @@ test('home states the consulting identity and hides the project catalog', async 
 	).toHaveCount(0);
 	await expect(page.getByText('Unpublished operations note')).toHaveCount(0);
 	await expect(page.getByText('HMFIC-01')).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Occupational Endurance Athlete' })).toHaveAttribute(
+		'href',
+		'/field-journal'
+	);
 	await expect(page.getByRole('link', { name: 'GitHub' })).toHaveAttribute(
 		'href',
 		'https://github.com/stepweaver'

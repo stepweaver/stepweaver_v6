@@ -78,7 +78,7 @@
 
 	<div class="chapter">
 		<p class="label">Current chapter</p>
-		<p>{OPERATOR_CHAPTER}</p>
+		<a href="/field-journal">{OPERATOR_CHAPTER}</a>
 	</div>
 
 	<p class="bio">
@@ -203,6 +203,15 @@
 
 	.label {
 		color: var(--text-label);
+	}
+
+	.chapter a {
+		color: var(--neon);
+	}
+
+	.chapter a:hover {
+		text-decoration: underline;
+		text-underline-offset: 0.18em;
 	}
 
 	.meta {
