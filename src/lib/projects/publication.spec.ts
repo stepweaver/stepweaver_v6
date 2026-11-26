@@ -48,6 +48,8 @@ describe('project publication', () => {
 		expect(publicSitemapPaths().some((path) => path.startsWith('/work/'))).toBe(false);
 		expect(publicSitemapPaths()).toContain('/dice-roller');
 		expect(publicSitemapPaths()).toContain('/terminal');
+		expect(publicSitemapPaths()).toContain('/field-journal');
+		expect(publicSitemapPaths()).not.toContain('/field-journal/log');
 		expect(publicSitemapPaths()).not.toContain('/lab');
 		expect(publicSitemapPaths()).not.toContain('/play');
 		expect(blob.includes('github.com/stepweaver')).toBe(true);

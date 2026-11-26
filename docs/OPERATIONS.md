@@ -19,40 +19,42 @@ pnpm preview
 
 `pnpm preview` builds and runs `wrangler dev`. Wrangler reads `.dev.vars` for local secrets and simulates bindings. `pnpm dev` does not write to production KV. Do not commit `.env` or `.dev.vars`.
 
-`WRITING_SOURCE=fixture` serves the in-repo writing fixtures. `WRITING_SOURCE=unavailable` forces the failure state. Playwright sets fixture mode, `CONTACT_EMAIL_ADAPTER=mock`, Turnstile test keys, and empty weather and model keys.
+`WRITING_SOURCE=fixture` serves the in-repo writing fixtures. `WRITING_SOURCE=unavailable` forces the failure state. `JOURNAL_SOURCE=fixture` serves synthetic mileage in development only. Playwright sets both fixture modes, `CONTACT_EMAIL_ADAPTER=mock`, Turnstile test keys, and empty weather and model keys. A second Playwright server sets `JOURNAL_SOURCE=unavailable`.
 
 ## Environment variables
 
-| Name                        | Purpose                                                                             |
-| --------------------------- | ----------------------------------------------------------------------------------- |
-| `NOTION_API_KEY`            | Notion integration token. Server only                                               |
-| `NOTION_BLOG_DB_ID`         | Writing database id                                                                 |
-| `WRITING_SOURCE`            | `fixture` or `unavailable`. Omit to use Notion when the key and database id are set |
-| `PUBLIC_TURNSTILE_SITE_KEY` | Site key rendered by the contact and terminal widgets                               |
-| `TURNSTILE_SECRET_KEY`      | Siteverify secret. Production contact fails closed when it is missing               |
-| `CONTACT_FROM_EMAIL`        | Sender address. Also set as a Worker var in `wrangler.jsonc`                        |
-| `CONTACT_TO_EMAIL`          | Destination address. Also a Worker var                                              |
-| `CONTACT_EMAIL_ADAPTER`     | `mock` only for local development. Production ignores it and fails closed           |
-| `OPENWEATHER_API_KEY`       | Terminal weather. Blank responses say weather is not configured                     |
-| `GROQ_API_KEY`              | Preferred λlambda provider                                                          |
-| `OPENAI_API_KEY`            | Fallback provider                                                                   |
-| `GROQ_MODEL`                | Optional. Default `llama-3.3-70b-versatile`                                         |
-| `OPENAI_MODEL`              | Optional. Default `gpt-4o-mini`                                                     |
+| Name                           | Purpose                                                                                                                   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `NOTION_API_KEY`               | Notion integration token. Server only. Writing and Field Journal share it                                                 |
+| `NOTION_BLOG_DB_ID`            | Writing database id                                                                                                       |
+| `NOTION_CARRIER_JOURNAL_DB_ID` | Existing Field Journal database id. Do not create a replacement                                                           |
+| `WRITING_SOURCE`               | `fixture` or `unavailable`. Omit to use Notion when the key and writing database id are set                               |
+| `JOURNAL_SOURCE`               | `fixture` or `unavailable`. Omit to use Notion when the key and journal database id are set. Production ignores `fixture` |
+| `PUBLIC_TURNSTILE_SITE_KEY`    | Site key rendered by the contact and terminal widgets                                                                     |
+| `TURNSTILE_SECRET_KEY`         | Siteverify secret. Production contact fails closed when it is missing                                                     |
+| `CONTACT_FROM_EMAIL`           | Sender address. Also set as a Worker var in `wrangler.jsonc`                                                              |
+| `CONTACT_TO_EMAIL`             | Destination address. Also a Worker var                                                                                    |
+| `CONTACT_EMAIL_ADAPTER`        | `mock` only for local development. Production ignores it and fails closed                                                 |
+| `OPENWEATHER_API_KEY`          | Terminal weather. Blank responses say weather is not configured                                                           |
+| `GROQ_API_KEY`                 | Preferred λlambda provider                                                                                                |
+| `OPENAI_API_KEY`               | Fallback provider                                                                                                         |
+| `GROQ_MODEL`                   | Optional. Default `llama-3.3-70b-versatile`                                                                               |
+| `OPENAI_MODEL`                 | Optional. Default `gpt-4o-mini`                                                                                           |
 
-Production secrets (`NOTION_API_KEY`, `NOTION_BLOG_DB_ID`, `TURNSTILE_SECRET_KEY`, `OPENWEATHER_API_KEY`, `GROQ_API_KEY`, `OPENAI_API_KEY`) belong in `wrangler secret put`, not in Git. The Turnstile site key is public. Sender and recipient addresses are Worker vars, not secrets.
+Production secrets (`NOTION_API_KEY`, `NOTION_BLOG_DB_ID`, `NOTION_CARRIER_JOURNAL_DB_ID`, `TURNSTILE_SECRET_KEY`, `OPENWEATHER_API_KEY`, `GROQ_API_KEY`, `OPENAI_API_KEY`) belong in `wrangler secret put`, not in Git. The Turnstile site key is public. Sender and recipient addresses are Worker vars, not secrets.
 
 ## Worker bindings
 
 `wrangler.jsonc` names the Worker `stepweaver-v6`. The entry is the SvelteKit Cloudflare worker. Compatibility date is `2026-08-16` with the `nodejs_als` flag. Observability is enabled and source maps are uploaded.
 
-| Binding                | Kind       | Behavior                                                              |
-| ---------------------- | ---------- | --------------------------------------------------------------------- |
-| `ASSETS`               | assets     | Built client and static files                                         |
-| `CONTACT_EMAIL`        | send_email | Outbound contact mail. No `destination_address` is set on the binding |
-| `CONTACT_RATE_LIMITER` | ratelimit  | 5 requests / 60 seconds, namespace `1001`                             |
-| `CHAT_RATE_LIMITER`    | ratelimit  | 20 / 60 seconds, namespace `1002`                                     |
-| `WEATHER_RATE_LIMITER` | ratelimit  | 30 / 60 seconds, namespace `1003`                                     |
-| `WRITING_CACHE`        | KV         | Public writing catalog and article blocks                             |
+| Binding                | Kind       | Behavior                                                                |
+| ---------------------- | ---------- | ----------------------------------------------------------------------- |
+| `ASSETS`               | assets     | Built client and static files                                           |
+| `CONTACT_EMAIL`        | send_email | Outbound contact mail. No `destination_address` is set on the binding   |
+| `CONTACT_RATE_LIMITER` | ratelimit  | 5 requests / 60 seconds, namespace `1001`                               |
+| `CHAT_RATE_LIMITER`    | ratelimit  | 20 / 60 seconds, namespace `1002`                                       |
+| `WEATHER_RATE_LIMITER` | ratelimit  | 30 / 60 seconds, namespace `1003`                                       |
+| `WRITING_CACHE`        | KV         | Public writing catalog, article blocks, and the public mileage snapshot |
 
 `src/app.d.ts` adds `WRITING_CACHE`, `CHAT_RATE_LIMITER`, and `WEATHER_RATE_LIMITER` onto the platform env. `src/worker-configuration.d.ts` is generated and can lag `wrangler.jsonc`. Regenerate with `pnpm cf-typegen` after binding changes, and keep `.svelte-kit/cloudflare` out of the way if the generator starts importing the built worker.
 
@@ -93,6 +95,12 @@ The memory cache holds 64 successful lookups for 10 minutes. It does not survive
 The server sends `Authorization: Bearer` and `Notion-Version` `2025-09-03` or `2022-06-28`. Logs record operation name and HTTP status. They do not record the token or the request body. Cover and inline images must pass the safe-URL check before they are rendered.
 
 Share the writing database with the integration that owns `NOTION_API_KEY`. A 401 or 403 fails the refresh and keeps the previous good cache entry when one exists.
+
+Share the existing Field Journal database with that same integration. On 2026-11-26 the v6 key received `object_not_found` for it, so the database still needs to be shared before `/field-journal` can leave the unconfigured state. Do not change `Publish Public` on existing rows as part of that setup, and do not delete properties.
+
+The server reads only `Date`, `Miles Walked`, and `Publish Public`. A Notion view for data entry can show those three columns. Leave mileage blank when it was not recorded. Type `0` only for a real zero. A date with two public rows blocks the total until one is unpublished or removed.
+
+The mileage cache key is `journal:v1:{databaseId}:public-mileage`. It is fresh for five minutes. A failed refresh does not serve an older snapshot. Totals are calculated on read and are not stored.
 
 ## Cache freshness
 

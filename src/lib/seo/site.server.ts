@@ -14,6 +14,7 @@ export function publicSitemapPaths(): string[] {
 		'/about',
 		'/services',
 		'/writing',
+		'/field-journal',
 		'/writing/rss.xml',
 		'/resume',
 		'/contact',

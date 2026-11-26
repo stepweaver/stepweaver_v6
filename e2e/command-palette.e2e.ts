@@ -42,7 +42,7 @@ test('keyboard search stays local, restores focus, and skips unpublished routes'
 	await expect(dialog).not.toContainText('Unpublished operations note');
 	await expect(page.getByRole('option', { name: /Silent Auction|Field Journal/ })).toHaveCount(0);
 	await input.fill('field-journal');
-	await expect(dialog.locator('[href="/field-journal"]')).toHaveCount(0);
+	await expect(page.getByRole('option', { name: /^Field Journal/ })).toBeVisible();
 	await input.fill('meshtastic');
 	await expect(dialog.locator('[href="/meshtastic"]')).toHaveCount(0);
 	const dialogText = await dialog.innerText();

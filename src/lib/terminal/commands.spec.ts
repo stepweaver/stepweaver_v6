@@ -88,8 +88,8 @@ describe('terminal commands', () => {
 			.join('\n');
 		expect(listed).toContain('/writing');
 		expect(listed).toContain('/dice-roller');
+		expect(listed).toContain('/field-journal');
 		expect(listed).toContain('https://github.com/stepweaver');
-		expect(listed).not.toContain('field-journal');
 		expect(listed).not.toContain('lab');
 		expect(listed).not.toContain('play');
 
@@ -99,9 +99,8 @@ describe('terminal commands', () => {
 		expect(dice.effect).toEqual({ type: 'navigate', href: '/dice-roller', external: false });
 		const roller = dispatchCommand('cd dice-roller');
 		expect(roller.effect).toEqual({ type: 'navigate', href: '/dice-roller', external: false });
-		const missing = dispatchCommand('cd field-journal');
-		expect(missing.effect).toBeUndefined();
-		expect(missing.lines[0]?.content).toBe('Unknown destination: field-journal');
+		const journal = dispatchCommand('cd field-journal');
+		expect(journal.effect).toEqual({ type: 'navigate', href: '/field-journal', external: false });
 		expect(dispatchCommand('cd lab').effect).toBeUndefined();
 		expect(dispatchCommand('cd play').effect).toBeUndefined();
 		const help = helpLines()

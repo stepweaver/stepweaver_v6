@@ -51,6 +51,6 @@ export function publicLambdaBrief(input: PublicBriefInput): string {
 		'Public case studies:',
 		projects,
 		'',
-		'Pages: /about /services /writing /resume /contact /terminal /dice-roller'
+		'Pages: /about /services /writing /field-journal /resume /contact /terminal /dice-roller'
 	].join('\n');
 }

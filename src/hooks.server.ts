@@ -5,11 +5,17 @@ function isPath(pathname: string, base: string): boolean {
 	return pathname === base || pathname.startsWith(`${base}/`);
 }
 
-/** Retired entry points. Lab tools and data stay; this app does not host them. */
+/**
+ * Retired entry points. Lab tools stay on the terminal.
+ * /carrier-journal was the old name of the public journal.
+ * Log, lab, and footwear paths are not separate apps anymore.
+ */
 export const handle: Handle = async ({ event, resolve }) => {
 	const { pathname } = event.url;
 	if (isPath(pathname, '/lab')) redirect(301, '/terminal');
 	if (isPath(pathname, '/play')) redirect(301, '/dice-roller');
+	if (isPath(pathname, '/carrier-journal')) redirect(301, '/field-journal');
+	if (pathname.startsWith('/field-journal/')) redirect(301, '/field-journal');
 	const response = await resolve(event);
 	const headers = new Headers(response.headers);
 	headers.set('x-content-type-options', 'nosniff');

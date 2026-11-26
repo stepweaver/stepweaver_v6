@@ -45,6 +45,7 @@ describe('command palette index', () => {
 		const quiet = hrefs(entries(''));
 		expect(quiet).toContain('/dice-roller');
 		expect(quiet).toContain('/terminal');
+		expect(quiet).toContain('/field-journal');
 		expect(quiet).not.toContain('/services');
 		expect(quiet).not.toContain('/work');
 		expect(quiet).not.toContain('/lab');
@@ -78,8 +79,8 @@ describe('command palette index', () => {
 
 	it('keeps retired routes and unpublished records out', () => {
 		const retired: ShellDestination = {
-			name: 'field-journal',
-			href: '/field-journal',
+			name: 'footwear',
+			href: '/footwear',
 			external: false
 		};
 		const projects = getPublicWorkCards().map((card) => ({
@@ -96,7 +97,9 @@ describe('command palette index', () => {
 				query: ''
 			})
 		);
-		expect(blob).not.toContain('/field-journal');
+		expect(blob).toContain('/field-journal');
+		expect(blob).not.toContain('/field-journal/lab');
+		expect(blob).not.toContain('/footwear');
 		expect(blob).not.toContain('/meshtastic');
 		expect(blob).not.toContain('/mail-sort-academy');
 		expect(blob).not.toContain('/yankee-samurai');
@@ -104,9 +107,12 @@ describe('command palette index', () => {
 		expect(blob).not.toContain(FIXTURE_DRAFT_TITLE);
 		for (const record of getCatalogRecords()) {
 			if (record.publication === 'public') continue;
+			expect(blob).not.toContain(`/work/${record.slug}`);
 			expect(blob).not.toContain(record.slug);
+			if (record.title === 'Field Journal') continue;
 			expect(blob).not.toContain(record.title);
 		}
+		expect(blob).not.toContain('equipment roster');
 	});
 
 	it('lists an approved project and still hides a retired route searched by name', () => {
@@ -122,7 +128,7 @@ describe('command palette index', () => {
 		});
 		expect(hrefs(found)).toEqual(['/work/parcel-sweep']);
 		expect(hrefs(entries('meshtastic'))).not.toContain('/meshtastic');
-		expect(hrefs(entries('field journal'))).not.toContain('/field-journal');
+		expect(hrefs(entries('field journal'))).toContain('/field-journal');
 	});
 
 	it('adds Ask λlambda only when shared chat is ready and the query is a draft', () => {

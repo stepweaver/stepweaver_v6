@@ -37,6 +37,35 @@ describe('server env isolation', () => {
 		expect(readServerEnv(platform, 'UNRELATED_SETTING', { isolated: true })).toBe('keep-platform');
 	});
 
+	it('lets the browser suite hide the journal database and choose the fixture source', () => {
+		const previous = {
+			database: process.env.NOTION_CARRIER_JOURNAL_DB_ID,
+			source: process.env.JOURNAL_SOURCE,
+			key: process.env.NOTION_API_KEY
+		};
+		const journalPlatform = {
+			env: {
+				NOTION_CARRIER_JOURNAL_DB_ID: 'platform-journal',
+				JOURNAL_SOURCE: 'notion',
+				NOTION_API_KEY: 'platform-key'
+			}
+		} as unknown as App.Platform;
+		process.env.NOTION_CARRIER_JOURNAL_DB_ID = '';
+		process.env.JOURNAL_SOURCE = 'fixture';
+		process.env.NOTION_API_KEY = '';
+		expect(
+			readServerEnv(journalPlatform, 'NOTION_CARRIER_JOURNAL_DB_ID', { isolated: true })
+		).toBeUndefined();
+		expect(readServerEnv(journalPlatform, 'JOURNAL_SOURCE', { isolated: true })).toBe('fixture');
+		expect(readServerEnv(journalPlatform, 'NOTION_API_KEY', { isolated: true })).toBeUndefined();
+		expect(
+			readServerEnv(journalPlatform, 'NOTION_CARRIER_JOURNAL_DB_ID', { isolated: false })
+		).toBe('platform-journal');
+		restore('NOTION_CARRIER_JOURNAL_DB_ID', previous.database);
+		restore('JOURNAL_SOURCE', previous.source);
+		restore('NOTION_API_KEY', previous.key);
+	});
+
 	it('cannot turn isolation on in production', () => {
 		process.env.STEPWEAVER_E2E = '1';
 		process.env.OPENWEATHER_API_KEY = '';

@@ -9,7 +9,9 @@ import { dev } from '$app/environment';
 const ISOLATED_SERVICE_KEYS = new Set([
 	'NOTION_API_KEY',
 	'NOTION_BLOG_DB_ID',
+	'NOTION_CARRIER_JOURNAL_DB_ID',
 	'WRITING_SOURCE',
+	'JOURNAL_SOURCE',
 	'TURNSTILE_SECRET_KEY',
 	'CONTACT_FROM_EMAIL',
 	'CONTACT_TO_EMAIL',
@@ -48,6 +50,18 @@ export function writingRequestFromPlatform(platform: App.Platform | undefined) {
 		source: readServerEnv(platform, 'WRITING_SOURCE'),
 		apiKey: readServerEnv(platform, 'NOTION_API_KEY'),
 		databaseId: readServerEnv(platform, 'NOTION_BLOG_DB_ID'),
+		cache: platform?.env?.WRITING_CACHE,
+		waitUntil: platform?.ctx
+			? (promise: Promise<unknown>) => platform.ctx.waitUntil(promise)
+			: undefined
+	};
+}
+
+export function journalRequestFromPlatform(platform: App.Platform | undefined) {
+	return {
+		source: readServerEnv(platform, 'JOURNAL_SOURCE'),
+		apiKey: readServerEnv(platform, 'NOTION_API_KEY'),
+		databaseId: readServerEnv(platform, 'NOTION_CARRIER_JOURNAL_DB_ID'),
 		cache: platform?.env?.WRITING_CACHE,
 		waitUntil: platform?.ctx
 			? (promise: Promise<unknown>) => platform.ctx.waitUntil(promise)

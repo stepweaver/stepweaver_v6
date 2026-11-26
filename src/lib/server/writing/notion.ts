@@ -169,18 +169,42 @@ function pageResults(
 	return { results: body.results, next: body.next_cursor };
 }
 
+function propertyFilterUrl(url: string, propertyIds?: readonly string[]): string {
+	if (!propertyIds || propertyIds.length === 0) return url;
+	const next = new URL(url);
+	for (const id of propertyIds) next.searchParams.append('filter_properties', id);
+	return next.toString();
+}
+
+function allowlistedPropertyIds(
+	body: Record<string, unknown> | undefined,
+	names: readonly string[]
+): string[] | null {
+	const properties = body?.properties;
+	if (!properties || typeof properties !== 'object') return null;
+	const ids: string[] = [];
+	for (const name of names) {
+		const property = (properties as Record<string, { id?: unknown }>)[name];
+		if (!property || typeof property.id !== 'string' || property.id.length === 0) return null;
+		ids.push(property.id);
+	}
+	return ids;
+}
+
 async function queryAll(
 	fetcher: NotionFetcher,
 	apiKey: string,
 	version: string,
 	url: string,
 	filter: unknown,
-	operation: string
+	operation: string,
+	propertyIds?: readonly string[]
 ): Promise<NotionPage[]> {
+	const queryUrl = propertyFilterUrl(url, propertyIds);
 	const pages: NotionPage[] = [];
 	let cursor: string | undefined;
 	for (let attempt = 0; attempt < 20; attempt += 1) {
-		const response = await fetcher(url, {
+		const response = await fetcher(queryUrl, {
 			method: 'POST',
 			headers: {
 				Authorization: `Bearer ${apiKey}`,
@@ -206,26 +230,39 @@ function queryLegacyDatabase(
 	fetcher: NotionFetcher,
 	apiKey: string,
 	databaseId: string,
-	statusType: string | undefined
+	filter: unknown,
+	propertyIds?: readonly string[]
 ): Promise<NotionPage[]> {
 	return queryAll(
 		fetcher,
 		apiKey,
 		DATABASE_VERSION,
 		`https://api.notion.com/v1/databases/${databaseId}/query`,
-		publishedFilter(statusType),
-		'query database'
+		filter,
+		'query database',
+		propertyIds
 	);
 }
 
-export async function fetchPublishedPages(
+export type NotionQuery = {
+	filterFor: (statusType: string | undefined) => unknown;
+	/**
+	 * When set, the query URL asks Notion for these properties only.
+	 * A missing name fails the query. There is no unfiltered fallback.
+	 */
+	propertyNames?: readonly string[];
+};
+
+export async function queryNotionDatabase(
 	fetcher: NotionFetcher,
 	apiKey: string,
-	databaseId: string
-): Promise<RawWritingPage[]> {
+	databaseId: string,
+	options: NotionQuery
+): Promise<NotionPage[]> {
 	const databaseUrl = `https://api.notion.com/v1/databases/${databaseId}`;
-	let dataSourceId: string;
+	let dataSourceId = '';
 	let statusType: string | undefined;
+	let schema: Record<string, unknown> | undefined;
 	try {
 		const retrieved = await fetcher(databaseUrl, {
 			headers: {
@@ -236,9 +273,9 @@ export async function fetchPublishedPages(
 		const body = await readJson(retrieved, 'retrieve database');
 		dataSourceId = selectedDataSourceId(body);
 		statusType = statusTypeOf(body);
+		schema = body;
 	} catch (error) {
-		if (isAuthOrAccess(error)) throw error;
-		dataSourceId = '';
+		if (isAuthOrAccess(error) || options.propertyNames) throw error;
 	}
 
 	if (dataSourceId) {
@@ -252,31 +289,51 @@ export async function fetchPublishedPages(
 			const body = await readJson(retrieved, 'retrieve data source');
 			const discovered = statusTypeOf(body);
 			if (discovered) statusType = discovered;
+			if (!options.propertyNames || allowlistedPropertyIds(body, options.propertyNames)) {
+				schema = body;
+			}
 		} catch (error) {
-			if (isAuthOrAccess(error)) throw error;
+			if (isAuthOrAccess(error) || options.propertyNames) throw error;
 			dataSourceId = '';
 		}
 	}
 
-	let pages: NotionPage[];
+	let propertyIds: string[] | undefined;
+	if (options.propertyNames) {
+		const ids = allowlistedPropertyIds(schema, options.propertyNames);
+		if (!ids) throw new NotionIncompleteError('property allowlist');
+		propertyIds = ids;
+	}
+
+	const filter = options.filterFor(statusType);
 	if (dataSourceId) {
 		try {
-			pages = await queryAll(
+			return await queryAll(
 				fetcher,
 				apiKey,
 				DATA_SOURCE_VERSION,
 				`https://api.notion.com/v1/data_sources/${dataSourceId}/query`,
-				publishedFilter(statusType),
-				'query data source'
+				filter,
+				'query data source',
+				propertyIds
 			);
 		} catch (error) {
-			if (isAuthOrAccess(error) || error instanceof NotionIncompleteError) throw error;
-			pages = await queryLegacyDatabase(fetcher, apiKey, databaseId, statusType);
+			if (isAuthOrAccess(error) || error instanceof NotionIncompleteError || propertyIds)
+				throw error;
+			return queryLegacyDatabase(fetcher, apiKey, databaseId, filter);
 		}
-	} else {
-		pages = await queryLegacyDatabase(fetcher, apiKey, databaseId, statusType);
 	}
+	return queryLegacyDatabase(fetcher, apiKey, databaseId, filter, propertyIds);
+}
 
+export async function fetchPublishedPages(
+	fetcher: NotionFetcher,
+	apiKey: string,
+	databaseId: string
+): Promise<RawWritingPage[]> {
+	const pages = await queryNotionDatabase(fetcher, apiKey, databaseId, {
+		filterFor: publishedFilter
+	});
 	return pages
 		.map(pageToRaw)
 		.filter((page): page is RawWritingPage => page !== null && isPublishedStatus(page.status));

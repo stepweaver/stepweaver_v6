@@ -194,7 +194,7 @@ test('cd, codex, and roll keep the transcript usable', async ({ page }) => {
 	await input.press('Enter');
 	await expect(transcript).toContainText('/writing');
 	await expect(transcript).toContainText('/dice-roller');
-	await expect(transcript).not.toContainText('field-journal');
+	await expect(transcript).toContainText('/field-journal');
 	await expect(transcript).not.toContainText('/lab');
 	await expect(transcript).not.toContainText('/play');
 	await expect(transcript).not.toContainText('lab:');

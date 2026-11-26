@@ -11,7 +11,8 @@ SvelteKit App Router-style file routes, grouped under `src/routes/(marketing)` s
 | `/`                        | Short introduction, operator card, Matrix Link, signature background. Primary action is Open Terminal. Secondary is Résumé. Writing and About are linked. Contact is a supporting link. A writing section renders when the catalog is available. |
 | `/about`                   | Professional narrative from canonical identity data                                                                                                                                                                                              |
 | `/services`                | What I Do. In the primary nav. Absent from homepage actions and the default command palette                                                                                                                                                      |
-| `/writing`                 | Published Notion index, tag filter, pagination                                                                                                                                                                                                   |
+| `/writing`                 | Published Notion index, tag filter, pagination. Links to the Field Journal                                                                                                                                                                       |
+| `/field-journal`           | Public walking mileage. Its own loader. Not a second CMS                                                                                                                                                                                         |
 | `/writing/[slug]`          | Article. Legacy title slugs redirect to the canonical slug                                                                                                                                                                                       |
 | `/writing/p/[pageId]`      | Permanent redirect to the canonical article slug                                                                                                                                                                                                 |
 | `/writing/rss.xml`         | First-party RSS feed                                                                                                                                                                                                                             |
@@ -25,11 +26,13 @@ SvelteKit App Router-style file routes, grouped under `src/routes/(marketing)` s
 | `/privacy`                 | On-site privacy page                                                                                                                                                                                                                             |
 | `/lab` and paths under it  | 301 to `/terminal`                                                                                                                                                                                                                               |
 | `/play` and paths under it | 301 to `/dice-roller`                                                                                                                                                                                                                            |
+| `/carrier-journal`         | 301 to `/field-journal`, including old subpaths. The daybook, lab, and footwear apps are not restored                                                                                                                                            |
+| `/field-journal/*`         | 301 to `/field-journal`                                                                                                                                                                                                                          |
 | `/api/chat`                | λlambda                                                                                                                                                                                                                                          |
 | `/api/weather`             | Terminal weather                                                                                                                                                                                                                                 |
 | `/sitemap.xml`             | Public paths only                                                                                                                                                                                                                                |
 
-Primary nav is About, What I Do, Writing, Resume, Contact. The wordmark goes home. Work stays in the footer. The default command palette (`src/lib/data/navigation.ts`) includes Home, About, Writing, Resume, Contact, Terminal, Dice Roller, and Privacy. Search can still resolve `/work` and `/services`.
+Primary nav is About, What I Do, Writing, Resume, Contact. The wordmark goes home. Work stays in the footer. Field Journal is not in the primary nav. The command palette and terminal `cd` include it as a static destination. The default list in `src/lib/data/navigation.ts` matches that. Search can still resolve `/work` and `/services`.
 
 The marketing layout (`src/routes/(marketing)/+layout.svelte`) mounts the navbar, footer, command palette, λlambda launcher, signature background, and a short page fade. The fade skips the terminal and `prefers-reduced-motion`.
 
@@ -74,6 +77,18 @@ Slug resolution for a published page:
 `/writing/p/{pageId}` redirects to the canonical slug. A title-derived slug that differs from the canonical slug redirects to it. New pages keep the title slug until their page id is added to the registry. Add that id before renaming the title.
 
 Public catalog and sanitized article blocks are cached. See [OPERATIONS.md](OPERATIONS.md) for freshness. Hyperlinks in rich text are limited to safe protocols. Rendered text is escaped Svelte text.
+
+## Field Journal
+
+`/field-journal` reads the existing Notion database named by `NOTION_CARRIER_JOURNAL_DB_ID`. It does not create a database, write rows, or load on the homepage, writing archive, or sitemap fetch. The writing archive only links to the route. Reflections stay ordinary posts filtered with the existing `Field Journal` tag.
+
+The public allowlist is `Date`, `Miles Walked`, and `Publish Public`. The query sends those property ids as `filter_properties`. `Publish Public` must be true in the Notion filter and again when each page is normalized. Page ids, titles, notes, and every other property are dropped before caching. The cached value is `journal:v1:{databaseId}:public-mileage` in the same KV binding as writing. It stores source rows, not totals.
+
+A snapshot is served only while it is younger than five minutes (`JOURNAL_PUBLICATION_WINDOW_MS`). If Notion then fails, the page says the record is unavailable. It does not keep an expired copy. Malformed or truncated responses fail the same way. An actually empty public query is an empty journal.
+
+`JOURNAL_SOURCE=fixture` serves synthetic rows and a fixed clock of 2026-11-26. That source is ignored when the production build sets `dev` to false. Playwright sets the fixture source, clears the Notion key and database id, and runs a second server with `JOURNAL_SOURCE=unavailable`.
+
+Mileage math lives in `src/lib/journal/mileage.ts`. Weeks start on Monday. The current day is `America/Indiana/Indianapolis`. Stored `YYYY-MM-DD` values are calendar dates. Missing mileage is omitted. Zero is kept and is not a walking day. Duplicate dates or invalid mileage reject the total and name the dates.
 
 ## Metadata
 

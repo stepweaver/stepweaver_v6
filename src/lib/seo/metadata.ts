@@ -60,6 +60,10 @@ const STATIC_PAGES: Record<string, StaticPage> = {
 const WRITING_DESCRIPTION =
 	'Notes on systems, integration, automation, and the decisions around the work.';
 
+export const FIELD_JOURNAL_TITLE = 'Field Journal — The Long Walk';
+export const FIELD_JOURNAL_DESCRIPTION =
+	'A personal record of miles walked: distance over time, endurance, and the days that were written down.';
+
 export type PageMetadata = {
 	title: string;
 	description: string;
@@ -316,6 +320,20 @@ export function resolvePageMetadata(request: MetadataRequest): PageMetadata {
 			description: WRITING_DESCRIPTION,
 			canonical: writingCanonical(data ?? {}),
 			robots: data?.status === 'ok' ? null : 'noindex',
+			image,
+			jsonLd: structuredBlocks(data)
+		});
+	}
+
+	if (pathname === '/field-journal') {
+		const journal = asRecord(data?.journal);
+		const status = journal?.status;
+		const indexable = status === 'ok' || status === 'empty';
+		return pageMetadata({
+			title: FIELD_JOURNAL_TITLE,
+			description: FIELD_JOURNAL_DESCRIPTION,
+			canonical: absoluteSiteUrl('/field-journal'),
+			robots: indexable ? null : 'noindex',
 			image,
 			jsonLd: structuredBlocks(data)
 		});

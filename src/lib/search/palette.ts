@@ -46,7 +46,6 @@ const GROUP_ORDER = ['Navigate', 'Writing', 'Work', 'Appearance', 'Ask'] as cons
 
 /** Routes this app does not serve. They stay out even if a caller lists them. */
 const RETIRED_HREFS = new Set([
-	'/field-journal',
 	'/field-journal/lab',
 	'/meshtastic',
 	'/mail-sort-academy',
@@ -66,6 +65,7 @@ const ROUTE_COPY: Record<string, { label: string; meta: string }> = {
 	about: { label: 'About', meta: '' },
 	services: { label: 'What I Do', meta: 'Services' },
 	writing: { label: 'Writing', meta: 'Published notes' },
+	'field-journal': { label: 'Field Journal', meta: 'The Long Walk' },
 	work: { label: 'Work', meta: 'Approved case studies' },
 	resume: { label: 'Resume', meta: '' },
 	contact: { label: 'Contact', meta: '' },

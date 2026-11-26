@@ -34,6 +34,7 @@
 		</p>
 		<p class="feed">
 			<a href="/writing/rss.xml">RSS</a>
+			<a href="/field-journal">Field Journal</a>
 		</p>
 	</header>
 
@@ -169,6 +170,8 @@
 	}
 
 	.feed {
+		display: flex;
+		gap: 1rem;
 		margin-top: 0.75rem;
 	}
 

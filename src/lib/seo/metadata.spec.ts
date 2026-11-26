@@ -7,6 +7,8 @@ import { fixtureEntries } from '$lib/writing/fixtures';
 
 import {
 	ARTICLE_DESCRIPTION_FALLBACK,
+	FIELD_JOURNAL_DESCRIPTION,
+	FIELD_JOURNAL_TITLE,
 	HOME_DESCRIPTION,
 	HOME_TITLE,
 	articleDescription,
@@ -217,6 +219,30 @@ describe('page metadata', () => {
 		const work = resolvePageMetadata({ pathname: '/work', status: 200, data: { projects: [] } });
 		expect(work.robots).toBe('noindex');
 		expect(work.description).toBe(workPageCopy(0).description);
+	});
+
+	it('describes the field journal and hides it from indexing when mileage is not public', () => {
+		const ready = resolvePageMetadata({
+			pathname: '/field-journal',
+			status: 200,
+			data: { journal: { status: 'ok' } }
+		});
+		expect(ready.title).toBe(`${FIELD_JOURNAL_TITLE} | λstepweaver`);
+		expect(ready.description).toBe(FIELD_JOURNAL_DESCRIPTION);
+		expect(ready.canonical).toBe('https://www.stepweaver.dev/field-journal');
+		expect(ready.ogTitle).toBe(ready.title);
+		expect(ready.ogType).toBe('website');
+		expect(ready.twitterCard).toBe('summary_large_image');
+		expect(ready.image.url).toBe(shareUrl);
+		expect(ready.robots).toBeNull();
+
+		const down = resolvePageMetadata({
+			pathname: '/field-journal',
+			status: 200,
+			data: { journal: { status: 'unavailable' } }
+		});
+		expect(down.robots).toBe('noindex');
+		expect(down.description).toBe(FIELD_JOURNAL_DESCRIPTION);
 	});
 
 	it('describes an approved case study without trusting a remote image', () => {

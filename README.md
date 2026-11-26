@@ -9,6 +9,7 @@ The product centers on the person, the résumé, and the terminal. Case studies 
 - Home, with the operator card, Matrix Link, and signature background
 - About, What I Do (`/services`), résumé, privacy, and contact
 - Notion-backed writing, article pages, and `/writing/rss.xml`
+- Field Journal at `/field-journal`: public walking mileage from the existing Notion database
 - Interactive terminal: résumé, navigation, Codex, dice, weather, contact, λlambda, blackjack, and the text adventure
 - Standalone dice roller at `/dice-roller`
 - Shared λlambda chat on the site and in the terminal
@@ -25,7 +26,7 @@ Canonical links, the sitemap, RSS, and structured data use `https://www.stepweav
 - Cloudflare Workers via `@sveltejs/adapter-cloudflare` and Wrangler
 - Cloudflare KV for the public writing cache
 - Cloudflare Email Service and Turnstile for contact
-- Notion for published writing
+- Notion for published writing and the public Field Journal mileage record
 - OpenWeather for terminal weather
 - Groq, with OpenAI as fallback, for λlambda
 - Vitest and Playwright
@@ -84,7 +85,7 @@ pnpm lint
 pnpm test:e2e
 ```
 
-CI runs `pnpm verify` on every push and pull request. Playwright is local. It uses fixture writing, a mock mail adapter, Turnstile test keys, and no weather or model keys. A physical phone and the production Worker are outside that suite.
+CI runs `pnpm verify` on every push and pull request. Playwright is local. It uses fixture writing, a synthetic Field Journal, a mock mail adapter, Turnstile test keys, and no weather or model keys. `JOURNAL_SOURCE=fixture` is ignored in production builds. A physical phone and the production Worker are outside that suite.
 
 ## Deployment
 
