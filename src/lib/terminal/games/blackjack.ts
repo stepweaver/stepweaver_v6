@@ -96,7 +96,10 @@ function handLines(state: BlackjackState): TerminalLine[] {
 	];
 }
 
-function resolve(state: BlackjackState, random: () => number): { state: BlackjackState; lines: TerminalLine[] } {
+function resolve(
+	state: BlackjackState,
+	random: () => number
+): { state: BlackjackState; lines: TerminalLine[] } {
 	let deck = state.deck;
 	const dealer = [...state.dealer];
 	const playerValue = handValue(state.player);

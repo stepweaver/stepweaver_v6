@@ -51,7 +51,11 @@ function takeEmail(draft: ContactDraft, email: string) {
 		message: 'hello',
 		intent: 'consult'
 	}).fieldErrors.email;
-	if (error) return { draft, lines: [line(error, 'error'), line('Step 2/5: What is your email?', 'dimmed')] };
+	if (error)
+		return {
+			draft,
+			lines: [line(error, 'error'), line('Step 2/5: What is your email?', 'dimmed')]
+		};
 	return {
 		draft: { ...draft, email, step: 'intent' as const },
 		lines: [

@@ -154,7 +154,12 @@ const ROOMS: Record<string, RoomDef> = {
 	'west-of-house': {
 		name: 'West of House',
 		description: 'You stand in an open field west of a white house, with a boarded front door.',
-		exits: { north: 'north-of-house', south: 'south-of-house', east: 'behind-house', west: 'forest' },
+		exits: {
+			north: 'north-of-house',
+			south: 'south-of-house',
+			east: 'behind-house',
+			west: 'forest'
+		},
 		initialItems: ['mailbox']
 	},
 	'north-of-house': {
@@ -168,18 +173,25 @@ const ROOMS: Record<string, RoomDef> = {
 		name: 'Behind House',
 		description:
 			'You are behind the white house. A path leads east into the forest. In one corner, a small window sits slightly ajar.',
-		exits: { west: 'north-of-house', south: 'south-of-house', east: 'forest', north: 'north-of-house' },
+		exits: {
+			west: 'north-of-house',
+			south: 'south-of-house',
+			east: 'forest',
+			north: 'north-of-house'
+		},
 		initialItems: ['window']
 	},
 	'south-of-house': {
 		name: 'South of House',
-		description: 'You face the south side of a white house. There is no door, and the windows are boarded.',
+		description:
+			'You face the south side of a white house. There is no door, and the windows are boarded.',
 		exits: { north: 'west-of-house', east: 'behind-house', west: 'forest' },
 		initialItems: []
 	},
 	forest: {
 		name: 'Forest',
-		description: 'Dense trees close in on every side. To the east, the forest seems a little brighter.',
+		description:
+			'Dense trees close in on every side. To the east, the forest seems a little brighter.',
 		exits: { east: 'west-of-house', north: 'forest', south: 'forest', west: 'forest' },
 		initialItems: []
 	},
@@ -243,7 +255,11 @@ const ROOMS: Record<string, RoomDef> = {
 		description:
 			'A deep chasm cuts southwest to northeast. The trail hugs the south rim; a crack in the wall opens into a passage.',
 		dark: true,
-		exits: { south: 'north-south-passage', northeast: 'reservoir-south', southwest: 'east-west-passage' },
+		exits: {
+			south: 'north-south-passage',
+			northeast: 'reservoir-south',
+			southwest: 'east-west-passage'
+		},
 		initialItems: []
 	},
 	'reservoir-south': {
@@ -348,9 +364,11 @@ function aliasesFor(itemId: string): string[] {
 	if (!def) return [];
 	return [
 		...new Set(
-			[phrase(def.name), phrase(itemId.replace(/-/g, ' ')), ...(ALIASES[itemId] ?? []).map(phrase)].filter(
-				Boolean
-			)
+			[
+				phrase(def.name),
+				phrase(itemId.replace(/-/g, ' ')),
+				...(ALIASES[itemId] ?? []).map(phrase)
+			].filter(Boolean)
 		)
 	];
 }
@@ -456,7 +474,9 @@ function describe(state: AdventureState, roomId: string): OutputLine[] {
 	for (const itemId of visibleInRoom(local, roomId)) {
 		const name = ITEMS[itemId]?.name ?? itemId;
 		const kind =
-			name.includes('mailbox') || name.includes('trophy') || name.includes('rug') ? 'cyan' : 'itemHere';
+			name.includes('mailbox') || name.includes('trophy') || name.includes('rug')
+				? 'cyan'
+				: 'itemHere';
 		lines.push(output(kind, `There is a ${name} here.`));
 	}
 	return lines;
@@ -468,7 +488,8 @@ function moved(state: AdventureState): AdventureState {
 
 function drain(state: AdventureState): Step {
 	if (!state.lampOn || !state.inventory.includes(LAMP)) return { state, lines: [] };
-	if (state.lampFuel - 1 > 0) return { state: { ...state, lampFuel: state.lampFuel - 1 }, lines: [] };
+	if (state.lampFuel - 1 > 0)
+		return { state: { ...state, lampFuel: state.lampFuel - 1 }, lines: [] };
 	return {
 		state: { ...state, lampFuel: 0, lampOn: false },
 		lines: [output('text', 'The lantern flickers and dies. You are left in darkness.')]
@@ -519,7 +540,8 @@ function take(state: AdventureState, objectPhrase: string): Step {
 	if (parent) {
 		const reachable =
 			isOpen(state, parent) &&
-			((state.roomItems[state.currentRoom] ?? []).includes(parent) || state.inventory.includes(parent));
+			((state.roomItems[state.currentRoom] ?? []).includes(parent) ||
+				state.inventory.includes(parent));
 		if (!reachable) return { state, lines: [output('error', "I don't see that here.")] };
 	} else if (!(state.roomItems[state.currentRoom] ?? []).includes(itemId)) {
 		return { state, lines: [output('error', "I don't see that here.")] };
@@ -632,7 +654,8 @@ function put(state: AdventureState, objectPhrase: string): Step {
 }
 
 function inventory(state: AdventureState): Step {
-	if (state.inventory.length === 0) return { state, lines: [output('itemHere', 'You are empty-handed.')] };
+	if (state.inventory.length === 0)
+		return { state, lines: [output('itemHere', 'You are empty-handed.')] };
 	return {
 		state,
 		lines: [
@@ -686,7 +709,8 @@ function openItem(state: AdventureState, objectPhrase: string): Step {
 	const def = itemId ? ITEMS[itemId] : undefined;
 	if (!itemId || !def) return { state, lines: [output('error', "I don't see that here.")] };
 	if (!def.openable) return { state, lines: [output('error', `You can't open the ${def.name}.`)] };
-	if (isOpen(state, itemId)) return { state, lines: [output('text', `The ${def.name} is already open.`)] };
+	if (isOpen(state, itemId))
+		return { state, lines: [output('text', `The ${def.name} is already open.`)] };
 	let next: AdventureState = moved({
 		...state,
 		itemStates: { ...state.itemStates, [itemId]: { ...state.itemStates[itemId], isOpen: true } }
@@ -695,7 +719,8 @@ function openItem(state: AdventureState, objectPhrase: string): Step {
 	const contents = next.containerContents[itemId] ?? [];
 	if (contents.length) {
 		lines.push(output('cyan', `Opening the ${def.name} reveals:`));
-		for (const inner of contents) lines.push(output('itemHere', `• A ${ITEMS[inner]?.name ?? inner}`));
+		for (const inner of contents)
+			lines.push(output('itemHere', `• A ${ITEMS[inner]?.name ?? inner}`));
 	}
 	if (itemId === 'window' && state.currentRoom === 'behind-house') {
 		lines.push(output('cyan', 'With effort, you force the window wide enough to climb through.'));
@@ -709,7 +734,9 @@ function openItem(state: AdventureState, objectPhrase: string): Step {
 		};
 	}
 	if (itemId === 'trap-door' && state.currentRoom === 'living-room') {
-		lines.push(output('cyan', 'The trap door creaks open, revealing stairs descending into darkness.'));
+		lines.push(
+			output('cyan', 'The trap door creaks open, revealing stairs descending into darkness.')
+		);
 		next = {
 			...next,
 			flags: { ...next.flags, trapDoorOpened: true },
@@ -729,7 +756,8 @@ function closeItem(state: AdventureState, objectPhrase: string): Step {
 	const def = itemId ? ITEMS[itemId] : undefined;
 	if (!itemId || !def) return { state, lines: [output('error', "I don't see that here.")] };
 	if (!def.openable) return { state, lines: [output('error', `You can't close the ${def.name}.`)] };
-	if (!isOpen(state, itemId)) return { state, lines: [output('text', `The ${def.name} is already closed.`)] };
+	if (!isOpen(state, itemId))
+		return { state, lines: [output('text', `The ${def.name} is already closed.`)] };
 	let next: AdventureState = moved({
 		...state,
 		itemStates: { ...state.itemStates, [itemId]: { ...state.itemStates[itemId], isOpen: false } }
@@ -767,7 +795,10 @@ function moveObject(state: AdventureState, objectPhrase: string): Step {
 	});
 	const under = def.under ?? [];
 	if (!under.length) {
-		return { state: next, lines: [output('text', `You move the ${def.name}, but find nothing underneath.`)] };
+		return {
+			state: next,
+			lines: [output('text', `You move the ${def.name}, but find nothing underneath.`)]
+		};
 	}
 	const room = [...(next.roomItems[next.currentRoom] ?? [])];
 	const lines = [output('cyan', `Moving the ${def.name} reveals:`)];
@@ -785,14 +816,26 @@ function light(state: AdventureState, objectPhrase: string, on: boolean): Step {
 	const held = resolvePhrase(objectPhrase, new Set(state.inventory));
 	const itemId = objectPhrase.trim() ? held : state.inventory.includes(LAMP) ? LAMP : null;
 	if (!itemId) {
-		return { state, lines: [output('error', objectPhrase.trim() ? "You don't have that." : `Turn ${on ? 'on' : 'off'} what?`)] };
+		return {
+			state,
+			lines: [
+				output(
+					'error',
+					objectPhrase.trim() ? "You don't have that." : `Turn ${on ? 'on' : 'off'} what?`
+				)
+			]
+		};
 	}
 	const def = ITEMS[itemId];
 	if (!def?.lightSource) {
-		return { state, lines: [output('error', `You can't turn ${on ? 'on' : 'off'} the ${def?.name ?? itemId}.`)] };
+		return {
+			state,
+			lines: [output('error', `You can't turn ${on ? 'on' : 'off'} the ${def?.name ?? itemId}.`)]
+		};
 	}
 	if (on && state.lampOn) return { state, lines: [output('text', 'The lantern is already on.')] };
-	if (!on && !state.lampOn) return { state, lines: [output('text', 'The lantern is already off.')] };
+	if (!on && !state.lampOn)
+		return { state, lines: [output('text', 'The lantern is already off.')] };
 	return {
 		state: moved({ ...state, lampOn: on }),
 		lines: [output('success', `The brass lantern is now ${on ? 'on' : 'off'}.`)]
@@ -862,7 +905,8 @@ export function runAdventure(state: AdventureState, raw: string): Step {
 	if (verb === 'put' || verb === 'place' || verb === 'insert') return put(state, objectPhrase);
 	if (verb === 'i' || verb === 'inventory') return inventory(state);
 	if ((verb === 'l' || verb === 'look') && !objectPhrase.trim()) return examine(state, '');
-	if (verb === 'l' || verb === 'look' || verb === 'examine' || verb === 'x') return examine(state, objectPhrase);
+	if (verb === 'l' || verb === 'look' || verb === 'examine' || verb === 'x')
+		return examine(state, objectPhrase);
 	if (verb === 'open') return openItem(state, objectPhrase);
 	if (verb === 'close') return closeItem(state, objectPhrase);
 	if (verb === 'read') return read(state, objectPhrase);
@@ -871,7 +915,10 @@ export function runAdventure(state: AdventureState, raw: string): Step {
 		return {
 			state,
 			lines: [
-				output('cyan', `Your score is ${state.score} (out of ${SCORE_MAX} points), in ${state.moves} moves.`),
+				output(
+					'cyan',
+					`Your score is ${state.score} (out of ${SCORE_MAX} points), in ${state.moves} moves.`
+				),
 				output('text', 'This gives you the rank of Beginner.')
 			]
 		};
@@ -909,7 +956,10 @@ export function openingAdventure(): { state: AdventureState; lines: TerminalLine
 	const state = createAdventure();
 	const lines = adventureLines([
 		output('success', 'λstepweaver Terminal Adventure'),
-		output('dim', 'An original browser-native text adventure inspired by classic command-line games.'),
+		output(
+			'dim',
+			'An original browser-native text adventure inspired by classic command-line games.'
+		),
 		output('text', ''),
 		...describe(state, 'west-of-house'),
 		output('text', ''),
@@ -936,7 +986,8 @@ export function loadAdventure(storage: AdventureStorage | null): AdventureState 
 		const raw = storage.getItem(ADVENTURE_SAVE_KEY);
 		if (!raw) return null;
 		const envelope = JSON.parse(raw) as { v?: number; state?: AdventureState };
-		if (envelope.v !== SCHEMA_VERSION || !envelope.state || typeof envelope.state !== 'object') return null;
+		if (envelope.v !== SCHEMA_VERSION || !envelope.state || typeof envelope.state !== 'object')
+			return null;
 		return envelope.state;
 	} catch {
 		return null;
@@ -950,7 +1001,11 @@ export function playAdventure(
 ): { state: AdventureState | null; lines: TerminalLine[]; exit?: boolean } {
 	const trimmed = raw.trim().toLowerCase();
 	if (trimmed === 'cancel' || trimmed === 'exit') {
-		return { state: null, lines: [{ content: 'Left the adventure.', variant: 'dimmed' }], exit: true };
+		return {
+			state: null,
+			lines: [{ content: 'Left the adventure.', variant: 'dimmed' }],
+			exit: true
+		};
 	}
 	if (!raw.trim()) return { state, lines: [] };
 	const echo: TerminalLine = { content: `>${raw}`, variant: 'dimmed' };
@@ -970,7 +1025,8 @@ export function playAdventure(
 	}
 	if (word === 'restore' || word === 'load') {
 		const loaded = loadAdventure(storage);
-		if (!loaded) return { state, lines: [echo, { content: 'No saved game found.', variant: 'error' }] };
+		if (!loaded)
+			return { state, lines: [echo, { content: 'No saved game found.', variant: 'error' }] };
 		return {
 			state: loaded,
 			lines: [
@@ -985,7 +1041,12 @@ export function playAdventure(
 		const opened = openingAdventure();
 		return {
 			state: opened.state,
-			lines: [echo, { content: 'Game restarted.', variant: 'lambda' }, { content: '', variant: 'default' }, ...opened.lines]
+			lines: [
+				echo,
+				{ content: 'Game restarted.', variant: 'lambda' },
+				{ content: '', variant: 'default' },
+				...opened.lines
+			]
 		};
 	}
 	const result = runAdventure(state, raw);

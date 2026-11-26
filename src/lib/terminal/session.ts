@@ -197,7 +197,11 @@ function chooseWeather(
 		};
 	}
 	const option = selection.options[choice - 1];
-	if (!option) return { lines: [{ content: 'That choice is not in the list.', variant: 'error' }], stay: true };
+	if (!option)
+		return {
+			lines: [{ content: 'That choice is not in the list.', variant: 'error' }],
+			stay: true
+		};
 	return {
 		lines: [{ content: `Using ${option.label}`, variant: 'success' }],
 		effect: { type: 'weather-at', lat: option.lat, lon: option.lon, forecast: selection.forecast },

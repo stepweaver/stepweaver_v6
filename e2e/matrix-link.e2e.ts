@@ -32,7 +32,12 @@ async function watchMatrix(page: Page) {
 			const status = document.querySelector('[data-matrix-status]');
 			const attempt = document.querySelector('[data-matrix-attempt]');
 			const line = document.querySelector('.matrix-link .status-line');
-			if (!(panel instanceof HTMLElement) || !status || !attempt || !(line instanceof HTMLElement)) {
+			if (
+				!(panel instanceof HTMLElement) ||
+				!status ||
+				!attempt ||
+				!(line instanceof HTMLElement)
+			) {
 				return;
 			}
 			const nextHeight = Math.round(panel.getBoundingClientRect().height);

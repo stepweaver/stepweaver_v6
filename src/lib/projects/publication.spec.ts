@@ -84,7 +84,8 @@ describe('project publication boundary', () => {
 
 function isClientSource(path: string): boolean {
 	if (!/\.(svelte|ts|js)$/.test(path)) return false;
-	if (path.endsWith('.spec.ts') || path.endsWith('.server.ts') || path.endsWith('+server.ts')) return false;
+	if (path.endsWith('.spec.ts') || path.endsWith('.server.ts') || path.endsWith('+server.ts'))
+		return false;
 	if (path.includes('lib/server/')) return false;
 	return true;
 }

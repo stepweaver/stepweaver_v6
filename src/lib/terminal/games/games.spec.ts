@@ -74,9 +74,9 @@ describe('blackjack', () => {
 			'Blackjack: dealer stands on 17.'
 		);
 		const stood = opened.state.over ? opened : playBlackjack(opened.state, 's', random);
-		expect([...opened.lines, ...stood.lines].some((line) => line.content.startsWith('Score: W:'))).toBe(
-			true
-		);
+		expect(
+			[...opened.lines, ...stood.lines].some((line) => line.content.startsWith('Score: W:'))
+		).toBe(true);
 		const again = openBlackjack(stood.state, random);
 		expect(again.state.wins + again.state.losses + again.state.ties).toBe(1);
 		const help = playBlackjack(again.state, '?', random);
@@ -90,7 +90,9 @@ describe('blackjack', () => {
 	it('keeps the score when blackjack is left and reopened', () => {
 		let session = submitLine(replaceInput(createSession(), 'bj'), { random: () => 0 });
 		session = submitLine(replaceInput(session, 'stand'), { random: () => 0 });
-		expect(session.lines.some((line) => /^Score: W:\d+ L:\d+ T:\d+$/.test(line.content))).toBe(true);
+		expect(session.lines.some((line) => /^Score: W:\d+ L:\d+ T:\d+$/.test(line.content))).toBe(
+			true
+		);
 		session = submitLine(replaceInput(session, 'exit'));
 		expect(session.mode).toBe('shell');
 		session = submitLine(replaceInput(session, 'blackjack'), { random: () => 0 });
@@ -111,7 +113,17 @@ describe('terminal adventure', () => {
 	it('opens west of the house and walks the early path', () => {
 		const opened = openingAdventure();
 		expect(opened.lines.map((line) => line.content).join('\n')).toContain('West of House');
-		const early = play(['look', 'open mailbox', 'take leaflet', 'read leaflet', 'n', 'e', 'open window', 'in', 'e']);
+		const early = play([
+			'look',
+			'open mailbox',
+			'take leaflet',
+			'read leaflet',
+			'n',
+			'e',
+			'open window',
+			'in',
+			'e'
+		]);
 		expect(early.text.toLowerCase()).toContain('mailbox');
 		expect(early.text.toLowerCase()).toContain('taken');
 		expect(early.text.toLowerCase()).toContain('cave crawl');
@@ -150,7 +162,16 @@ describe('terminal adventure', () => {
 
 	it('opens a carried sack and saves under the v5 key', () => {
 		let state = createAdventure();
-		for (const input of ['n', 'e', 'open window', 'in', 'e', 'take sack', 'open sack', 'take garlic']) {
+		for (const input of [
+			'n',
+			'e',
+			'open window',
+			'in',
+			'e',
+			'take sack',
+			'open sack',
+			'take garlic'
+		]) {
 			state = runAdventure(state, input).state;
 		}
 		expect(state.inventory).toContain('sack');
@@ -160,7 +181,9 @@ describe('terminal adventure', () => {
 		const storage = memoryStorage();
 		let session = submitLine(replaceInput(createSession(), 'zork'), { adventureStorage: storage });
 		expect(session.mode).toBe('adventure');
-		expect(session.lines.map((line) => line.content).join('\n')).toContain('Launching terminal adventure.');
+		expect(session.lines.map((line) => line.content).join('\n')).toContain(
+			'Launching terminal adventure.'
+		);
 		session = submitLine(replaceInput(session, 'n'), { adventureStorage: storage });
 		session = submitLine(replaceInput(session, 'save'), { adventureStorage: storage });
 		expect(session.lines.at(-1)?.content).toBe('Game saved.');
