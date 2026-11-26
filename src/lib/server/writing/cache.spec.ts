@@ -253,9 +253,81 @@ describe('persistent writing cache', () => {
 });
 
 describe('page loaders', () => {
-	it('returns the homepage and shared layout while Notion is still blocked', async () => {
-		const { load: home } = await import('../../../routes/(marketing)/+page.server');
+	it('serves the shared layout without a writing catalog lookup', async () => {
 		const { load: layout } = await import('../../../routes/(marketing)/+layout.server');
+		const fetches: string[] = [];
+		const pending = deferred<Response>();
+		vi.stubGlobal('fetch', async (url: string) => {
+			fetches.push(String(url));
+			return pending.promise;
+		});
+		try {
+			const depends = vi.fn();
+			const shell = (await layout({
+				platform: {
+					env: { NOTION_API_KEY: 'test', NOTION_BLOG_DB_ID: 'db' },
+					ctx: { waitUntil: () => {} }
+				},
+				depends
+			} as never)) as {
+				structuredData: { website: { '@type': string } };
+				commandPalette: { projects: unknown[] };
+			};
+			expect(fetches).toEqual([]);
+			expect(depends).not.toHaveBeenCalled();
+			expect(shell.commandPalette).toEqual({ projects: [] });
+			expect(shell.structuredData.website['@type']).toBe('WebSite');
+			expect(JSON.stringify(shell)).not.toContain('workflow-handoffs');
+		} finally {
+			pending.resolve(Response.json({}));
+			vi.unstubAllGlobals();
+		}
+	});
+
+	it('keeps featured writing on the homepage fixture path', async () => {
+		const { load: home } = await import('../../../routes/(marketing)/+page.server');
+		const depends = vi.fn();
+		const headers: Record<string, string> = {};
+		const page = (await home({
+			platform: { env: { WRITING_SOURCE: 'fixture' } },
+			depends,
+			setHeaders: (value: Record<string, string>) => Object.assign(headers, value)
+		} as never)) as {
+			writingPending: boolean;
+			writing: {
+				lead: { slug: string; title: string } | null;
+				recent: { slug: string }[];
+			};
+		};
+		expect(depends).toHaveBeenCalledWith('app:home-writing');
+		expect(page.writingPending).toBe(false);
+		expect(page.writing.lead).toMatchObject({
+			slug: 'integration-boundaries',
+			title: 'Integration boundaries'
+		});
+		expect(page.writing.recent.map((post) => post.slug)).toContain('workflow-handoffs');
+		expect(headers['cache-control']).toBe('public, max-age=60');
+		expect(headers['server-timing']).toContain('writing');
+	});
+
+	it('keeps the homepage load usable when writing is unavailable', async () => {
+		const { load: home } = await import('../../../routes/(marketing)/+page.server');
+		const headers: Record<string, string> = {};
+		const page = (await home({
+			platform: { env: { WRITING_SOURCE: 'unavailable' } },
+			depends: vi.fn(),
+			setHeaders: (value: Record<string, string>) => Object.assign(headers, value)
+		} as never)) as {
+			writingPending: boolean;
+			writing: { status: string; lead: null; recent: [] };
+		};
+		expect(page.writingPending).toBe(true);
+		expect(page.writing).toEqual({ status: 'unavailable', lead: null, recent: [] });
+		expect(headers['cache-control']).toBe('no-store');
+	});
+
+	it('returns the homepage while Notion is still blocked', async () => {
+		const { load: home } = await import('../../../routes/(marketing)/+page.server');
 		const pending = deferred<Response>();
 		const tasks: Promise<unknown>[] = [];
 		vi.stubGlobal('fetch', async (url: string) =>
@@ -274,9 +346,7 @@ describe('page loaders', () => {
 				depends: vi.fn(),
 				setHeaders: vi.fn()
 			};
-			const [page, shell] = await Promise.all([home(event as never), layout(event as never)]);
-			expect(page).toMatchObject({ writingPending: true });
-			expect(shell).toHaveProperty('commandPalette');
+			expect(await home(event as never)).toMatchObject({ writingPending: true });
 			pending.resolve(Response.json({}));
 			await Promise.all(tasks);
 			expect(await home(event as never)).toMatchObject({ writingPending: false });

@@ -10,17 +10,16 @@
 		paletteFrame,
 		paletteGroups,
 		type PaletteEntry,
-		type PaletteProject,
-		type PaletteWriting
+		type PaletteProject
 	} from '$lib/search/palette';
+	import {
+		loadPaletteWriting,
+		requestPaletteWriting,
+		type PaletteWritingRequest
+	} from '$lib/search/palette-writing';
 	import { DESTINATION_ALIASES, SHELL_DESTINATIONS } from '$lib/terminal/routes';
 	import { applyTheme, currentTheme, toggleLightDark } from '$lib/theme/apply-theme';
 	import { THEME_IDS } from '$lib/theme/themes';
-
-	type PaletteData = {
-		writing?: PaletteWriting[];
-		projects?: PaletteProject[];
-	};
 
 	let open = $state(false);
 	let query = $state('');
@@ -30,21 +29,21 @@
 	let inputEl = $state<HTMLInputElement | null>(null);
 	let restoreFocus: HTMLElement | null = null;
 	let openedAt = '';
+	let writingSearch = $state<PaletteWritingRequest>({ phase: 'empty' });
+	let writingToken = 0;
 
 	const path = $derived(page.url.pathname);
-	const sources = $derived.by(() => {
-		const data = page.data as { commandPalette?: PaletteData };
-		return {
-			writing: data.commandPalette?.writing ?? [],
-			projects: data.commandPalette?.projects ?? []
-		};
+	const projects = $derived.by(() => {
+		const data = page.data as { commandPalette?: { projects?: PaletteProject[] } };
+		return data.commandPalette?.projects ?? [];
 	});
+	const writing = $derived(writingSearch.phase === 'ready' ? writingSearch.posts : []);
 	const groups = $derived(
 		paletteGroups({
 			destinations: SHELL_DESTINATIONS,
 			aliases: DESTINATION_ALIASES,
-			writing: sources.writing,
-			projects: sources.projects,
+			writing,
+			projects,
 			themes: THEME_IDS,
 			chat,
 			query
@@ -107,12 +106,30 @@
 		};
 	});
 
+	function ensureWriting() {
+		const phase = writingSearch.phase;
+		if (phase === 'ready' || phase === 'pending') return;
+		const next = requestPaletteWriting({ phase }, loadPaletteWriting);
+		if (next.phase !== 'pending') return;
+		const token = ++writingToken;
+		writingSearch = next;
+		void next.request.then((result) => {
+			if (token !== writingToken) return;
+			const currentId = flat[selected]?.id;
+			writingSearch = result;
+			if (!currentId) return;
+			const index = flat.findIndex((item) => item.id === currentId);
+			if (index >= 0) selected = index;
+		});
+	}
+
 	function openPalette() {
 		restoreFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 		openedAt = path;
 		query = '';
 		selected = 0;
 		open = true;
+		ensureWriting();
 		void tick().then(() => inputEl?.focus());
 	}
 
@@ -270,7 +287,12 @@
 			{#if localCount === 0}
 				<p class="empty">No results</p>
 			{/if}
-			<div id="palette-results" role="listbox" aria-label="Commands">
+			<div
+				id="palette-results"
+				role="listbox"
+				aria-label="Commands"
+				aria-busy={writingSearch.phase === 'pending'}
+			>
 				{#each rows as row (row.key)}
 					{#if row.kind === 'header'}
 						<div class="group-label" role="presentation">{row.label}</div>

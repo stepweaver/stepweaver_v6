@@ -139,7 +139,9 @@ A successful article response may still be HTTP-cached for 60 seconds (`public, 
 
 Homepage responses include `Server-Timing: writing;dur=...` for the catalog wait only. Fresh catalog responses may also send `cache-control: public, max-age=60`. Stale or failed catalog responses send `no-store`. Article 404 and 503 responses send `no-store`.
 
-There is no scheduled warmer and no public purge route. Listing pages can keep a previously published title for up to 30 minutes during an outage. That list is not authorization for the article. Deleting a KV key does not clear memory in isolates that already hold the entry, or copies a browser already downloaded. For an urgent removal, block the route or the edge before relying on cache expiry.
+Ordinary marketing pages do not read the catalog. `GET /api/palette/writing` reads the same listing catalog when the command palette opens. That response is `no-store`. The browser keeps one successful payload until the next full page load and requests a failed response again the next time the palette opens.
+
+There is no scheduled warmer and no public purge route. Listing pages, and a palette that has already loaded writing, can keep a previously published title for up to 30 minutes during an outage. That list is not authorization for the article. Deleting a KV key does not clear memory in isolates that already hold the entry, or a palette payload the browser already downloaded. For an urgent removal, block the route or the edge before relying on cache expiry.
 
 Only public writing data is cached. Contact responses, chat responses, credentials, and HTML are not.
 

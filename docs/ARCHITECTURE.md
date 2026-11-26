@@ -46,7 +46,11 @@ Server-only modules live in `src/lib/server`. They read credentials through `rea
 
 ## Data loading
 
-Marketing `+layout.server.ts` loads JSON-LD and the command-palette lists. The writing catalog on that layout and on the homepage uses a non-blocking read: at most 300ms for KV, and no wait for Notion. A cold homepage shows the profile plus a loading notice and retries the `app:home-writing` dependency three times, four seconds apart.
+Marketing `+layout.server.ts` loads JSON-LD and the approved project cards for the command palette. It does not read the writing catalog, and it does not register `app:home-writing`. Static navigation lives in the client. Project cards stay on that server load so the private registry is not shipped to the browser.
+
+The command palette requests `GET /api/palette/writing` the first time it opens. That route calls `getWritingCatalog` and returns `slug`, `title`, `excerpt`, and `tags` for published entries. The browser keeps a successful response for the visit and does not request it again when the palette opens again. A failed response is not kept, so the next open tries again. Pages, approved projects, and themes stay searchable while that request is in flight or unavailable.
+
+The homepage reads the writing catalog on its own non-blocking path: at most 300ms for KV, and no wait for Notion. A cold homepage shows the profile plus a loading notice and retries the `app:home-writing` dependency three times, four seconds apart. That dependency is only on the homepage load.
 
 `/writing`, article pages, RSS, and `/writing/p/[pageId]` wait for a bounded catalog fetch so the response can be server-rendered. A cached article body is loaded only when a fresh publication catalog includes the page. An uncached body waits for a published-set read in that request before Notion blocks are fetched.
 
@@ -104,7 +108,7 @@ On 2026-11-25, `https://stepweaver.dev/` returned 307 with `Location: https://ww
 
 ## Article publication
 
-A listing catalog is not publication. `/`, `/writing`, RSS, the sitemap, and the terminal may show a previously published title for five minutes, or for up to 30 minutes when Notion is down. That list never authorizes an article body.
+A listing catalog is not publication. `/`, `/writing`, RSS, the sitemap, the terminal, and `GET /api/palette/writing` may show a previously published title for five minutes, or for up to 30 minutes when Notion is down. That list never authorizes an article body.
 
 `getPublicationCatalog()` returns a catalog only when `status` is `ok`: Notion succeeded less than five minutes ago (`FRESH_MS`), or the source is the fixture catalog. A stale catalog, including one kept because Notion failed, is not returned.
 
