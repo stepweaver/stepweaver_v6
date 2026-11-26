@@ -1,3 +1,5 @@
+import { deserialize } from '$app/forms';
+import type { ActionResult } from '@sveltejs/kit';
 import { formatWeatherLines, type WeatherReport } from '$lib/weather/format';
 import type { ContactDraft, ShellEffect, TerminalLine, WeatherOption } from './types';
 
@@ -192,6 +194,59 @@ async function askLambda(message: string, fetchImpl: FetchLike): Promise<EffectO
 	}
 }
 
+const UNSENT = 'The message was not sent.';
+const DRAFT_STILL_HERE = 'The draft is still here. Type send, edit, or cancel.';
+
+function contactKept(message: string, draft: ContactDraft): EffectOutcome {
+	return {
+		lines: [
+			{ content: message, variant: 'error' },
+			{ content: DRAFT_STILL_HERE, variant: 'dimmed' }
+		],
+		mode: 'contact',
+		contact: draft
+	};
+}
+
+function contactDelivered(message: string): EffectOutcome {
+	return { lines: [{ content: message, variant: 'success' }], mode: 'shell', contact: null };
+}
+
+function textMessage(value: unknown): string | null {
+	if (typeof value === 'string' && value.trim()) return value;
+	if (!value || typeof value !== 'object') return null;
+	const message = (value as { message?: unknown }).message;
+	return typeof message === 'string' && message.trim() ? message : null;
+}
+
+/** Delivery is the contact payload, not the HTTP status or the action type. */
+function deliveredMessage(data: unknown): string | null {
+	if (!data || typeof data !== 'object') return null;
+	if ((data as { success?: unknown }).success !== true) return null;
+	return textMessage(data);
+}
+
+function outcomeFromAction(result: ActionResult, draft: ContactDraft): EffectOutcome {
+	if (result.type === 'success') {
+		const delivered = deliveredMessage(result.data);
+		if (delivered) return contactDelivered(delivered);
+		return contactKept(textMessage(result.data) ?? UNSENT, draft);
+	}
+	if (result.type === 'failure') return contactKept(textMessage(result.data) ?? UNSENT, draft);
+	if (result.type === 'error') return contactKept(textMessage(result.error) ?? UNSENT, draft);
+	return contactKept(UNSENT, draft);
+}
+
+function readAction(body: string): ActionResult | null {
+	try {
+		const result = deserialize(body);
+		if (!result || typeof result !== 'object') return null;
+		return result;
+	} catch {
+		return null;
+	}
+}
+
 async function sendContact(
 	draft: ContactDraft,
 	token: string,
@@ -210,35 +265,14 @@ async function sendContact(
 			method: 'POST',
 			body: form,
 			headers: { accept: 'application/json', 'x-sveltekit-action': 'true' },
+			redirect: 'manual',
 			signal: AbortSignal.timeout(CLIENT_DEADLINE_MS)
 		});
-		const payload = (await response.json()) as {
-			type?: string;
-			data?: { success?: boolean; message?: string };
-			message?: string;
-		};
-		const message = payload.data?.message || payload.message || 'The message was not sent.';
-		const sent = payload.type === 'success' || payload.data?.success === true;
-		if (!sent) {
-			return {
-				lines: [
-					{ content: message, variant: 'error' },
-					{ content: 'The draft is still here. Type send, edit, or cancel.', variant: 'dimmed' }
-				],
-				mode: 'contact',
-				contact: draft
-			};
-		}
-		return { lines: [{ content: message, variant: 'success' }], mode: 'shell', contact: null };
+		const result = readAction(await response.text());
+		if (!result) return contactKept(UNSENT, draft);
+		return outcomeFromAction(result, draft);
 	} catch {
-		return {
-			lines: [
-				{ content: 'The message was not sent.', variant: 'error' },
-				{ content: 'The draft is still here. Type send, edit, or cancel.', variant: 'dimmed' }
-			],
-			mode: 'contact',
-			contact: draft
-		};
+		return contactKept(UNSENT, draft);
 	}
 }
 

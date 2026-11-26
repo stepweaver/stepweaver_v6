@@ -36,6 +36,11 @@ function devServer(port: number, journalSource: string) {
 export default defineConfig({
 	workers: 1,
 	testMatch: '**/*.e2e.{ts,js}',
+	reporter: process.env.CI ? [['dot'], ['html', { open: 'never' }]] : [['list']],
+	use: {
+		trace: process.env.CI ? 'retain-on-failure' : 'off',
+		screenshot: process.env.CI ? 'only-on-failure' : 'off'
+	},
 	webServer: [devServer(4173, 'fixture'), devServer(4174, 'unavailable')],
 	projects: [
 		{

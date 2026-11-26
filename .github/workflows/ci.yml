@@ -4,9 +4,13 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -16,5 +20,27 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run verify
+      - name: Install dependencies from the lockfile
+        run: pnpm install --frozen-lockfile
+      # pnpm verify is the type check, unit tests, and production build.
+      # The build runs the client publication check, so it is not repeated.
+      - name: Typecheck, unit tests, and production build
+        run: pnpm verify
+      # pnpm lint is `prettier --check .` and then `eslint .`.
+      - name: Prettier and ESLint
+        run: pnpm lint
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Browser tests
+        id: e2e
+        run: pnpm test:e2e
+      - name: Upload browser test report
+        if: failure() && steps.e2e.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 14
+          if-no-files-found: warn

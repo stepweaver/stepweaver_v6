@@ -264,3 +264,54 @@ test('cd, codex, and roll keep the transcript usable', async ({ page }) => {
 	expect(box?.y ?? -1).toBeGreaterThanOrEqual(0);
 	expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(701);
 });
+
+test('terminal contact submits through the contact action and returns to the shell', async ({
+	page
+}) => {
+	await page.addInitScript(() => {
+		const widgets = new Map();
+		Object.assign(window, {
+			turnstile: {
+				render(_element, options) {
+					const id = `stub-${widgets.size + 1}`;
+					widgets.set(id, options);
+					queueMicrotask(() => options.callback('XXXX.DUMMY.TOKEN.XXXX'));
+					return id;
+				},
+				reset(id) {
+					const options = widgets.get(id);
+					if (options) queueMicrotask(() => options.callback('XXXX.DUMMY.TOKEN.XXXX'));
+				},
+				remove(id) {
+					widgets.delete(id);
+				}
+			}
+		});
+	});
+
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto('/terminal');
+	const input = page.getByRole('textbox', { name: 'Command' });
+	const transcript = page.getByRole('log', { name: 'Terminal transcript' });
+	await expect(input).toHaveAttribute('data-ready', 'true');
+
+	async function command(line: string) {
+		await input.fill(line);
+		await input.press('Enter');
+	}
+
+	await command('contact');
+	await expect(transcript).toContainText('Step 1/5');
+	await command('Ada');
+	await command('ada@example.com');
+	await command('1');
+	await command('A workflow question from the terminal.');
+	await expect(page.locator('.bot-check')).toHaveAttribute('data-turnstile', 'ready');
+	await page.waitForTimeout(500);
+	await command('send');
+
+	await expect(transcript).toContainText('Your message was sent. I will read it and reply.');
+	await expect(page.locator('.prompt-row .prompt')).toHaveText('user@stepweaver.dev:~$');
+	await command('help');
+	await expect(transcript).toContainText('Available commands:');
+});

@@ -85,7 +85,7 @@ pnpm lint
 pnpm test:e2e
 ```
 
-CI runs `pnpm verify` on every push and pull request. Playwright is local. It uses fixture writing, a synthetic Field Journal, a mock mail adapter, Turnstile test keys, and no weather or model keys. `JOURNAL_SOURCE=fixture` is ignored in production builds. A physical phone and the production Worker are outside that suite.
+CI on every push and pull request installs from the lockfile, then runs `pnpm verify`, `pnpm lint`, and `pnpm test:e2e`. The browser job installs Playwright Chromium and its operating-system libraries. Playwright uses fixture writing, a synthetic Field Journal, fixture weather, a mock mail adapter, Turnstile test keys, and no model keys. `STEPWEAVER_E2E=1` keeps those process values ahead of platform bindings in development. `JOURNAL_SOURCE=fixture` is ignored in production builds. Passing that suite does not prove production Notion, email, Turnstile, weather, or the model providers. A physical phone and the production Worker are outside that suite.
 
 ## Deployment
 

@@ -86,7 +86,7 @@ The public allowlist is `Date`, `Miles Walked`, and `Publish Public`. The query 
 
 A snapshot is served only while it is younger than five minutes (`JOURNAL_PUBLICATION_WINDOW_MS`). If Notion then fails, the page says the record is unavailable. It does not keep an expired copy. Malformed or truncated responses fail the same way. An actually empty public query is an empty journal.
 
-`JOURNAL_SOURCE=fixture` serves synthetic rows and a fixed clock of 2026-11-26. That source is ignored when the production build sets `dev` to false. Playwright sets the fixture source, clears the Notion key and database id, and runs a second server with `JOURNAL_SOURCE=unavailable`.
+`JOURNAL_SOURCE=fixture` serves synthetic rows and a fixed clock of 2026-11-26. That source is ignored when the production build sets `dev` to false. Playwright sets `STEPWEAVER_E2E=1`, which in development makes service keys come from the process environment instead of platform bindings. It sets this fixture source, clears the Notion key and database id, and runs a second server with `JOURNAL_SOURCE=unavailable`. The owner reports that the existing database is shared with the integration and that `/field-journal` is working. The browser suite does not call that database.
 
 Mileage math lives in `src/lib/journal/mileage.ts`. Weeks start on Monday. The current day is `America/Indiana/Indianapolis`. Stored `YYYY-MM-DD` values are calendar dates. Missing mileage is omitted. Zero is kept and is not a walking day. Duplicate dates or invalid mileage reject the total and name the dates.
 
@@ -161,9 +161,15 @@ Per-IP limiting is the `CHAT_RATE_LIMITER` binding (20 requests per 60 seconds).
 
 Weather is `GET /api/weather`. The handler checks `WEATHER_RATE_LIMITER` (30 per 60 seconds), then `lookupWeather`. Geocoding uses OpenWeather. Current conditions and the forecast are requested together. Forecast lines are one row per local calendar day, using that day's high, low, and the sample nearest local noon, for up to five days. Every row uses the single `timezone` offset from the current observation. The forecast does not change that offset when the window crosses a daylight-saving transition, and the app does not load a timezone database. Missing humidity, wind, and forecast temperatures are shown as unavailable. A real zero is kept. If the city offset is missing, the forecast is not labeled as local time. Ambiguous city names return a numbered choice. A denied geolocation lookup falls back to New York and tells the reader to type a city. Successful lookups are cached in Worker memory for 10 minutes. The cache is per isolate.
 
-Contact is the default form action on `/contact`. The terminal wizard posts the same action with `x-sveltekit-action`. Shared field rules are in `src/lib/contact/fields.ts`. The server checks origin, body size and read time, the `CONTACT_RATE_LIMITER` binding (5 per 60 seconds), honeypot, minimum form age, Turnstile (hostname plus action `contact`), and then sends through the `CONTACT_EMAIL` binding. Production fails closed when the rate limiter, Turnstile secret, email binding, or sender and recipient addresses are missing. `CONTACT_EMAIL_ADAPTER=mock` works only in development.
+Contact is the default form action on `/contact`. The page form submits it with `enhance`. The terminal wizard posts that same action with `accept: application/json` and `x-sveltekit-action`, then reads the body with `deserialize` from `$app/forms`. There is no second contact endpoint. Shared field rules are in `src/lib/contact/fields.ts`. The server checks origin, body size and read time, the `CONTACT_RATE_LIMITER` binding (5 per 60 seconds), honeypot, minimum form age, Turnstile (hostname plus action `contact`), and then sends through the `CONTACT_EMAIL` binding. Production fails closed when the rate limiter, Turnstile secret, email binding, or sender and recipient addresses are missing. `CONTACT_EMAIL_ADAPTER=mock` works only in development.
 
-The terminal client reads the action body with `response.json()` and does not use `$app/forms` `deserialize`. Specific success and error messages from the action can be dropped. The page form uses `enhance` and is a different path. Fixing the terminal path is outstanding.
+The terminal shows the action's `message`. It clears the draft and returns to the shell only when the result type is `success` and the contact payload has `success: true`. An HTTP status or a success type without that flag is not treated as delivery. Validation failure, provider failure, an action error, a redirect, a body that cannot be deserialized, and a network failure keep the draft in contact mode. The visitor can send again, edit, or cancel. The terminal still sends `cf_turnstile_response`, and the server still checks it before mail is attempted.
+
+## Verification
+
+`.github/workflows/ci.yml` runs on push and pull request. It installs with `pnpm install --frozen-lockfile`, then `pnpm verify` (type check, unit tests, production build, and the client publication check inside that build), then `pnpm lint` (Prettier, then ESLint), then `pnpm exec playwright install --with-deps chromium` and `pnpm test:e2e`. A failed check fails the job. A failed browser run uploads the HTML report, traces, and screenshots for 14 days.
+
+Playwright starts the two development servers in `playwright.config.ts`. Both set `STEPWEAVER_E2E=1`, fixture writing, `WEATHER_SOURCE=fixture`, mock contact mail, Turnstile test keys, and empty model keys. Port 4173 sets `JOURNAL_SOURCE=fixture`. Port 4174 sets `JOURNAL_SOURCE=unavailable`. No production credentials are provided. Passing those runs does not prove the production Worker, Notion, email, Turnstile, OpenWeather, or the model providers.
 
 ## Decisions and trade-offs
 
@@ -179,9 +185,7 @@ The terminal client reads the action body with `response.json()` and does not us
 
 These are recorded so they are not mistaken for current guarantees:
 
-- Deserialize terminal contact responses and prove the visitor-visible message.
 - Verify the production Worker, KV, email, Turnstile, and a live forecast. Repository tests do not attach those bindings.
 - Add an application-wide model budget and alerting on top of the per-IP chat limit.
 - Profile the signature-background frame loop on low-end phones and cap it if it dominates the main thread.
-- Put lint and Playwright in CI. CI currently runs `pnpm verify` only.
 - Register new article page ids before title changes, or adopt a Notion Slug property as the source for pages that are not already frozen.
