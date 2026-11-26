@@ -9,7 +9,8 @@ export const SHARE_CARD = {
 	path: '/images/lambda-share.jpg',
 	width: 1200,
 	height: 630,
-	type: 'image/jpeg'
+	type: 'image/jpeg',
+	alt: 'Stephen Weaver — λstepweaver, a green pixel lambda above a terminal'
 } as const;
 
 const VERIFIED_SHARE_ASSETS: Record<string, typeof SHARE_CARD> = {
@@ -35,8 +36,9 @@ export function verifiedSharePath(cover: string | null | undefined): string | nu
  * Social cards use a measured static image.
  * Notion file URLs are signed and expire. Other remote URLs are not fetched, proxied, or given dimensions.
  * A local file that is not a registered share asset (for example the portrait mark) is not a large-card image.
+ * Alt text is the asset's own description. The branded card does not depict an article title.
  */
-export function shareImageFor(cover: string | null | undefined, alt: string): ShareImage {
+export function shareImageFor(cover: string | null | undefined): ShareImage {
 	const path = verifiedSharePath(cover) ?? SHARE_CARD.path;
 	const asset = VERIFIED_SHARE_ASSETS[path] ?? SHARE_CARD;
 	return {
@@ -44,6 +46,6 @@ export function shareImageFor(cover: string | null | undefined, alt: string): Sh
 		width: asset.width,
 		height: asset.height,
 		type: asset.type,
-		alt
+		alt: asset.alt
 	};
 }

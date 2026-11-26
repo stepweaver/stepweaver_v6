@@ -45,7 +45,7 @@ Server-only modules live in `src/lib/server`. They read credentials through `rea
 
 Marketing `+layout.server.ts` loads JSON-LD and the command-palette lists. The writing catalog on that layout and on the homepage uses a non-blocking read: at most 300ms for KV, and no wait for Notion. A cold homepage shows the profile plus a loading notice and retries the `app:home-writing` dependency three times, four seconds apart.
 
-`/writing`, article pages, RSS, and `/writing/p/[pageId]` wait for a bounded catalog fetch so the response can be server-rendered. Article bodies are loaded only after the page is in the published catalog.
+`/writing`, article pages, RSS, and `/writing/p/[pageId]` wait for a bounded catalog fetch so the response can be server-rendered. A cached article body is loaded only when a fresh publication catalog includes the page. An uncached body waits for a published-set read in that request before Notion blocks are fetched.
 
 Chat loads writing context with the same non-blocking option. Public project cards come from the in-memory allow-list.
 
@@ -75,9 +75,36 @@ Slug resolution for a published page:
 
 Public catalog and sanitized article blocks are cached. See [OPERATIONS.md](OPERATIONS.md) for freshness. Hyperlinks in rich text are limited to safe protocols. Rendered text is escaped Svelte text.
 
+## Metadata
+
+The root layout resolves one page description through `resolvePageMetadata` and renders it with `src/lib/components/seo/PageMeta.svelte`. A client navigation replaces that head block. Open Graph and Twitter tags stay on that component: title, description, type, URL, site name, locale, image URL, width, height, type, and alt text, plus article dates and tags when the page is an article.
+
+The sharing image for every current page is `static/images/lambda-share.jpg` (`/images/lambda-share.jpg`). `src/lib/seo/share-image.ts` records its URL path, 1200×630 dimensions, `image/jpeg` type, and alt text together. The alt text describes that mark: a green pixel lambda above a terminal. It does not say the picture contains an article or project title. Notion cover URLs are not used as social images. There is no per-article image renderer.
+
+`src/lib/seo/metadata.spec.ts` checks the metadata object. `e2e/metadata.e2e.ts` checks the initial HTML, client navigation, and the served JPEG. Those tests do not call Facebook, X, LinkedIn, or Slack. Those products cache and crop previews on their own.
+
+`SITE_ORIGIN` in `src/lib/seo/origin.ts` is `https://www.stepweaver.dev`. Canonical links, Open Graph URLs, sitemap locations, RSS item links, and JSON-LD `url` values use it. The origin is not taken from the request host. `stepweaver.dev` and `www.stepweaver.dev` are both same-site hosts for article links and Turnstile. This repository does not contain the apex-to-www redirect.
+
+On 2026-11-25, `https://stepweaver.dev/` returned 307 with `Location: https://www.stepweaver.dev/`. The HTML, sitemap, and RSS then served from www still published `https://stepweaver.dev`. That is the deployed site. This branch publishes the www origin, which matches that redirect target. The check did not identify the Worker and did not call a social-preview crawler.
+
 ## Article publication
 
-Direct article routes authorize from a fresh published-set read: Notion succeeded less than five minutes ago, or the fixture source. A stale catalog is not permission to publish. If the saved catalog is older, `/writing/[slug]` and `/writing/p/[pageId]` wait for Notion. A failed read returns 503 and does not serve the cached title or body. A successful read that omits the page returns 404. Listing surfaces can still show a previously published title for five minutes, or for up to 30 minutes when Notion is down. That list does not authorize an article body. Unpublishing is therefore not instantaneous.
+A listing catalog is not publication. `/`, `/writing`, RSS, the sitemap, and the terminal may show a previously published title for five minutes, or for up to 30 minutes when Notion is down. That list never authorizes an article body.
+
+`getPublicationCatalog()` returns a catalog only when `status` is `ok`: Notion succeeded less than five minutes ago (`FRESH_MS`), or the source is the fixture catalog. A stale catalog, including one kept because Notion failed, is not returned.
+
+`/writing/[slug]` uses one request-scoped read (`loadArticleBySlug`):
+
+- A body already stored for that page's `revisedAt` may be served from the fresh catalog with no further Notion read. `revisedAt` is the full Notion `last_edited_time`. The display field `updated` is only the calendar day, so two edits on the same day do not share a body cache key.
+- A missing body does not treat that fresh catalog as permission to call the Notion blocks API. The request performs a published-set read and fetches blocks only when that read still includes the page. If the catalog read above already waited on Notion, it is not repeated.
+- If that read fails, the response is 503. If it omits the page, the response is 404. Neither response includes the article title or article sharing metadata.
+- If the read includes the page and the block fetch then fails, the page may still render the title and say the text is unavailable.
+
+`/writing/p/[pageId]` and a legacy slug respond with 301 only when a fresh catalog maps them to a published slug. This app does not set a short cache lifetime on that redirect. Clients may store a 301 longer than five minutes. The destination article is checked on its own request.
+
+A successful article response sends `cache-control: public, max-age=60`. A shared cache can replay that HTML for 60 seconds after the origin created it. Error responses send `no-store`. A cached body can therefore remain available until the fresh catalog window ends, plus up to 60 seconds of HTTP caching. Unpublishing is not instantaneous. After a failed Notion read, an isolate backs off for 30 seconds, so another uncached article attempt in that interval also fails closed instead of using the listing cache.
+
+Body keys are `writing:v1:{databaseId}:blocks:{pageId}:rev:{encoded revisedAt}`. Keys from the previous schema, which ended in the calendar date, are not read. Catalog snapshots that omit `revisedAt` fail validation and are refetched. KV expires orphaned keys after 30 minutes. Deleting a key does not clear memory in an isolate that already holds the entry.
 
 ## Project publication
 
@@ -117,7 +144,7 @@ Per-IP limiting is the `CHAT_RATE_LIMITER` binding (20 requests per 60 seconds).
 
 ## Weather and contact
 
-Weather is `GET /api/weather`. The handler checks `WEATHER_RATE_LIMITER` (30 per 60 seconds), then `lookupWeather`. Geocoding uses OpenWeather. Current conditions and the forecast are requested together. Forecast lines are one row per local calendar day, using that day's high, low, and the sample nearest local noon, for up to five days. Missing humidity, wind, and forecast temperatures are shown as unavailable. A real zero is kept. If the city offset is missing, the forecast is not labeled as local time. Ambiguous city names return a numbered choice. A denied geolocation lookup falls back to New York and tells the reader to type a city. Successful lookups are cached in Worker memory for 10 minutes. The cache is per isolate.
+Weather is `GET /api/weather`. The handler checks `WEATHER_RATE_LIMITER` (30 per 60 seconds), then `lookupWeather`. Geocoding uses OpenWeather. Current conditions and the forecast are requested together. Forecast lines are one row per local calendar day, using that day's high, low, and the sample nearest local noon, for up to five days. Every row uses the single `timezone` offset from the current observation. The forecast does not change that offset when the window crosses a daylight-saving transition, and the app does not load a timezone database. Missing humidity, wind, and forecast temperatures are shown as unavailable. A real zero is kept. If the city offset is missing, the forecast is not labeled as local time. Ambiguous city names return a numbered choice. A denied geolocation lookup falls back to New York and tells the reader to type a city. Successful lookups are cached in Worker memory for 10 minutes. The cache is per isolate.
 
 Contact is the default form action on `/contact`. The terminal wizard posts the same action with `x-sveltekit-action`. Shared field rules are in `src/lib/contact/fields.ts`. The server checks origin, body size and read time, the `CONTACT_RATE_LIMITER` binding (5 per 60 seconds), honeypot, minimum form age, Turnstile (hostname plus action `contact`), and then sends through the `CONTACT_EMAIL` binding. Production fails closed when the rate limiter, Turnstile secret, email binding, or sender and recipient addresses are missing. `CONTACT_EMAIL_ADAPTER=mock` works only in development.
 
@@ -137,7 +164,6 @@ The terminal client reads the action body with `response.json()` and does not us
 
 These are recorded so they are not mistaken for current guarantees:
 
-- Confirm whether canonical URLs should stay on `https://stepweaver.dev` or move to `www`, then align metadata, sitemap, and RSS in one change. Turnstile already accepts both hosts. `SITE_ORIGIN` is the apex.
 - Deserialize terminal contact responses and prove the visitor-visible message.
 - Verify the production Worker, KV, email, Turnstile, and a live forecast. Repository tests do not attach those bindings.
 - Add an application-wide model budget and alerting on top of the per-IP chat limit.

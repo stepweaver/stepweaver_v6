@@ -86,7 +86,7 @@ Per-IP limiting is the chat binding above. There is no shared token budget, spen
 
 `OPENWEATHER_API_KEY` is sent to OpenWeather geocoding, current weather, and the 5-day/3-hour forecast. Current conditions and the forecast run concurrently. Each upstream call has a 5 second timeout and manual redirect handling. Forecast failure still returns current conditions. Daily lines aggregate min and max on the city-local calendar day.
 
-The memory cache holds 64 successful lookups for 10 minutes. It does not survive a new isolate and is not KV.
+The memory cache holds 64 successful lookups for 10 minutes. It does not survive a new isolate and is not KV. Daily lines use the one timezone offset on the current observation for every forecast sample. A daylight-saving change during the five-day window does not move that offset. Missing humidity, wind, and forecast temperatures stay unavailable. A measured zero stays zero.
 
 ## Notion
 
@@ -109,7 +109,13 @@ Share the writing database with the integration that owns `NOTION_API_KEY`. A 40
 
 KV is eventually consistent. Separate locations can refresh at the same time. After five minutes a homepage can keep showing the previous catalog while a refresh runs. After 30 minutes with no successful refresh, the homepage can show a loading notice and retry. Visitors without JavaScript can open `/writing` or reload. The archive still uses that performance cache.
 
-Direct article routes do not. `/writing/[slug]` and `/writing/p/[pageId]` accept a catalog only while it is fresh (younger than five minutes). After that they wait for one Notion read. If Notion is down they return 503 and do not serve the cached article or fetch its blocks. If Notion answers and the page is gone they return 404. A fresh authorized response may still be HTTP-cached for 60 seconds. Unpublishing is visible on a direct URL after the fresh window once Notion answers. It is not instantaneous inside that window.
+Direct article routes do not use the listing cache as permission to publish. `/writing/[slug]` and `/writing/p/[pageId]` accept a catalog only while it is fresh (younger than five minutes). After that they wait for one Notion read. If Notion is down they return 503 and do not serve the cached article or fetch its blocks. If Notion answers and the page is gone they return 404. Those errors are `no-store` and do not include the article title or article sharing metadata.
+
+A body already stored for the page's full Notion `last_edited_time` (`revisedAt`) may be served during that fresh window with no further Notion read. The calendar field `updated` is display-only. Two edits on the same day use different body keys: `writing:v1:{databaseId}:blocks:{pageId}:rev:{encoded revisedAt}`. A key from the previous schema, ending in the calendar date, is not read. A catalog snapshot that omits `revisedAt` fails validation and is refetched. Orphaned KV entries expire after 30 minutes.
+
+Fetching a body that is not already stored requires a published-set read in the current request. A fresh catalog from an earlier request is not enough. If this request's catalog read already waited on Notion, the catalog is not fetched again. If the current read fails, the route returns 503 and does not call the blocks API. If the page is absent, it returns 404. An isolate also backs off for 30 seconds after a failed refresh, so a second uncached attempt in that interval fails closed.
+
+A successful article response may still be HTTP-cached for 60 seconds (`public, max-age=60`). Legacy slugs and `/writing/p/[pageId]` answer with 301 when a fresh catalog maps them to a published slug. This app does not set a short lifetime on that redirect, so a client may store it longer than the fresh window. The canonical article URL is checked again when it is requested. Unpublishing is visible to a new origin request after the fresh window once Notion answers. It is not instantaneous inside that window, and a shared cache can replay a successful response for up to 60 seconds after that.
 
 Homepage responses include `Server-Timing: writing;dur=...` for the catalog wait only. Fresh catalog responses may also send `cache-control: public, max-age=60`. Stale or failed catalog responses send `no-store`. Article 404 and 503 responses send `no-store`.
 
@@ -157,6 +163,7 @@ pnpm test:e2e
 On a deployed Worker, with real secrets and no load test against email:
 
 - Home, About, Writing, one article, RSS, résumé PDF, and the terminal shell
+- View source on the homepage and one article: one title, one `og:image`, and the static card alt text. This does not check Facebook, X, or LinkedIn preview tools
 - Contact with Turnstile, then the message in the destination inbox and Reply set to the visitor
 - `chat` with a configured model, and once with the keys absent so the public brief is the reply
 - `weather <city> --forecast` showing a daily high and low
@@ -191,7 +198,7 @@ DNS for the public hostname is outside this repository. If the hostname was poin
 
 ## Not verifiable from the repository
 
-- Whether `stepweaver-v6` is the Worker currently serving `stepweaver.dev` or `www.stepweaver.dev`
+- Whether `stepweaver-v6` is the Worker currently serving `stepweaver.dev` or `www.stepweaver.dev`. A public request on 2026-11-25 saw the apex return 307 to www, while the deployed sitemap, RSS, and JSON-LD still used the apex. This branch's copies of those documents use www. That request does not identify the Worker.
 - Whether the KV namespace id in `wrangler.jsonc` is bound on the deployed script and has been warmed
 - Whether Email Service, Turnstile, Notion, OpenWeather, Groq, and OpenAI secrets are present in production and working
 - Live TTFB, the homepage black-screen report, and low-end phone frame time

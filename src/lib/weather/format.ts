@@ -21,6 +21,12 @@ export type WeatherReport = {
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+/**
+ * Local labels use one UTC offset for every sample in the report.
+ * OpenWeather sends that offset on the current observation. A forecast that
+ * crosses a daylight-saving transition stays on the same offset. This module
+ * does not load a timezone database.
+ */
 export function formatCityTime(unixSeconds: number, offsetSeconds: number): string {
 	const shifted = new Date((unixSeconds + offsetSeconds) * 1000);
 	const hour24 = shifted.getUTCHours();

@@ -172,6 +172,7 @@ async function reportAt(
 		tempC: Math.round(((tempF - 32) * 5) / 9),
 		humidity: roundedMeasurement(current.main?.humidity, 0, 100),
 		windMph: roundedMeasurement(current.wind?.speed, 0),
+		// One offset for the whole report. Forecast rows do not change it for daylight saving.
 		timezoneOffsetSeconds: finiteNumber(current.timezone),
 		forecast: samples ?? [],
 		forecastUnavailable: samples === null

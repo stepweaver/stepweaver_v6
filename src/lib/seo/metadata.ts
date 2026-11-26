@@ -3,12 +3,11 @@ import { workPageCopy } from '$lib/projects/work-copy';
 import type { WritingEntry } from '$lib/writing/types';
 
 import { absoluteSiteUrl } from './origin';
-import { shareImageFor, type ShareImage } from './share-image';
+import { SHARE_CARD, shareImageFor, type ShareImage } from './share-image';
 
 export const SITE_NAME = 'λstepweaver';
 export const SITE_LOCALE = 'en_US';
-export const DEFAULT_IMAGE_ALT =
-	'Stephen Weaver — λstepweaver, a green pixel lambda above a terminal';
+export const DEFAULT_IMAGE_ALT = SHARE_CARD.alt;
 export const ARTICLE_DESCRIPTION_FALLBACK = 'A published note by Stephen Weaver on λstepweaver.';
 
 export const HOME_TITLE = `${identity.name} | ${identity.title}`;
@@ -129,6 +128,7 @@ function isWritingPost(value: unknown): value is WritingEntry {
 		typeof record.summary === 'string' &&
 		typeof record.date === 'string' &&
 		typeof record.updated === 'string' &&
+		typeof record.revisedAt === 'string' &&
 		typeof record.cover === 'string' &&
 		Array.isArray(record.tags) &&
 		record.tags.every((tag) => typeof tag === 'string')
@@ -221,7 +221,7 @@ function articleMetadata(post: WritingEntry, data: Record<string, unknown>): Pag
 	const publishedTime = isoDate(post.date);
 	const modifiedTime = isoDate(post.updated);
 	const tags = post.tags.map((tag) => tag.trim()).filter(Boolean);
-	const image = shareImageFor(post.cover, `${post.title} — ${SITE_NAME}`);
+	const image = shareImageFor(post.cover);
 	const article: Record<string, unknown> = {
 		'@context': 'https://schema.org',
 		'@type': 'BlogPosting',
@@ -257,7 +257,7 @@ function articleMetadata(post: WritingEntry, data: Record<string, unknown>): Pag
 export function resolvePageMetadata(request: MetadataRequest): PageMetadata {
 	const pathname = normalizePath(request.pathname);
 	const data = asRecord(request.data);
-	const image = shareImageFor(null, DEFAULT_IMAGE_ALT);
+	const image = shareImageFor(null);
 
 	if (request.status >= 400) {
 		const message = request.message?.trim() || 'This page is not available.';
@@ -277,10 +277,7 @@ export function resolvePageMetadata(request: MetadataRequest): PageMetadata {
 
 	if (data?.kind === 'case-study' && isPublicCard(data.project)) {
 		if (pathname === `/work/${data.project.slug}`) {
-			const projectImage = shareImageFor(
-				data.project.imageUrl,
-				`${data.project.title} — ${SITE_NAME}`
-			);
+			const projectImage = shareImageFor(data.project.imageUrl);
 			return pageMetadata({
 				title: data.project.title,
 				description: data.project.description,
@@ -297,7 +294,7 @@ export function resolvePageMetadata(request: MetadataRequest): PageMetadata {
 				title: data.card.title,
 				description: data.card.description,
 				canonical: absoluteSiteUrl(pathname),
-				image: shareImageFor(null, `${data.card.title} — ${SITE_NAME}`),
+				image: shareImageFor(null),
 				jsonLd: structuredBlocks(data)
 			});
 		}

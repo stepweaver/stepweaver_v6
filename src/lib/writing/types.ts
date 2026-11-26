@@ -22,7 +22,13 @@ export type WritingEntry = {
 	slug: string;
 	legacySlugs: string[];
 	date: string;
+	/** Calendar day for display, RSS, and article:modified_time. */
 	updated: string;
+	/**
+	 * Full Notion `last_edited_time`, or the created timestamp when that is missing.
+	 * Article body cache version only. Not a public URL segment.
+	 */
+	revisedAt: string;
 	excerpt: string;
 	summary: string;
 	featured: boolean;

@@ -33,7 +33,9 @@ test.describe('server-rendered metadata', () => {
 		expect(await meta(page, 'meta[property="og:image:height"]')).toBe('630');
 		expect(await meta(page, 'meta[property="og:image:type"]')).toBe('image/jpeg');
 		expect(await meta(page, 'meta[name="twitter:image"]')).toContain('lambda-share.jpg');
-		expect((await meta(page, 'meta[property="og:image:alt"]')).length).toBeGreaterThan(0);
+		expect(await meta(page, 'meta[property="og:image:alt"]')).toBe(
+			'Stephen Weaver — λstepweaver, a green pixel lambda above a terminal'
+		);
 		await expect(page.locator('meta[property="article:published_time"]')).toHaveCount(0);
 		await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
 	});
@@ -61,6 +63,10 @@ test.describe('server-rendered metadata', () => {
 			'https://www.stepweaver.dev/writing/workflow-handoffs'
 		);
 		expect(await meta(page, 'meta[property="og:type"]')).toBe('article');
+		expect(await meta(page, 'meta[property="og:image:alt"]')).toBe(
+			'Stephen Weaver — λstepweaver, a green pixel lambda above a terminal'
+		);
+		expect(await meta(page, 'meta[property="og:image:alt"]')).not.toContain('Workflow handoffs');
 		expect(await meta(page, 'meta[property="article:published_time"]')).toBe('2026-09-01');
 		expect(await meta(page, 'meta[property="article:modified_time"]')).toBe('2026-09-02');
 		const tags = await page
@@ -167,6 +173,22 @@ test('share image is public without a session', async ({ request }) => {
 	expect(bytes[0]).toBe(0xff);
 	expect(bytes[1]).toBe(0xd8);
 	expect(bytes.byteLength).toBeGreaterThan(10_000);
+	let offset = 2;
+	let width = 0;
+	let height = 0;
+	while (offset + 8 < bytes.byteLength) {
+		expect(bytes[offset]).toBe(0xff);
+		const marker = bytes[offset + 1];
+		const length = (bytes[offset + 2] << 8) | bytes[offset + 3];
+		if (marker === 0xc0 || marker === 0xc1 || marker === 0xc2) {
+			height = (bytes[offset + 5] << 8) | bytes[offset + 6];
+			width = (bytes[offset + 7] << 8) | bytes[offset + 8];
+			break;
+		}
+		offset += 2 + length;
+	}
+	expect(width).toBe(1200);
+	expect(height).toBe(630);
 });
 
 test('client navigation replaces metadata instead of stacking it', async ({ page }) => {
@@ -183,6 +205,7 @@ test('client navigation replaces metadata instead of stacking it', async ({ page
 	await page.getByRole('link', { name: 'Workflow handoffs' }).click();
 	await expect(page).toHaveURL(/\/writing\/workflow-handoffs$/);
 	await expect(page.locator('meta[property="og:title"]')).toHaveCount(1);
+	await expect(page.locator('meta[property="og:image:alt"]')).toHaveCount(1);
 	await expect(page.locator('meta[property="article:published_time"]')).toHaveCount(1);
 	expect(await meta(page, 'meta[property="og:title"]')).toBe('Workflow handoffs');
 
@@ -192,6 +215,7 @@ test('client navigation replaces metadata instead of stacking it', async ({ page
 		'Stephen Weaver | Business Systems Developer & Systems Integration Consultant'
 	);
 	await expect(page.locator('meta[property="og:title"]')).toHaveCount(1);
+	await expect(page.locator('meta[property="og:image:alt"]')).toHaveCount(1);
 	await expect(page.locator('meta[property="article:published_time"]')).toHaveCount(0);
 	await expect(page.locator('meta[property="article:tag"]')).toHaveCount(0);
 });

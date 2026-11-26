@@ -315,11 +315,21 @@ describe('forecast days', () => {
 		expect(text).not.toContain('0°F / 4°F');
 	});
 
-	it('follows the provided offset across a daylight-saving boundary', () => {
-		const at = Date.UTC(2024, 10, 3, 4, 30, 0) / 1000;
-		const sample = [{ at, condition: 'clear', highF: 50, lowF: 40 }];
-		expect(lines(-4 * 60 * 60, sample)).toContain('Sun Nov 3: clear, 50°F / 40°F');
-		expect(lines(-5 * 60 * 60, sample)).toContain('Sat Nov 2: clear, 50°F / 40°F');
+	it('applies one fixed offset to every sample, including a daylight-saving boundary', () => {
+		// Each call is one observation. The offset does not change between samples,
+		// and this does not look up the civil timezone.
+		const before = Date.UTC(2024, 10, 3, 4, 30, 0) / 1000;
+		const after = Date.UTC(2024, 10, 3, 7, 30, 0) / 1000;
+		const samples = [
+			{ at: before, condition: 'clear', highF: 50, lowF: 40 },
+			{ at: after, condition: 'later', highF: 48, lowF: 39 }
+		];
+		const edt = lines(-4 * 60 * 60, samples);
+		expect(edt).toContain('Sun Nov 3: later, 50°F / 39°F');
+		expect(edt).not.toContain('Sat Nov 2');
+		const est = lines(-5 * 60 * 60, samples);
+		expect(est).toContain('Sat Nov 2: clear, 50°F / 40°F');
+		expect(est).toContain('Sun Nov 3: later, 48°F / 39°F');
 	});
 
 	it('does not present a local forecast when the city offset is missing', () => {

@@ -15,6 +15,11 @@ export type CacheOptions = {
 	 * a stale catalog as a performance cache.
 	 */
 	acceptStale?: boolean;
+	/**
+	 * Skip a fresh hit and wait for `load()`. An uncached article body uses this
+	 * so a catalog read from the last five minutes is not treated as current.
+	 */
+	revalidate?: boolean;
 	now?: number;
 };
 
@@ -54,12 +59,13 @@ function remember<T>(key: string, entry: Entry<T>): void {
 	if (memory.size > MAX_MEMORY_ENTRIES) memory.delete(memory.keys().next().value!);
 }
 
-export async function cachedWriting<T>(
+export type CacheHitSource = 'cache' | 'load';
+
+async function readStored<T>(
 	key: string,
 	options: CacheOptions,
-	validate: (value: unknown) => value is T,
-	load: () => Promise<T>
-): Promise<{ value: T; stale: boolean } | undefined> {
+	validate: (value: unknown) => value is T
+): Promise<Entry<T> | undefined> {
 	const now = () => options.now ?? Date.now();
 	const usable = (entry: Entry<unknown> | undefined): entry is Entry<T> =>
 		!!entry &&
@@ -84,11 +90,38 @@ export async function cachedWriting<T>(
 			}
 		}
 	}
-	const cached = usable(saved) ? saved : undefined;
-	if (cached && now() - cached.at < FRESH_MS) return { value: cached.value, stale: false };
+	return usable(saved) ? saved : undefined;
+}
+
+/** Read a stored value. Does not refresh and does not call the loader. */
+export async function peekWriting<T>(
+	key: string,
+	options: CacheOptions,
+	validate: (value: unknown) => value is T
+): Promise<{ value: T; stale: boolean } | undefined> {
+	const saved = await readStored(key, options, validate);
+	if (!saved) return undefined;
+	const now = options.now ?? Date.now();
+	return { value: saved.value, stale: now - saved.at >= FRESH_MS };
+}
+
+export async function cachedWriting<T>(
+	key: string,
+	options: CacheOptions,
+	validate: (value: unknown) => value is T,
+	load: () => Promise<T>,
+	sink?: { source?: CacheHitSource }
+): Promise<{ value: T; stale: boolean } | undefined> {
+	const now = () => options.now ?? Date.now();
+	const saved = await readStored(key, options, validate);
+	if (saved && now() - saved.at < FRESH_MS && !options.revalidate) {
+		if (sink) sink.source = 'cache';
+		return { value: saved.value, stale: false };
+	}
 	if ((retryAfter.get(key) ?? 0) > now()) {
 		if (options.acceptStale === false) return undefined;
-		return cached ? { value: cached.value, stale: true } : undefined;
+		if (sink && saved) sink.source = 'cache';
+		return saved ? { value: saved.value, stale: true } : undefined;
 	}
 
 	let refresh = refreshing.get(key) as Promise<Entry<T> | undefined> | undefined;
@@ -128,12 +161,17 @@ export async function cachedWriting<T>(
 	if (options.waitUntil) options.waitUntil(refresh);
 	// A stale catalog may fill a listing. It must not authorize article delivery.
 	const defer =
-		options.acceptStale !== false && (options.nonBlocking || (cached && options.waitUntil));
+		options.acceptStale !== false && (options.nonBlocking || (saved && options.waitUntil));
 	if (defer) {
-		return cached ? { value: cached.value, stale: true } : undefined;
+		if (sink && saved) sink.source = 'cache';
+		return saved ? { value: saved.value, stale: true } : undefined;
 	}
 	const updated = await refresh;
-	if (updated) return { value: updated.value, stale: false };
+	if (updated) {
+		if (sink) sink.source = 'load';
+		return { value: updated.value, stale: false };
+	}
 	if (options.acceptStale === false) return undefined;
-	return cached && usable(cached) ? { value: cached.value, stale: true } : undefined;
+	if (sink && saved) sink.source = 'cache';
+	return saved ? { value: saved.value, stale: true } : undefined;
 }

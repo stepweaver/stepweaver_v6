@@ -44,6 +44,7 @@ const draftPost = {
 	legacySlugs: [],
 	date: '2026-10-01',
 	updated: '2026-10-01',
+	revisedAt: '2026-10-01T12:00:00.000Z',
 	excerpt: 'This draft must not appear on the site.',
 	summary: 'This draft must not appear on the site.',
 	featured: false,
@@ -102,11 +103,12 @@ describe('page metadata', () => {
 		expect(meta.ogType).toBe('website');
 		expect(meta.siteName).toBe('λstepweaver');
 		expect(meta.locale).toBe('en_US');
-		expect(meta.image).toMatchObject({
+		expect(meta.image).toEqual({
 			url: shareUrl,
 			width: 1200,
 			height: 630,
-			type: 'image/jpeg'
+			type: 'image/jpeg',
+			alt: SHARE_CARD.alt
 		});
 		expect(meta.twitterCard).toBe('summary_large_image');
 		expect(meta.robots).toBeNull();
@@ -125,6 +127,7 @@ describe('page metadata', () => {
 					legacySlugs: [],
 					date: '2024-06-01',
 					updated: '2024-06-04',
+					revisedAt: '2024-06-04T12:00:00.000Z',
 					excerpt: 'Systems & <handoffs> — "notes".',
 					summary: 'Do not prefer this.',
 					featured: false,
@@ -142,8 +145,14 @@ describe('page metadata', () => {
 		expect(meta.publishedTime).toBe('2024-06-01');
 		expect(meta.modifiedTime).toBe('2024-06-04');
 		expect(meta.tags).toEqual(['systems']);
-		expect(meta.image.url).toBe(shareUrl);
-		expect(meta.image.alt).toContain('λ & "quotes"');
+		expect(meta.image).toEqual({
+			url: shareUrl,
+			width: 1200,
+			height: 630,
+			type: 'image/jpeg',
+			alt: SHARE_CARD.alt
+		});
+		expect(meta.image.alt).not.toContain('quotes');
 		const article = meta.jsonLd.find(
 			(block) =>
 				typeof block === 'object' &&
@@ -166,6 +175,7 @@ describe('page metadata', () => {
 					legacySlugs: [],
 					date: '2026-02-31',
 					updated: 'not-a-date',
+					revisedAt: 'not-a-date',
 					excerpt: '',
 					summary: '',
 					featured: false,
@@ -226,6 +236,8 @@ describe('page metadata', () => {
 		expect(meta.title).toBe('Parcel Sweep | λstepweaver');
 		expect(meta.description).toBe('A reviewed public case study.');
 		expect(meta.image.url).toBe(shareUrl);
+		expect(meta.image.alt).toBe(SHARE_CARD.alt);
+		expect(meta.image.alt).not.toContain('Parcel Sweep');
 		expect(meta.ogType).toBe('website');
 	});
 

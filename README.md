@@ -16,6 +16,8 @@ The product centers on the person, the résumé, and the terminal. Case studies 
 
 `/lab` redirects to `/terminal`. `/play` redirects to `/dice-roller`.
 
+Canonical links, the sitemap, RSS, and structured data use `https://www.stepweaver.dev`. The app does not take that origin from the request host. Sharing cards use the static file `/images/lambda-share.jpg`.
+
 ## Stack
 
 - SvelteKit and Svelte 5, TypeScript, Vite

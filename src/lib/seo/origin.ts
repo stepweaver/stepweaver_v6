@@ -1,4 +1,4 @@
-/** Public canonical origin. Apex requests redirect here; do not derive this from Host. */
+/** Canonical origin for public URLs. Do not derive this from the request Host. */
 export const SITE_ORIGIN = 'https://www.stepweaver.dev';
 
 export function absoluteSiteUrl(path = '/'): string {

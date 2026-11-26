@@ -59,6 +59,37 @@ describe('writing entries', () => {
 		}
 	];
 
+	it('keeps the calendar display date separate from the full revision', () => {
+		const posts = toWritingEntries([
+			{
+				id: 'same-morning',
+				title: 'Morning edit',
+				status: 'Published',
+				excerpt: '',
+				tags: [],
+				slugProperty: '',
+				created: '2026-02-02T08:00:00.000Z',
+				edited: '2026-02-02T10:00:00.000Z'
+			},
+			{
+				id: 'same-evening',
+				title: 'Evening edit',
+				status: 'Published',
+				excerpt: '',
+				tags: [],
+				slugProperty: '',
+				created: '2026-02-02T08:00:00.000Z',
+				edited: '2026-02-02T18:30:00.000Z'
+			}
+		]);
+		expect(posts.map((post) => post.updated)).toEqual(['2026-02-02', '2026-02-02']);
+		expect(posts.map((post) => post.revisedAt)).toEqual([
+			'2026-02-02T18:30:00.000Z',
+			'2026-02-02T10:00:00.000Z'
+		]);
+		expect(posts.map((post) => post.slug)).toEqual(['evening-edit', 'morning-edit']);
+	});
+
 	it('hides unpublished pages and freezes an existing url ahead of a slug property', () => {
 		const posts = toWritingEntries(pages);
 		expect(posts.map((post) => post.slug)).toEqual([
@@ -344,6 +375,7 @@ describe('writing rss', () => {
 				legacySlugs: [],
 				date: '2026-09-01',
 				updated: '2026-09-01',
+				revisedAt: '2026-09-01T00:00:00.000Z',
 				excerpt: 'A note',
 				summary: 'A note',
 				featured: false,
@@ -367,6 +399,7 @@ describe('writing rss', () => {
 				legacySlugs: [],
 				date: '2026-02-31',
 				updated: '',
+				revisedAt: '',
 				excerpt: '',
 				summary: '',
 				featured: false,

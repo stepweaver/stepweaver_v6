@@ -84,6 +84,7 @@ export function toWritingEntries(
 			legacySlugs,
 			date: calendarDate(page.created),
 			updated: calendarDate(page.edited) || calendarDate(page.created),
+			revisedAt: page.edited.trim() || page.created.trim(),
 			excerpt,
 			summary: tldr || description || excerpt,
 			featured: page.featured === true,
