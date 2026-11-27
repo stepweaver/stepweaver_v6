@@ -71,14 +71,17 @@ test('codex loads writing on first use and reuses that response', async ({ page 
 	await input.press('Enter');
 	await expect.poll(() => requests.length).toBe(1);
 	await expect(input).toHaveValue('');
+	await expect(page.getByRole('status')).toHaveText('Loading writing');
 	await expect(transcript).not.toContainText('Workflow handoffs');
 	await input.fill('help');
 	await input.press('Enter');
-	await expect(transcript).toContainText('help: Show commands');
+	await expect(input).toHaveValue('help');
+	await expect(transcript).not.toContainText('help: Show commands');
 	expect(requests).toHaveLength(1);
 
 	release();
 	await expect(transcript).toContainText('published post');
+	await expect(input).toHaveValue('help');
 	await input.fill('ls');
 	await input.press('Enter');
 	await expect(transcript).toContainText('Workflow handoffs');
@@ -97,6 +100,41 @@ test('codex loads writing on first use and reuses that response', async ({ page 
 	await input.press('Enter');
 	await expect(transcript.getByText('user@stepweaver.dev:~$ codex')).toHaveCount(2);
 	expect(requests).toHaveLength(1);
+});
+
+test('codex is not applied as contact input while writing is still loading', async ({ page }) => {
+	await page.setViewportSize({ width: 1440, height: 900 });
+	let release = () => {};
+	const gate = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+	await page.route(`**${WRITING_API}`, async (route: Route) => {
+		await gate;
+		await route.continue();
+	});
+
+	await page.goto('/terminal');
+	await ready(page);
+	const input = page.getByRole('textbox', { name: 'Command' });
+	const transcript = page.getByRole('log', { name: 'Terminal transcript' });
+	const prompt = page.locator('.prompt-row .prompt');
+
+	await input.fill('codex');
+	await input.press('Enter');
+	await input.fill('contact');
+	await input.press('Enter');
+	await expect(prompt).toHaveText('user@stepweaver.dev:~$');
+	await expect(page.getByRole('status')).toHaveText('Loading writing');
+	await expect(transcript).not.toContainText('Step 1/5');
+	await expect(input).toHaveValue('contact');
+
+	release();
+	await expect(transcript).toContainText('published post');
+	await expect(prompt).toHaveText('[codex]');
+	await expect(transcript).not.toContainText('Step 1/5');
+	await expect(transcript).not.toContainText('Step 2/5');
+	await expect(input).toHaveValue('contact');
+	await expect(page.getByRole('status')).toHaveCount(0);
 });
 
 test('a writing failure stays in the console and the next codex retries', async ({ page }) => {

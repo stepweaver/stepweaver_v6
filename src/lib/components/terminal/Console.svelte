@@ -21,6 +21,7 @@
 
 	let session = $state(createSession());
 	let writingRequest = $state<HeldRequest<CodexLibrary>>({ phase: 'empty' });
+	let writingBusy = $state(false);
 	let inputEl = $state<HTMLInputElement>();
 	let screenEl = $state<HTMLDivElement>();
 	let turnstileEl = $state<HTMLDivElement>();
@@ -64,6 +65,17 @@
 	function onKeydown(event: KeyboardEvent) {
 		const typed = inputEl?.value ?? session.input;
 		if (event.isComposing) return;
+		if (
+			writingBusy &&
+			(event.key === 'Enter' ||
+				event.key === 'NumpadEnter' ||
+				event.key === 'Escape' ||
+				event.key === 'ArrowUp' ||
+				event.key === 'ArrowDown')
+		) {
+			event.preventDefault();
+			return;
+		}
 		if (event.key === 'Escape') {
 			event.preventDefault();
 			session = cancelMode(replaceInput(session, typed));
@@ -91,22 +103,32 @@
 	}
 
 	async function runCommand(typed: string, follow: boolean, anchor: number) {
-		const needs = commandNeedsWriting(session.mode, typed);
+		const mode = session.mode;
+		const needs = commandNeedsWriting(mode, typed);
 		let library = writingRequest.phase === 'ready' ? writingRequest.value : undefined;
 		let draft = '';
-		if (needs) {
+		if (needs && writingRequest.phase !== 'ready') {
 			session = replaceInput(session, '');
-			const next = holdRequest(writingRequest, loadCodexLibrary);
-			writingRequest = next;
-			const result = next.phase === 'pending' ? await next.request : next;
-			if (result.phase === 'ready') {
-				writingRequest = result;
-				library = result.value;
-			} else {
-				writingRequest = { phase: 'failed' };
-				library = { status: 'unavailable', posts: [] };
+			writingBusy = true;
+			try {
+				const next = holdRequest(writingRequest, loadCodexLibrary);
+				writingRequest = next;
+				const result = next.phase === 'pending' ? await next.request : next;
+				draft = session.input;
+				if (result.phase === 'ready') {
+					writingRequest = result;
+					library = result.value;
+				} else {
+					writingRequest = { phase: 'failed' };
+					library = { status: 'unavailable', posts: [] };
+				}
+			} finally {
+				writingBusy = false;
 			}
-			draft = session.input;
+			if (session.mode !== mode) {
+				if (draft) session = replaceInput(session, draft);
+				return;
+			}
 		}
 		session = submitLine(replaceInput(session, typed), { library });
 		if (draft) session = replaceInput(session, draft);
@@ -179,6 +201,9 @@
 
 	<div class="prompt-row">
 		<span class="prompt">{session.mode === 'shell' ? PROMPT : `[${session.mode}]`}</span>
+		{#if writingBusy}
+			<span class="busy" role="status">Loading writing</span>
+		{/if}
 		{#if session.mode === 'contact'}
 			<div class="bot-check" bind:this={turnstileEl}></div>
 		{/if}
@@ -187,6 +212,7 @@
 			value={session.input}
 			oninput={onInput}
 			onkeydown={onKeydown}
+			aria-busy={writingBusy ? 'true' : undefined}
 			type="text"
 			aria-label="Command"
 			autocomplete="off"
@@ -285,10 +311,15 @@
 		}
 	}
 
-	.prompt {
+	.prompt,
+	.busy {
 		font-family: var(--font-family-ibm);
 		font-size: 1rem;
 		line-height: 1.4;
+	}
+
+	.busy {
+		color: var(--text-muted);
 	}
 
 	input {
