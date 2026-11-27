@@ -3,6 +3,7 @@
 	import { env } from '$env/dynamic/public';
 	import { onMount, tick } from 'svelte';
 	import { mountTurnstile, type TurnstileHandle } from '$lib/contact/turnstile-widget';
+	import { holdRequest, type HeldRequest } from '$lib/search/palette-writing';
 	import { PROMPT } from '$lib/terminal/commands';
 	import type { CodexLibrary } from '$lib/terminal/codex';
 	import { performEffect } from '$lib/terminal/effects';
@@ -16,10 +17,10 @@
 		submitLine
 	} from '$lib/terminal/session';
 	import type { ShellEffect } from '$lib/terminal/types';
-
-	let { library }: { library: CodexLibrary } = $props();
+	import { commandNeedsWriting, loadCodexLibrary } from '$lib/terminal/writing';
 
 	let session = $state(createSession());
+	let writingRequest = $state<HeldRequest<CodexLibrary>>({ phase: 'empty' });
 	let inputEl = $state<HTMLInputElement>();
 	let screenEl = $state<HTMLDivElement>();
 	let turnstileEl = $state<HTMLDivElement>();
@@ -73,16 +74,7 @@
 			const screen = screenEl;
 			const anchor = screen?.scrollTop ?? 0;
 			const follow = !screen || screen.scrollHeight - screen.clientHeight - anchor <= 2;
-			session = submitLine(replaceInput(session, typed), { library });
-			const effect = session.effect;
-			if (effect) session = { ...session, effect: null };
-			void settleScroll(follow, anchor);
-			if (effect?.type === 'navigate') {
-				if (effect.external) window.open(effect.href, '_blank', 'noopener,noreferrer');
-				else void goto(effect.href);
-			} else if (effect) {
-				void runEffect(effect);
-			}
+			void runCommand(typed, follow, anchor);
 			return;
 		}
 		if (event.key === 'ArrowUp') {
@@ -95,6 +87,37 @@
 			event.preventDefault();
 			session = moveNewer(replaceInput(session, typed));
 			placeCaret();
+		}
+	}
+
+	async function runCommand(typed: string, follow: boolean, anchor: number) {
+		const needs = commandNeedsWriting(session.mode, typed);
+		let library = writingRequest.phase === 'ready' ? writingRequest.value : undefined;
+		let draft = '';
+		if (needs) {
+			session = replaceInput(session, '');
+			const next = holdRequest(writingRequest, loadCodexLibrary);
+			writingRequest = next;
+			const result = next.phase === 'pending' ? await next.request : next;
+			if (result.phase === 'ready') {
+				writingRequest = result;
+				library = result.value;
+			} else {
+				writingRequest = { phase: 'failed' };
+				library = { status: 'unavailable', posts: [] };
+			}
+			draft = session.input;
+		}
+		session = submitLine(replaceInput(session, typed), { library });
+		if (draft) session = replaceInput(session, draft);
+		const effect = session.effect;
+		if (effect) session = { ...session, effect: null };
+		void settleScroll(follow, anchor);
+		if (effect?.type === 'navigate') {
+			if (effect.external) window.open(effect.href, '_blank', 'noopener,noreferrer');
+			else void goto(effect.href);
+		} else if (effect) {
+			void runEffect(effect);
 		}
 	}
 

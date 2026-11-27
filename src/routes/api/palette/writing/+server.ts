@@ -6,8 +6,11 @@ import type { RequestHandler } from './$types';
 
 const HEADERS = { 'cache-control': 'no-store' };
 
-/** Published writing fields for the command palette. Uses the listing catalog. */
+/** Published listing for the command palette and the terminal codex. */
 export const GET: RequestHandler = async ({ platform }) => {
 	const body = paletteWritingBody(await getWritingCatalog(writingRequestFromPlatform(platform)));
-	return json({ posts: body.posts }, { status: body.status, headers: HEADERS });
+	return json(
+		{ status: body.status, posts: body.posts },
+		{ status: body.httpStatus, headers: HEADERS }
+	);
 };

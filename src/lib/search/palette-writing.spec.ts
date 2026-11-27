@@ -16,6 +16,12 @@ const post = {
 describe('palette writing payload', () => {
 	it('keeps the fields the palette searches', () => {
 		expect(paletteWritingPosts({ posts: [post] })).toEqual([post]);
+		expect(
+			paletteWritingPosts({
+				status: 'ok',
+				posts: [{ ...post, date: '2026-09-01', updated: '2026-09-02' }]
+			})
+		).toEqual([post]);
 	});
 
 	it('rejects a payload that is not a list of published search fields', () => {

@@ -51,18 +51,39 @@ export async function loadPaletteWriting(
 	}
 }
 
+export type HeldResult<T> = { phase: 'ready'; value: T } | { phase: 'failed' };
+
+export type HeldRequest<T> =
+	{ phase: 'empty' } | { phase: 'pending'; request: Promise<HeldResult<T>> } | HeldResult<T>;
+
 /**
  * One successful payload is kept. A pending request is shared.
  * A failure is not kept, so the next call tries again.
+ * `null` is a failure. An empty list is a successful payload.
  */
+export function holdRequest<T>(
+	current: HeldRequest<T>,
+	load: () => Promise<T | null>
+): HeldRequest<T> {
+	if (current.phase === 'ready' || current.phase === 'pending') return current;
+	const request = load().then(
+		(value) => (value !== null ? { phase: 'ready' as const, value } : { phase: 'failed' as const }),
+		() => ({ phase: 'failed' as const })
+	);
+	return { phase: 'pending', request };
+}
+
 export function requestPaletteWriting(
 	current: PaletteWritingRequest,
 	load: () => Promise<readonly PaletteWriting[] | null>
 ): PaletteWritingRequest {
 	if (current.phase === 'ready' || current.phase === 'pending') return current;
-	const request = load().then(
-		(posts) => (posts ? { phase: 'ready' as const, posts } : { phase: 'failed' as const }),
-		() => ({ phase: 'failed' as const })
-	);
-	return { phase: 'pending', request };
+	const held = holdRequest(current.phase === 'empty' ? current : { phase: 'failed' }, load);
+	if (held.phase !== 'pending') return { phase: 'failed' };
+	return {
+		phase: 'pending',
+		request: held.request.then((result) =>
+			result.phase === 'ready' ? { phase: 'ready', posts: result.value } : { phase: 'failed' }
+		)
+	};
 }

@@ -48,7 +48,9 @@ Server-only modules live in `src/lib/server`. They read credentials through `rea
 
 Marketing `+layout.server.ts` loads JSON-LD and the approved project cards for the command palette. It does not read the writing catalog, and it does not register `app:home-writing`. Static navigation lives in the client. Project cards stay on that server load so the private registry is not shipped to the browser.
 
-The command palette requests `GET /api/palette/writing` the first time it opens. That route calls `getWritingCatalog` and returns `slug`, `title`, `excerpt`, and `tags` for published entries. The browser keeps a successful response for the visit and does not request it again when the palette opens again. A failed response is not kept, so the next open tries again. Pages, approved projects, and themes stay searchable while that request is in flight or unavailable.
+The command palette requests `GET /api/palette/writing` the first time it opens. That route calls `getWritingCatalog` and returns published entries. The palette searches `slug`, `title`, `excerpt`, and `tags`. The same payload includes `date`, `updated`, and the catalog `status` for the terminal. The browser keeps a successful response for the visit and does not request it again when the palette opens again. A failed response is not kept, so the next open tries again. Pages, approved projects, and themes stay searchable while that request is in flight or unavailable. The response is `cache-control: no-store`.
+
+Opening `/terminal` does not read the writing catalog. The console calls that same endpoint the first time a command needs published posts: shell `codex`, and inside codex `ls`, `dir`, `grep` or `filter` with a tag, and `cat` with a number or slug. A successful response, including an empty or unconfigured catalog, is kept for that visit to the console and one in-flight request is shared. A failed response is not kept. `help`, `resume`, `cd` (including `cd writing` and `cd resume`), and the other shell commands do not request it. Codex `help`, `pwd`, `clear`, and `exit` do not either. There is no writing completion.
 
 The homepage reads the writing catalog on its own non-blocking path: at most 300ms for KV, and no wait for Notion. A cold homepage shows the profile plus a loading notice and retries the `app:home-writing` dependency three times, four seconds apart. That dependency is only on the homepage load.
 
@@ -108,7 +110,7 @@ On 2026-11-25, `https://stepweaver.dev/` returned 307 with `Location: https://ww
 
 ## Article publication
 
-A listing catalog is not publication. `/`, `/writing`, RSS, the sitemap, the terminal, and `GET /api/palette/writing` may show a previously published title for five minutes, or for up to 30 minutes when Notion is down. That list never authorizes an article body.
+A listing catalog is not publication. `/`, `/writing`, RSS, the sitemap, and `GET /api/palette/writing` may show a previously published title for five minutes, or for up to 30 minutes when Notion is down. The terminal codex reads that endpoint when a writing command needs the list. That list never authorizes an article body.
 
 `getPublicationCatalog()` returns a catalog only when `status` is `ok`: Notion succeeded less than five minutes ago (`FRESH_MS`), or the source is the fixture catalog. A stale catalog, including one kept because Notion failed, is not returned.
 
@@ -151,7 +153,7 @@ A retired project may become a historical case study with no demo button. That s
 
 Domain logic is in `src/lib/terminal` (parser, commands, session, history, routes, Codex, contact wizard, blackjack, adventure). Presentation is `Console.svelte` and `TerminalPage.svelte`.
 
-Shell commands: `help`, `clear`, `resume`, `cd`, `codex`, `roll`, `weather`, `contact`, `chat`, `blackjack`, `zork`, `cancel`. `cd` only resolves destinations in `src/lib/terminal/routes.ts`, plus `codex` → writing and `dice` → dice roller. Routes this app does not serve are rejected. Blackjack and the adventure keep their own modes, including adventure save and restore in `localStorage`. Dice history uses the same engine and storage key as `/dice-roller`.
+Shell commands: `help`, `clear`, `resume`, `cd`, `codex`, `roll`, `weather`, `contact`, `chat`, `blackjack`, `zork`, `cancel`. `cd` only resolves destinations in `src/lib/terminal/routes.ts`, plus `codex` → writing and `dice` → dice roller. Routes this app does not serve are rejected. `cd` does not read the writing catalog. `codex` requests `GET /api/palette/writing` on first use, then `ls`, `dir`, `grep`, `filter`, and `cat` reuse that response. A failure says writing could not be loaded and the next writing command tries again. Blackjack and the adventure keep their own modes, including adventure save and restore in `localStorage`. Dice history uses the same engine and storage key as `/dice-roller`.
 
 The desktop prompt sits at the end of the transcript. Narrow viewports keep the input in a sticky console frame. Effects (weather, chat, contact send) run in the browser with a 20 second abort.
 

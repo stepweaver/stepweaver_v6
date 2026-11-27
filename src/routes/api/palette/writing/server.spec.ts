@@ -6,30 +6,42 @@ import { GET } from './+server';
 describe('palette writing response', () => {
 	it('returns an empty list when writing is not configured and fails closed when it is down', () => {
 		expect(paletteWritingBody({ status: 'unconfigured', stale: false, posts: [] })).toEqual({
-			status: 200,
+			httpStatus: 200,
+			status: 'unconfigured',
 			posts: []
 		});
 		expect(
 			paletteWritingBody({ status: 'unavailable', stale: false, posts: fixtureEntries() })
 		).toEqual({
-			status: 503,
+			httpStatus: 503,
+			status: 'unavailable',
 			posts: []
 		});
 	});
 
-	it('returns only the published fields the palette searches', () => {
+	it('returns published listing fields and hides drafts', () => {
 		const body = paletteWritingBody({ status: 'ok', stale: false, posts: fixtureEntries() });
-		expect(body.status).toBe(200);
+		expect(body.httpStatus).toBe(200);
+		expect(body.status).toBe('ok');
 		const handoff = body.posts.find((post) => post.slug === 'workflow-handoffs');
 		expect(handoff).toEqual({
 			slug: 'workflow-handoffs',
 			title: 'Workflow handoffs',
 			excerpt: 'Where a handoff drops the work, and what the system has to remember.',
-			tags: ['systems', 'operations']
+			tags: ['systems', 'operations'],
+			date: '2026-09-01',
+			updated: '2026-09-02'
 		});
 		expect(body.posts.map((post) => post.title)).not.toContain(FIXTURE_DRAFT_TITLE);
 		for (const post of body.posts) {
-			expect(Object.keys(post).sort()).toEqual(['excerpt', 'slug', 'tags', 'title']);
+			expect(Object.keys(post).sort()).toEqual([
+				'date',
+				'excerpt',
+				'slug',
+				'tags',
+				'title',
+				'updated'
+			]);
 		}
 	});
 });
@@ -41,8 +53,16 @@ describe('GET /api/palette/writing', () => {
 		} as never);
 		expect(response.status).toBe(200);
 		expect(response.headers.get('cache-control')).toBe('no-store');
-		const body = (await response.json()) as { posts: { slug: string }[] };
+		const body = (await response.json()) as {
+			status: string;
+			posts: { slug: string; date: string; updated: string }[];
+		};
+		expect(body.status).toBe('ok');
 		expect(body.posts.map((post) => post.slug)).toContain('workflow-handoffs');
+		expect(body.posts.find((post) => post.slug === 'workflow-handoffs')).toMatchObject({
+			date: '2026-09-01',
+			updated: '2026-09-02'
+		});
 		expect(JSON.stringify(body)).not.toContain(FIXTURE_DRAFT_TITLE);
 		expect(JSON.stringify(body)).not.toContain('revisedAt');
 		expect(JSON.stringify(body)).not.toContain('fixture000');
@@ -54,6 +74,6 @@ describe('GET /api/palette/writing', () => {
 		} as never);
 		expect(response.status).toBe(503);
 		expect(response.headers.get('cache-control')).toBe('no-store');
-		expect(await response.json()).toEqual({ posts: [] });
+		expect(await response.json()).toEqual({ status: 'unavailable', posts: [] });
 	});
 });
