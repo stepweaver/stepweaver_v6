@@ -6,10 +6,12 @@
 		type MileageRejection,
 		type PeriodTotal
 	} from '$lib/journal/mileage';
+	import { formatWeightChange } from '$lib/journal/weight';
 
 	let { data } = $props();
 	const journal = $derived(data.journal);
 	const entry = $derived(journal.status === 'ok' ? journal.journal : null);
+	const weightChangeLbs = $derived(journal.status === 'ok' ? journal.weightChangeLbs : null);
 
 	function periodValue(period: PeriodTotal): string {
 		if (period.miles === null) return 'No record';
@@ -34,6 +36,16 @@
 		return `${parts.join(' ')} No total is shown.`;
 	}
 </script>
+
+{#snippet weightChange(change: number)}
+	<div>
+		<dt>Weight change</dt>
+		<dd>
+			{formatWeightChange(change)}
+			<span class="meta">Since first published weigh-in.</span>
+		</dd>
+	</div>
+{/snippet}
 
 <div class="journal">
 	<header class="intro">
@@ -69,6 +81,11 @@
 			Public dates are here, and none of them include a mileage value. Missing mileage is not shown
 			as zero.
 		</p>
+		{#if weightChangeLbs !== null}
+			<dl class="stats">
+				{@render weightChange(weightChangeLbs)}
+			</dl>
+		{/if}
 	{:else if entry}
 		<p class="span">
 			Recorded from {formatJournalDate(entry.firstDate ?? '')} to {formatJournalDate(
@@ -111,6 +128,9 @@
 					{/if}
 				</dd>
 			</div>
+			{#if weightChangeLbs !== null}
+				{@render weightChange(weightChangeLbs)}
+			{/if}
 		</dl>
 
 		<DistanceChart weeks={entry.weeks} months={entry.months} />
@@ -237,6 +257,10 @@
 		display: grid;
 		gap: var(--space-md);
 		margin-top: var(--space-xl);
+	}
+
+	.stats > div {
+		min-inline-size: 0;
 	}
 
 	@media (min-width: 40rem) {

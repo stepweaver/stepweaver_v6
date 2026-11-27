@@ -86,7 +86,9 @@ Public catalog and sanitized article blocks are cached. See [OPERATIONS.md](OPER
 
 `/field-journal` reads the existing Notion database named by `NOTION_CARRIER_JOURNAL_DB_ID`. It does not create a database, write rows, or load on the homepage, writing archive, or sitemap fetch. The writing archive only links to the route. Reflections stay ordinary posts filtered with the existing `Field Journal` tag.
 
-The public allowlist is `Date`, `Miles Walked`, and `Publish Public`. The query sends those property ids as `filter_properties`. `Publish Public` must be true in the Notion filter and again when each page is normalized. Page ids, titles, notes, and every other property are dropped before caching. The cached value is `journal:v1:{databaseId}:public-mileage` in the same KV binding as writing. It stores source rows, not totals.
+The public allowlist is `Date`, `Miles Walked`, `Publish Public`, and `Weight Lbs`. The query sends those property ids as `filter_properties`. `Publish Public` must be true in the Notion filter and again when each page is normalized. Page ids, titles, notes, individual weights, and every other property are dropped before caching. The cached value is `journal:v1:{databaseId}:public-mileage` in the same KV binding as writing. It stores mileage rows and the derived weight change, not each weigh-in and not mileage totals.
+
+Weight change is the latest valid published weigh-in minus the earliest, after sorting by `Date`. A weigh-in counts when miles are blank. Blank, zero, negative, and invalid weights are skipped. Fewer than two valid published weigh-ins leaves the change unset, and the page omits the stat. The browser receives that one number only.
 
 A snapshot is served only while it is younger than five minutes (`JOURNAL_PUBLICATION_WINDOW_MS`). If Notion then fails, the page says the record is unavailable. It does not keep an expired copy. Malformed or truncated responses fail the same way. An actually empty public query is an empty journal.
 

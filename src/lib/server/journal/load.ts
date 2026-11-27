@@ -7,6 +7,7 @@ import {
 	type MileageRecord,
 	type MileageRejection
 } from '$lib/journal/mileage';
+import { publishedWeightChange } from '$lib/journal/weight';
 import { cachedWriting, FRESH_MS, within, type CacheOptions } from '$lib/server/writing/cache';
 import {
 	NotionIncompleteError,
@@ -15,13 +16,14 @@ import {
 	type NotionFetcher
 } from '$lib/server/writing/notion';
 
-import { FIXTURE_TODAY, fixtureMileageRecords } from './fixtures';
+import { FIXTURE_TODAY, fixtureMileageRecords, fixtureWeighIns } from './fixtures';
 import { JOURNAL_PROPERTY_NAMES, projectPublicPages, type JournalSnapshot } from './normalize';
 
 /**
  * A public snapshot older than this is not served when Notion fails.
  * This is the writing cache fresh window. Expired entries are not a fallback.
- * Calculated totals are rebuilt from the cached records and are not stored.
+ * Mileage totals are rebuilt from the cached records and are not stored.
+ * The snapshot stores the derived weight change because the weigh-ins are not stored.
  */
 export const JOURNAL_PUBLICATION_WINDOW_MS = FRESH_MS;
 
@@ -35,7 +37,7 @@ export type FieldJournalState =
 	| { status: 'unavailable' }
 	| { status: 'empty' }
 	| { status: 'rejected'; rejections: MileageRejection[] }
-	| { status: 'ok'; journal: MileageJournal };
+	| { status: 'ok'; journal: MileageJournal; weightChangeLbs: number | null };
 
 export type JournalRequest = CacheOptions & {
 	source?: string;
@@ -63,10 +65,19 @@ function isRecord(value: unknown): value is MileageRecord {
 	return typeof record.miles === 'number' && Number.isFinite(record.miles) && record.miles >= 0;
 }
 
+function isWeightChange(value: unknown): value is number | null {
+	return value === null || (typeof value === 'number' && Number.isFinite(value));
+}
+
 function isSnapshot(value: unknown): value is JournalSnapshot {
 	if (!value || typeof value !== 'object') return false;
 	const record = value as Record<string, unknown>;
 	if (record.kind === 'records') {
+		const keys = Object.keys(record);
+		if (keys.length !== 3 || !keys.includes('records') || !keys.includes('weightChangeLbs')) {
+			return false;
+		}
+		if (!isWeightChange(record.weightChangeLbs)) return false;
 		return Array.isArray(record.records) && record.records.every(isRecord);
 	}
 	if (record.kind !== 'rejected' || !Array.isArray(record.rejections)) return false;
@@ -128,10 +139,14 @@ async function fetchSnapshot(request: JournalRequest, apiKey: string, databaseId
 	}
 }
 
-function presentRecords(records: MileageRecord[], today: string): FieldJournalState {
+function presentRecords(
+	records: MileageRecord[],
+	today: string,
+	weightChangeLbs: number | null
+): FieldJournalState {
 	if (records.length === 0) return { status: 'empty' };
 	try {
-		return { status: 'ok', journal: summarizeMileage(records, today) };
+		return { status: 'ok', journal: summarizeMileage(records, today), weightChangeLbs };
 	} catch {
 		return { status: 'unavailable' };
 	}
@@ -143,7 +158,11 @@ export async function loadPublicMileage(request: JournalRequest = {}): Promise<F
 	if (source === 'unavailable') return { status: 'unavailable' };
 	if (source === 'fixture') {
 		if (!allowFixture) return { status: 'unavailable' };
-		return presentRecords(fixtureMileageRecords(), FIXTURE_TODAY);
+		return presentRecords(
+			fixtureMileageRecords(),
+			FIXTURE_TODAY,
+			publishedWeightChange(fixtureWeighIns())
+		);
 	}
 
 	const apiKey = request.apiKey?.trim();
@@ -163,5 +182,5 @@ export async function loadPublicMileage(request: JournalRequest = {}): Promise<F
 	const today =
 		(request.today && calendarDate(request.today)) ||
 		localCalendarDay(new Date(request.now ?? Date.now()));
-	return presentRecords(result.value.records, today);
+	return presentRecords(result.value.records, today, result.value.weightChangeLbs);
 }

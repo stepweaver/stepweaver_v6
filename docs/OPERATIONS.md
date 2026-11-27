@@ -110,9 +110,9 @@ Share the writing database with the integration that owns `NOTION_API_KEY`. A 40
 
 The existing Field Journal database is shared with that integration. The owner reports that `/field-journal` is working. Do not create a replacement database. Do not change `Publish Public` on existing rows, and do not delete properties. If a later request logs `object_not_found` or 403, the integration has lost access to that same database.
 
-The server reads only `Date`, `Miles Walked`, and `Publish Public`. A Notion view for data entry can show those three columns. Leave mileage blank when it was not recorded. Type `0` only for a real zero. A date with two public rows blocks the total until one is unpublished or removed.
+The server reads `Date`, `Miles Walked`, `Publish Public`, and `Weight Lbs`. A Notion view for data entry can show those columns. Leave mileage blank when it was not recorded. Type `0` only for a real zero. Leave weight blank when it was not recorded. A blank, zero, negative, or invalid weight is not a weigh-in. A date with two public rows blocks the total until one is unpublished or removed.
 
-The mileage cache key is `journal:v1:{databaseId}:public-mileage`. It is fresh for five minutes. A failed refresh does not serve an older snapshot. Totals are calculated on read and are not stored.
+The mileage cache key is `journal:v1:{databaseId}:public-mileage`. It is fresh for five minutes. A failed refresh does not serve an older snapshot. Mileage totals are calculated on read and are not stored. The snapshot stores the derived weight change and does not store individual weights. A snapshot from before that field existed is not reused.
 
 ## Cache freshness
 

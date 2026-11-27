@@ -33,7 +33,12 @@ test('renders the public mileage record and its chart', async ({ page }) => {
 	await expect(table.getByText('3.5')).toBeVisible();
 	await expect(table.getByText('No record').first()).toBeVisible();
 	await expect(table).toContainText('not counted as zero');
-	await expect(page.getByText('Weight')).toHaveCount(0);
+	await expect(page.getByText('Weight change')).toBeVisible();
+	await expect(page.getByText('4.8 lb lost')).toBeVisible();
+	await expect(page.getByText('Since first published weigh-in.')).toBeVisible();
+	await expect(page.getByText('210', { exact: true })).toHaveCount(0);
+	await expect(page.getByText('208', { exact: true })).toHaveCount(0);
+	await expect(page.getByText('205.2')).toHaveCount(0);
 	await expect(page.getByText('Private Note')).toHaveCount(0);
 	await expect(page.getByText('DPS')).toHaveCount(0);
 	await expect(page.getByText('Hydration')).toHaveCount(0);
@@ -45,6 +50,17 @@ test('stays readable on a phone', async ({ page }) => {
 	await page.goto('/field-journal');
 	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 	await expect(page.getByText('miles recorded')).toBeVisible();
+	await expect(page.locator('.total-value')).toHaveText('16');
+	await expect(page.getByText('12.5 miles')).toBeVisible();
+	const weightCaption = page.getByText('Since first published weigh-in.');
+	await expect(weightCaption).toBeVisible();
+	await expect(page.getByText('4.8 lb lost')).toBeVisible();
+	const captionBox = await weightCaption.boundingBox();
+	expect(captionBox).not.toBeNull();
+	if (captionBox) {
+		expect(captionBox.x).toBeGreaterThanOrEqual(0);
+		expect(captionBox.x + captionBox.width).toBeLessThanOrEqual(391);
+	}
 	const overflow = await page.evaluate(
 		() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1
 	);

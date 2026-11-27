@@ -192,13 +192,17 @@ function echoedDate(value: unknown): string {
 	return DATE_SHAPE.test(head) ? head : 'undated';
 }
 
+/** Calendar day for a Notion date `start`, including a value that also carries a time. */
+export function calendarDay(value: unknown): string | null {
+	if (typeof value !== 'string') return null;
+	return calendarDate(value.trim().slice(0, 10));
+}
+
 function dateInput(
 	value: unknown
 ): { kind: 'date'; date: string } | { kind: 'invalid'; label: string } | { kind: 'missing' } {
 	if (value === null || value === undefined || value === '') return { kind: 'missing' };
-	if (typeof value !== 'string') return { kind: 'invalid', label: 'undated' };
-	const head = value.trim().slice(0, 10);
-	const date = calendarDate(head);
+	const date = calendarDay(value);
 	if (!date) return { kind: 'invalid', label: echoedDate(value) };
 	return { kind: 'date', date };
 }
