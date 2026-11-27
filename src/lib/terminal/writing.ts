@@ -6,6 +6,9 @@ import type { ShellMode } from './types';
 const CODEX_LIST = new Set(['ls', 'dir']);
 const CODEX_QUERY = new Set(['grep', 'filter', 'cat']);
 
+/** Same client deadline as weather, chat, and contact send. */
+export const CODEX_LIBRARY_DEADLINE_MS = 20_000;
+
 /**
  * Shell `codex` needs the catalog for its opening count.
  * Inside codex, only commands that read posts need it.
@@ -74,16 +77,52 @@ export function codexLibraryFromPayload(value: unknown): CodexLibrary | null {
 	return { status: 'ok', posts };
 }
 
+function untilDeadline<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
+	if (signal.aborted) return Promise.reject(signal.reason);
+	return new Promise((resolve, reject) => {
+		const fail = () => reject(signal.reason);
+		signal.addEventListener('abort', fail, { once: true });
+		work.then(
+			(value) => {
+				signal.removeEventListener('abort', fail);
+				if (signal.aborted) fail();
+				else resolve(value);
+			},
+			(error) => {
+				signal.removeEventListener('abort', fail);
+				reject(error);
+			}
+		);
+	});
+}
+
+/**
+ * One 20 second deadline covers the response and its body. The timer aborts
+ * the fetch, and the same signal settles a body that keeps the connection
+ * open. A timeout, a non-ok response, or a body that cannot be read is a
+ * failed load.
+ */
 export async function loadCodexLibrary(
 	fetchImpl: typeof fetch = fetch
 ): Promise<CodexLibrary | null> {
+	const controller = new AbortController();
+	const signal = controller.signal;
+	const timer = setTimeout(() => controller.abort(), CODEX_LIBRARY_DEADLINE_MS);
+	let response: Response | undefined;
 	try {
-		const response = await fetchImpl(PALETTE_WRITING_PATH, {
-			headers: { accept: 'application/json' }
-		});
+		response = await untilDeadline(
+			fetchImpl(PALETTE_WRITING_PATH, {
+				headers: { accept: 'application/json' },
+				signal
+			}),
+			signal
+		);
 		if (!response.ok) return null;
-		return codexLibraryFromPayload(await response.json());
+		return codexLibraryFromPayload(await untilDeadline(response.json(), signal));
 	} catch {
+		if (signal.aborted) await response?.body?.cancel().catch(() => undefined);
 		return null;
+	} finally {
+		clearTimeout(timer);
 	}
 }

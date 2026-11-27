@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { holdRequest } from '$lib/search/palette-writing';
-import { commandNeedsWriting, codexLibraryFromPayload, loadCodexLibrary } from './writing';
+import {
+	CODEX_LIBRARY_DEADLINE_MS,
+	commandNeedsWriting,
+	codexLibraryFromPayload,
+	loadCodexLibrary
+} from './writing';
 
 const post = {
 	slug: 'workflow-handoffs',
@@ -119,6 +124,45 @@ describe('codex library requests', () => {
 			value: { status: 'unconfigured', posts: [] }
 		});
 		expect(fetchImpl).toHaveBeenCalledTimes(2);
+	});
+
+	it('treats a stalled catalog body as unavailable so the next command can retry', async () => {
+		vi.useFakeTimers();
+		try {
+			let stalled = true;
+			const fetchImpl = vi.fn(async () => {
+				if (!stalled) return Response.json({ status: 'ok', posts: [post] });
+				return new Response(
+					new ReadableStream({
+						start() {
+							/* headers arrived; the body never finishes */
+						}
+					}),
+					{ status: 200, headers: { 'content-type': 'application/json' } }
+				);
+			});
+			const pending = holdRequest({ phase: 'empty' }, () => loadCodexLibrary(fetchImpl));
+			if (pending.phase !== 'pending') throw new Error('expected a request');
+			let settled = false;
+			const result = pending.request.then((value) => {
+				settled = true;
+				return value;
+			});
+			await vi.advanceTimersByTimeAsync(CODEX_LIBRARY_DEADLINE_MS - 1);
+			expect(settled).toBe(false);
+			await vi.advanceTimersByTimeAsync(1);
+			expect(await result).toEqual({ phase: 'failed' });
+
+			stalled = false;
+			const retry = holdRequest({ phase: 'failed' }, () => loadCodexLibrary(fetchImpl));
+			if (retry.phase !== 'pending') throw new Error('expected a retry');
+			expect(await retry.request).toEqual({
+				phase: 'ready',
+				value: { status: 'ok', posts: [post] }
+			});
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	it('reads a published catalog and rejects a body that is not JSON', async () => {
