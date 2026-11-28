@@ -3,6 +3,7 @@
 	import { env } from '$env/dynamic/public';
 	import { onMount, tick } from 'svelte';
 	import { mountTurnstile, type TurnstileHandle } from '$lib/contact/turnstile-widget';
+	import { holdRequest, type HeldRequest } from '$lib/search/palette-writing';
 	import { PROMPT } from '$lib/terminal/commands';
 	import type { CodexLibrary } from '$lib/terminal/codex';
 	import { performEffect } from '$lib/terminal/effects';
@@ -16,10 +17,11 @@
 		submitLine
 	} from '$lib/terminal/session';
 	import type { ShellEffect } from '$lib/terminal/types';
-
-	let { library }: { library: CodexLibrary } = $props();
+	import { commandNeedsWriting, loadCodexLibrary } from '$lib/terminal/writing';
 
 	let session = $state(createSession());
+	let writingRequest = $state<HeldRequest<CodexLibrary>>({ phase: 'empty' });
+	let writingBusy = $state(false);
 	let inputEl = $state<HTMLInputElement>();
 	let screenEl = $state<HTMLDivElement>();
 	let turnstileEl = $state<HTMLDivElement>();
@@ -63,6 +65,17 @@
 	function onKeydown(event: KeyboardEvent) {
 		const typed = inputEl?.value ?? session.input;
 		if (event.isComposing) return;
+		if (
+			writingBusy &&
+			(event.key === 'Enter' ||
+				event.key === 'NumpadEnter' ||
+				event.key === 'Escape' ||
+				event.key === 'ArrowUp' ||
+				event.key === 'ArrowDown')
+		) {
+			event.preventDefault();
+			return;
+		}
 		if (event.key === 'Escape') {
 			event.preventDefault();
 			session = cancelMode(replaceInput(session, typed));
@@ -73,16 +86,7 @@
 			const screen = screenEl;
 			const anchor = screen?.scrollTop ?? 0;
 			const follow = !screen || screen.scrollHeight - screen.clientHeight - anchor <= 2;
-			session = submitLine(replaceInput(session, typed), { library });
-			const effect = session.effect;
-			if (effect) session = { ...session, effect: null };
-			void settleScroll(follow, anchor);
-			if (effect?.type === 'navigate') {
-				if (effect.external) window.open(effect.href, '_blank', 'noopener,noreferrer');
-				else void goto(effect.href);
-			} else if (effect) {
-				void runEffect(effect);
-			}
+			void runCommand(typed, follow, anchor);
 			return;
 		}
 		if (event.key === 'ArrowUp') {
@@ -95,6 +99,47 @@
 			event.preventDefault();
 			session = moveNewer(replaceInput(session, typed));
 			placeCaret();
+		}
+	}
+
+	async function runCommand(typed: string, follow: boolean, anchor: number) {
+		const mode = session.mode;
+		const needs = commandNeedsWriting(mode, typed);
+		let library = writingRequest.phase === 'ready' ? writingRequest.value : undefined;
+		let draft = '';
+		if (needs && writingRequest.phase !== 'ready') {
+			session = replaceInput(session, '');
+			writingBusy = true;
+			try {
+				const next = holdRequest(writingRequest, loadCodexLibrary);
+				writingRequest = next;
+				const result = next.phase === 'pending' ? await next.request : next;
+				draft = session.input;
+				if (result.phase === 'ready') {
+					writingRequest = result;
+					library = result.value;
+				} else {
+					writingRequest = { phase: 'failed' };
+					library = { status: 'unavailable', posts: [] };
+				}
+			} finally {
+				writingBusy = false;
+			}
+			if (session.mode !== mode) {
+				if (draft) session = replaceInput(session, draft);
+				return;
+			}
+		}
+		session = submitLine(replaceInput(session, typed), { library });
+		if (draft) session = replaceInput(session, draft);
+		const effect = session.effect;
+		if (effect) session = { ...session, effect: null };
+		void settleScroll(follow, anchor);
+		if (effect?.type === 'navigate') {
+			if (effect.external) window.open(effect.href, '_blank', 'noopener,noreferrer');
+			else void goto(effect.href);
+		} else if (effect) {
+			void runEffect(effect);
 		}
 	}
 
@@ -156,6 +201,9 @@
 
 	<div class="prompt-row">
 		<span class="prompt">{session.mode === 'shell' ? PROMPT : `[${session.mode}]`}</span>
+		{#if writingBusy}
+			<span class="busy" role="status">Loading writing</span>
+		{/if}
 		{#if session.mode === 'contact'}
 			<div class="bot-check" bind:this={turnstileEl}></div>
 		{/if}
@@ -164,6 +212,7 @@
 			value={session.input}
 			oninput={onInput}
 			onkeydown={onKeydown}
+			aria-busy={writingBusy ? 'true' : undefined}
 			type="text"
 			aria-label="Command"
 			autocomplete="off"
@@ -262,10 +311,15 @@
 		}
 	}
 
-	.prompt {
+	.prompt,
+	.busy {
 		font-family: var(--font-family-ibm);
 		font-size: 1rem;
 		line-height: 1.4;
+	}
+
+	.busy {
+		color: var(--text-muted);
 	}
 
 	input {

@@ -4,11 +4,8 @@
 	import LambdaText from '$lib/components/site/LambdaText.svelte';
 	import { requestPaletteToggle } from '$lib/components/site/palette-bus';
 	import { identity } from '$lib/data/identity';
-	import type { CodexLibrary } from '$lib/terminal/codex';
 	import { SHELL_HOST, commandGuide, commandModules } from '$lib/terminal/commands';
 	import { consoleViewportFrame } from '$lib/terminal/viewport';
-
-	let { library }: { library: CodexLibrary } = $props();
 
 	const guide = commandGuide();
 	const modules = commandModules();
@@ -131,7 +128,7 @@
 				<span class="window-path">~/terminal</span>
 				<span class="host-name">{SHELL_HOST}</span>
 			</div>
-			<Console {library} />
+			<Console />
 		</section>
 	</div>
 

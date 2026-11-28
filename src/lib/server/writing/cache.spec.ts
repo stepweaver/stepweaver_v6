@@ -284,6 +284,13 @@ describe('page loaders', () => {
 		}
 	});
 
+	it('does not give the terminal page a writing loader', async () => {
+		const { access } = await import('node:fs/promises');
+		await expect(
+			access(new URL('../../../routes/(marketing)/terminal/+page.server.ts', import.meta.url))
+		).rejects.toThrow();
+	});
+
 	it('keeps featured writing on the homepage fixture path', async () => {
 		const { load: home } = await import('../../../routes/(marketing)/+page.server');
 		const depends = vi.fn();
