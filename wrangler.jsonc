@@ -56,6 +56,20 @@
 			"binding": "WRITING_CACHE",
 			"id": "59b4dc4b764e4d89823444791c6043d3"
 		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "LAMBDA_DAILY_BUDGET",
+				"class_name": "LambdaDailyBudget"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1-lambda-daily-budget",
+			"new_sqlite_classes": ["LambdaDailyBudget"]
+		}
 	]
 	/**
 	 * Smart Placement

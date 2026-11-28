@@ -21,7 +21,8 @@ const ISOLATED_SERVICE_KEYS = new Set([
 	'GROQ_API_KEY',
 	'OPENAI_API_KEY',
 	'GROQ_MODEL',
-	'OPENAI_MODEL'
+	'OPENAI_MODEL',
+	'LAMBDA_CHAT'
 ]);
 
 export function serviceIsolationEnabled(devMode = dev): boolean {

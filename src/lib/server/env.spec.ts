@@ -66,6 +66,17 @@ describe('server env isolation', () => {
 		restore('NOTION_API_KEY', previous.key);
 	});
 
+	it('lets the browser suite hide an operator switch copied onto the platform', () => {
+		const previous = process.env.LAMBDA_CHAT;
+		const switched = {
+			env: { LAMBDA_CHAT: 'off', GROQ_API_KEY: 'platform-groq' }
+		} as unknown as App.Platform;
+		process.env.LAMBDA_CHAT = '';
+		expect(readServerEnv(switched, 'LAMBDA_CHAT', { isolated: true })).toBeUndefined();
+		expect(readServerEnv(switched, 'LAMBDA_CHAT', { isolated: false })).toBe('off');
+		restore('LAMBDA_CHAT', previous);
+	});
+
 	it('cannot turn isolation on in production', () => {
 		process.env.STEPWEAVER_E2E = '1';
 		process.env.OPENWEATHER_API_KEY = '';

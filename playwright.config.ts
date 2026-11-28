@@ -13,6 +13,7 @@ const isolated = {
 	OPENAI_API_KEY: '',
 	GROQ_MODEL: '',
 	OPENAI_MODEL: '',
+	LAMBDA_CHAT: '',
 	NOTION_API_KEY: '',
 	NOTION_BLOG_DB_ID: '',
 	NOTION_CARRIER_JOURNAL_DB_ID: '',

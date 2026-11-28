@@ -4,6 +4,7 @@ import { originAllowed } from '$lib/server/contact/submit';
 import { BodyTimeoutError, readBoundedJson } from '$lib/server/security/bounded-body';
 import { publicApiLimit } from '$lib/server/security/public-api';
 import { readServerEnv } from '$lib/server/env';
+import { lambdaBudget, retryAfterSeconds } from '$lib/server/lambda/budget';
 import { publicLambdaBrief } from '$lib/server/lambda/brief';
 import { completeLambda } from '$lib/server/lambda/complete';
 import { getPublicWorkCards } from '$lib/projects/publication';
@@ -75,15 +76,25 @@ export const POST: RequestHandler = async (event) => {
 		})),
 		projects: getPublicWorkCards()
 	});
+	const budgetBinding = event.platform?.env?.LAMBDA_DAILY_BUDGET;
 	const result = await completeLambda({
 		brief,
 		...request,
 		groqKey: readServerEnv(event.platform, 'GROQ_API_KEY'),
 		openaiKey: readServerEnv(event.platform, 'OPENAI_API_KEY'),
 		groqModel: readServerEnv(event.platform, 'GROQ_MODEL'),
-		openaiModel: readServerEnv(event.platform, 'OPENAI_MODEL')
+		openaiModel: readServerEnv(event.platform, 'OPENAI_MODEL'),
+		lambdaChat: readServerEnv(event.platform, 'LAMBDA_CHAT'),
+		budget: budgetBinding ? lambdaBudget(budgetBinding) : undefined,
+		requestSignal: event.request.signal
 	});
-	if (!result.ok) return json({ error: result.message }, { status: 502, headers: HEADERS });
+	if (!result.ok) {
+		const headers =
+			result.status === 429
+				? { ...HEADERS, 'retry-after': String(retryAfterSeconds(result.resetAt, Date.now())) }
+				: HEADERS;
+		return json({ error: result.message }, { status: result.status, headers });
+	}
 	return json({ message: result.message }, { headers: HEADERS });
 };
 

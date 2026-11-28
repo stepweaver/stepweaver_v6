@@ -7,3 +7,5 @@ PUBLIC_TURNSTILE_SITE_KEY=
 TURNSTILE_SECRET_KEY=
 CONTACT_FROM_EMAIL=
 CONTACT_TO_EMAIL=
+# Unset means on. Set to off to skip λlambda provider calls in `wrangler dev`.
+LAMBDA_CHAT=

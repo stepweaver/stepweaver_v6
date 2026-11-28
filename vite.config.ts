@@ -1,6 +1,23 @@
 import { defineConfig } from 'vitest/config';
 import adapter from '@sveltejs/adapter-cloudflare';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { ensureWorkerBudgetExport } from './scripts/ensure-worker-budget-export.mjs';
+
+ensureWorkerBudgetExport();
+
+function cloudflareAdapter() {
+	const plugin = adapter();
+	const adapt = plugin.adapt.bind(plugin);
+	plugin.adapt = async (builder) => {
+		await adapt(builder);
+		if (!ensureWorkerBudgetExport()) {
+			throw new Error(
+				'The SvelteKit Cloudflare worker was not written, so LambdaDailyBudget could not be exported.'
+			);
+		}
+	};
+	return plugin;
+}
 
 export default defineConfig({
 	plugins: [
@@ -14,7 +31,7 @@ export default defineConfig({
 			// adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
 			// If your environment is not supported, or you settled on a specific environment, switch out the adapter.
 			// See https://svelte.dev/docs/kit/adapters for more information about adapters.
-			adapter: adapter(),
+			adapter: cloudflareAdapter(),
 			csp: {
 				mode: 'auto',
 				directives: {
